@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import {
   ArrowLeft, Loader2, DollarSign, Calendar, MessageSquare,
   Building2, AlertTriangle, CheckCircle, HelpCircle, Bell,
+  TrendingUp,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +17,7 @@ import { supabase } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/utils";
 import { fetchBillsForAsset, Bill } from "@/lib/bill-service";
 import { formatCentsToDisplay } from "@/lib/bill-parser";
+import { BudgetView } from "@/components/budget/BudgetView";
 
 interface Asset {
   id: string;
@@ -43,20 +45,31 @@ export default function AssetDetailPage() {
   const [asset, setAsset] = useState<Asset | null>(null);
   const [bills, setBills] = useState<Bill[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [hasBudget, setHasBudget] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"overview" | "bills" | "messages">("overview");
+  const [activeTab, setActiveTab] = useState<"budget" | "overview" | "bills" | "messages">("budget");
 
   useEffect(() => {
     async function loadData() {
       const id = params.id as string;
-      const [assetRes, billsData, msgRes] = await Promise.all([
+      const [assetRes, billsData, msgRes, budgetRes] = await Promise.all([
         db.from("assets").select("*").eq("id", id).single(),
         fetchBillsForAsset(id),
         db.from("messages").select("id, title, type, priority, body, created_at").eq("asset_id", id).eq("is_deleted", false).order("created_at", { ascending: false }),
+        db.from("budgets").select("id").eq("asset_id", id).limit(1),
       ]);
       setAsset(assetRes.data);
       setBills(billsData);
       setMessages(msgRes.data || []);
+      setHasBudget(budgetRes.data && budgetRes.data.length > 0);
+
+      // Default to budget tab if budget exists, otherwise overview
+      if (budgetRes.data && budgetRes.data.length > 0) {
+        setActiveTab("budget");
+      } else {
+        setActiveTab("overview");
+      }
+
       setIsLoading(false);
     }
     loadData();
@@ -118,20 +131,25 @@ export default function AssetDetailPage() {
         </Link>
 
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3">
-            <Badge variant="outline" className={`capitalize ${categoryColors[asset.category] || ""}`}>
-              {asset.category}
-            </Badge>
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <div className="flex items-center gap-3">
+              <Badge variant="outline" className={`capitalize ${categoryColors[asset.category] || ""}`}>
+                {asset.category}
+              </Badge>
+            </div>
+            <h1 className="mt-2 text-3xl font-bold text-foreground">{asset.name}</h1>
+            {asset.description && <p className="mt-1 text-sm text-muted-foreground">{asset.description}</p>}
           </div>
-          <h1 className="mt-2 text-3xl font-bold text-foreground">{asset.name}</h1>
-          <p className="mt-1 text-3xl font-bold text-primary">{formatCurrency(asset.estimated_value)}</p>
-          {asset.description && <p className="mt-2 text-sm text-muted-foreground">{asset.description}</p>}
+          <div className="text-right">
+            <p className="text-3xl font-bold text-primary">{formatCurrency(asset.estimated_value)}</p>
+            <p className="text-xs text-muted-foreground">Estimated Value</p>
+          </div>
         </div>
 
         {/* Tabs */}
         <div className="mb-6 flex gap-1 rounded-lg bg-muted/30 p-1">
-          {(["overview", "bills", "messages"] as const).map((tab) => (
+          {(["budget", "overview", "bills", "messages"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -139,6 +157,7 @@ export default function AssetDetailPage() {
                 activeTab === tab ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
               }`}
             >
+              {tab === "budget" && <TrendingUp className="h-4 w-4" />}
               {tab === "overview" && <DollarSign className="h-4 w-4" />}
               {tab === "bills" && <Calendar className="h-4 w-4" />}
               {tab === "messages" && <MessageSquare className="h-4 w-4" />}
@@ -153,7 +172,12 @@ export default function AssetDetailPage() {
           ))}
         </div>
 
-        {/* Overview Tab */}
+        {/* ═══ BUDGET TAB ═══ */}
+        {activeTab === "budget" && (
+          <BudgetView assetId={asset.id} />
+        )}
+
+        {/* ═══ OVERVIEW TAB ═══ */}
         {activeTab === "overview" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid gap-4 sm:grid-cols-3">
             <Card className="border-border bg-card/60">
@@ -178,7 +202,7 @@ export default function AssetDetailPage() {
           </motion.div>
         )}
 
-        {/* Bills Tab */}
+        {/* ═══ BILLS TAB ═══ */}
         {activeTab === "bills" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <Card className="border-border bg-card/60">
@@ -222,7 +246,7 @@ export default function AssetDetailPage() {
           </motion.div>
         )}
 
-        {/* Messages Tab */}
+        {/* ═══ MESSAGES TAB ═══ */}
         {activeTab === "messages" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <Card className="border-border bg-card/60">
