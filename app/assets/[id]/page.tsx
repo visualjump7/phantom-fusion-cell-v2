@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import {
   ArrowLeft, Loader2, DollarSign, Calendar, MessageSquare,
   Building2, AlertTriangle, CheckCircle, HelpCircle, Bell,
-  TrendingUp,
+  TrendingUp, Upload,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +18,7 @@ import { formatCurrency } from "@/lib/utils";
 import { fetchBillsForAsset, Bill } from "@/lib/bill-service";
 import { formatCentsToDisplay } from "@/lib/bill-parser";
 import { BudgetView } from "@/components/budget/BudgetView";
+import { useRole } from "@/lib/use-role";
 
 interface Asset {
   id: string;
@@ -42,6 +43,7 @@ const db = supabase as any;
 
 export default function AssetDetailPage() {
   const params = useParams();
+  const { isAdmin } = useRole();
   const [asset, setAsset] = useState<Asset | null>(null);
   const [bills, setBills] = useState<Bill[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -174,7 +176,19 @@ export default function AssetDetailPage() {
 
         {/* ═══ BUDGET TAB ═══ */}
         {activeTab === "budget" && (
-          <BudgetView assetId={asset.id} />
+          <div>
+            {isAdmin && (
+              <div className="mb-4 flex justify-end">
+                <Link href={`/upload?asset=${asset.id}&year=${new Date().getFullYear()}`}>
+                  <Button variant={hasBudget ? "outline" : "default"} size="sm">
+                    <Upload className="mr-2 h-4 w-4" />
+                    {hasBudget ? "Update Budget" : "Upload Budget"}
+                  </Button>
+                </Link>
+              </div>
+            )}
+            <BudgetView assetId={asset.id} />
+          </div>
         )}
 
         {/* ═══ OVERVIEW TAB ═══ */}

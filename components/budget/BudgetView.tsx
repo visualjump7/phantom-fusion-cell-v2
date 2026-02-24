@@ -7,9 +7,11 @@ import {
   PieChart, Pie, Cell, Legend,
 } from "recharts";
 import {
-  ChevronDown, ChevronRight, Search, Loader2, TrendingUp,
+  ChevronDown, ChevronRight, Search, Loader2, TrendingUp, Upload,
 } from "lucide-react";
+import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
@@ -217,6 +219,11 @@ export function BudgetView({ assetId }: BudgetViewProps) {
         <TrendingUp className="mx-auto mb-3 h-10 w-10 text-muted-foreground/30" />
         <p className="text-muted-foreground">No budget data for this asset</p>
         <p className="mt-1 text-xs text-muted-foreground">Upload a budget spreadsheet to get started</p>
+        <Link href={`/upload?asset=${assetId}`}>
+          <Button variant="outline" size="sm" className="mt-4">
+            <Upload className="mr-2 h-4 w-4" />Upload Budget
+          </Button>
+        </Link>
       </div>
     );
   }

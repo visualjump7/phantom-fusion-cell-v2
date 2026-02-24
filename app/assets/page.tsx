@@ -3,12 +3,13 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Building2, Loader2, ChevronRight } from "lucide-react";
+import { Building2, Loader2, ChevronRight, Upload } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
 import { formatCurrency, getCategoryColor } from "@/lib/utils";
+import { useRole } from "@/lib/use-role";
 
 interface Asset {
   id: string;
@@ -22,6 +23,7 @@ interface Asset {
 const db = supabase as any;
 
 export default function AssetsPage() {
+  const { isAdmin } = useRole();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
@@ -95,7 +97,21 @@ export default function AssetsPage() {
                         <Badge variant="outline" className={`text-xs capitalize ${categoryColors[asset.category] || ""}`}>
                           {asset.category}
                         </Badge>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        <div className="flex items-center gap-1">
+                          {isAdmin && (
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                window.location.href = `/upload?asset=${asset.id}&year=${new Date().getFullYear()}`;
+                              }}
+                              className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                              title="Upload Budget"
+                            >
+                              <Upload className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        </div>
                       </div>
                       <h3 className="mt-3 text-lg font-semibold text-foreground">{asset.name}</h3>
                       <p className="mt-1 text-2xl font-bold text-foreground">{formatCurrency(asset.estimated_value)}</p>
