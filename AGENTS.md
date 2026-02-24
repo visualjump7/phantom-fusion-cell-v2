@@ -20,9 +20,10 @@
 
 ### Authentication & test account
 
-- The app uses Supabase Auth (email/password). A valid account in the Supabase project is required to access any page beyond `/login`.
-- Known working test account: `media@phantomservices.com` / `FusionCell` (admin role). This account has full access including admin-only routes (`/admin/*`, `/upload`).
-- The user is greeted as "Media" on the dashboard after login.
+- The Supabase project has Google OAuth configured. Some user accounts are Google OAuth users and cannot log in via the email/password form.
+- The current login page (`app/login/page.tsx`) only has email/password auth — there is no "Sign in with Google" button. The OAuth callback route (`/auth/callback`) exists but is not triggered from the UI.
+- Known working email/password test account: `media@phantomservices.com` / `FusionCell` (admin role). This account has full access including admin-only routes (`/admin/*`, `/upload`).
+- To test with a Google OAuth account, a "Sign in with Google" button would need to be added to the login page, or the user can log in manually via the Desktop pane.
 
 ### Key gotchas
 
