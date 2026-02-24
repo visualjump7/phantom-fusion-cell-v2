@@ -31,7 +31,7 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  // Public routes
+  // Public routes — no auth needed
   const isPublicRoute =
     pathname === "/login" ||
     pathname === "/signup" ||
@@ -45,6 +45,32 @@ export async function middleware(request: NextRequest) {
   // Redirect authenticated users away from login
   if (user && pathname === "/login") {
     return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  // ========================================
+  // ROLE-BASED ROUTE PROTECTION
+  // ========================================
+  // Admin-only routes: /admin/*, /upload
+  const isAdminRoute =
+    pathname.startsWith("/admin") || pathname === "/upload";
+
+  if (user && isAdminRoute) {
+    // Query the user's role
+    const { data: membership } = await supabase
+      .from("organization_members")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .single();
+
+    const role = membership?.role;
+    const hasAdminAccess =
+      role === "owner" || role === "admin" || role === "accountant";
+
+    if (!hasAdminAccess) {
+      // Executive or unknown role — redirect to dashboard
+      return NextResponse.redirect(new URL("/", request.url));
+    }
   }
 
   return supabaseResponse;

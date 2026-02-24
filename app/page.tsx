@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { CashFlowCard } from "@/components/dashboard/CashFlowCard";
 import { supabase } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/utils";
+import { useRole } from "@/lib/use-role";
 import {
   fetchBillSummary,
   fetchUpcomingBills,
@@ -49,23 +50,15 @@ const db = supabase as any;
 
 export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
-  const [userName, setUserName] = useState("Guest");
   const [assets, setAssets] = useState<Asset[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [billSummary, setBillSummary] = useState<BillSummary | null>(null);
   const [upcomingBills, setUpcomingBills] = useState<Bill[]>([]);
+  const { userName, isAdmin, isExecutive } = useRole();
 
   useEffect(() => {
     async function loadData() {
       try {
-        // Get user
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user?.email) {
-          const name = user.user_metadata?.full_name || user.email.split("@")[0];
-          setUserName(name.charAt(0).toUpperCase() + name.slice(1));
-        }
-
-        // Fetch all data in parallel
         const [assetRes, msgRes, summary, upcoming] = await Promise.all([
           db.from("assets").select("id, name, category, estimated_value").eq("is_deleted", false).order("estimated_value", { ascending: false }),
           db.from("messages").select("id, title, type, priority, asset_id, created_at").eq("is_deleted", false).eq("is_archived", false).order("created_at", { ascending: false }).limit(5),
@@ -113,6 +106,11 @@ export default function DashboardPage() {
     low: "border-border text-muted-foreground",
   };
 
+  // Greeting based on time of day
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const displayName = userName ? userName.charAt(0).toUpperCase() + userName.slice(1) : "Guest";
+
   return (
     <div className="min-h-screen bg-background">
       <div className="fixed inset-0 -z-10 overflow-hidden">
@@ -130,10 +128,12 @@ export default function DashboardPage() {
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <h1 className="text-2xl font-bold text-foreground">
-            Welcome back, {userName}
+            {greeting}, {displayName}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Here&apos;s your financial overview
+            {isExecutive
+              ? "Here\u2019s your financial overview"
+              : "Fusion Cell command center"}
           </p>
         </motion.div>
 
@@ -197,7 +197,7 @@ export default function DashboardPage() {
                     <CardContent className="p-4">
                       <p className="text-xs text-muted-foreground">Due This Month</p>
                       <p className="text-2xl font-bold text-foreground">
-                        {billSummary ? `$${Math.round(billSummary.totalDueThisMonth / 100).toLocaleString()}` : "—"}
+                        {billSummary ? `$${Math.round(billSummary.totalDueThisMonth / 100).toLocaleString()}` : "\u2014"}
                       </p>
                     </CardContent>
                   </Card>
@@ -226,7 +226,7 @@ export default function DashboardPage() {
                         Assets
                       </CardTitle>
                       <Link href="/assets" className="text-xs text-primary hover:underline">
-                        View all →
+                        View all \u2192
                       </Link>
                     </div>
                   </CardHeader>
@@ -262,7 +262,7 @@ export default function DashboardPage() {
                         Recent Messages
                       </CardTitle>
                       <Link href="/messages" className="text-xs text-primary hover:underline">
-                        View all →
+                        View all \u2192
                       </Link>
                     </div>
                   </CardHeader>

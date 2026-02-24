@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
-// Fetch data snapshot from Supabase for AI context
-async function fetchDataSnapshot(supabaseUrl: string, supabaseKey: string) {
+async function fetchComprehensiveSnapshot(supabaseUrl: string, supabaseKey: string) {
   const headers = {
     apikey: supabaseKey,
     Authorization: `Bearer ${supabaseKey}`,
@@ -20,104 +19,183 @@ async function fetchDataSnapshot(supabaseUrl: string, supabaseKey: string) {
     const now = new Date();
     const today = now.toISOString().split("T")[0];
     const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-      .toISOString()
-      .split("T")[0];
-    const next14 = new Date(now.getTime() + 14 * 86400000)
-      .toISOString()
-      .split("T")[0];
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0];
+    const next30 = new Date(now.getTime() + 30 * 86400000).toISOString().split("T")[0];
 
-    const [assets, pendingBills, upcomingBills, messages, unreadCount] =
-      await Promise.all([
-        fetchTable(
-          "assets?is_deleted=eq.false&select=id,name,category,estimated_value&order=estimated_value.desc"
-        ),
-        fetchTable(
-          `bills?status=eq.pending&due_date=gte.${monthStart}&due_date=lte.${monthEnd}&select=title,amount_cents,due_date,category,asset_id`
-        ),
-        fetchTable(
-          `bills?status=eq.pending&due_date=gte.${today}&due_date=lte.${next14}&select=title,amount_cents,due_date,category,payee&order=due_date.asc&limit=10`
-        ),
-        fetchTable(
-          "messages?is_deleted=eq.false&is_archived=eq.false&select=id,title,type,priority,asset_id,created_at&order=created_at.desc&limit=10"
-        ),
-        fetchTable(
-          "messages?is_deleted=eq.false&is_archived=eq.false&select=id&limit=100"
-        ),
-      ]);
+    const [
+      assets,
+      allBillsThisMonth,
+      upcomingBills,
+      overdueBills,
+      paidBillsThisMonth,
+      messages,
+      messageResponses,
+      budgets,
+      budgetLineItems,
+    ] = await Promise.all([
+      // All active assets with full detail
+      fetchTable("assets?is_deleted=eq.false&select=id,name,category,estimated_value,description,status&order=estimated_value.desc"),
+      // All pending bills this month
+      fetchTable(`bills?status=eq.pending&due_date=gte.${monthStart}&due_date=lte.${monthEnd}&select=id,title,amount_cents,due_date,category,payee,asset_id,notes&order=due_date.asc`),
+      // Upcoming 30 days
+      fetchTable(`bills?status=eq.pending&due_date=gte.${today}&due_date=lte.${next30}&select=id,title,amount_cents,due_date,category,payee,asset_id&order=due_date.asc`),
+      // Overdue
+      fetchTable(`bills?status=eq.pending&due_date=lt.${today}&select=id,title,amount_cents,due_date,category,payee,asset_id`),
+      // Paid this month
+      fetchTable(`bills?status=eq.paid&due_date=gte.${monthStart}&due_date=lte.${monthEnd}&select=amount_cents`),
+      // All active messages with full detail
+      fetchTable("messages?is_deleted=eq.false&is_archived=eq.false&select=id,title,body,type,priority,asset_id,created_at&order=created_at.desc"),
+      // All message responses
+      fetchTable("message_responses?select=id,message_id,response_type,comment,created_at&order=created_at.desc"),
+      // Budgets
+      fetchTable("budgets?select=id,asset_id,year"),
+      // Budget line items
+      fetchTable("budget_line_items?select=id,budget_id,description,jan,feb,mar,apr,may,jun,jul,aug,sep,oct,dec,annual_total"),
+    ]);
+
+    // Build asset lookup
+    const assetMap = new Map((assets || []).map((a: any) => [a.id, a.name]));
 
     // Calculate totals
-    const totalPortfolioValue = (assets || []).reduce(
-      (sum: number, a: { estimated_value: number | null }) =>
-        sum + (a.estimated_value || 0),
-      0
-    );
+    const totalPortfolioValue = (assets || []).reduce((s: number, a: any) => s + (a.estimated_value || 0), 0);
+    const totalDueThisMonth = (allBillsThisMonth || []).reduce((s: number, b: any) => s + b.amount_cents, 0);
+    const totalPaidThisMonth = (paidBillsThisMonth || []).reduce((s: number, b: any) => s + b.amount_cents, 0);
+    const totalOverdue = (overdueBills || []).reduce((s: number, b: any) => s + b.amount_cents, 0);
 
-    const totalDueThisMonth = (pendingBills || []).reduce(
-      (sum: number, b: { amount_cents: number }) => sum + b.amount_cents,
-      0
-    );
+    // Group bills by category
+    const billsByCategory = new Map<string, { count: number; total: number }>();
+    (allBillsThisMonth || []).forEach((b: any) => {
+      const cat = b.category || "Uncategorized";
+      const existing = billsByCategory.get(cat) || { count: 0, total: 0 };
+      billsByCategory.set(cat, { count: existing.count + 1, total: existing.total + b.amount_cents });
+    });
 
-    // Build asset lookup for bill context
-    const assetMap = new Map(
-      (assets || []).map((a: { id: string; name: string }) => [a.id, a.name])
-    );
+    // Group bills by asset
+    const billsByAsset = new Map<string, { count: number; total: number }>();
+    (upcomingBills || []).forEach((b: any) => {
+      if (!b.asset_id) return;
+      const name = assetMap.get(b.asset_id) || "Unknown";
+      const existing = billsByAsset.get(name) || { count: 0, total: 0 };
+      billsByAsset.set(name, { count: existing.count + 1, total: existing.total + b.amount_cents });
+    });
 
-    // Format upcoming bills with asset names
-    const upcomingFormatted = (upcomingBills || []).map(
-      (b: {
-        title: string;
-        amount_cents: number;
-        due_date: string;
-        category: string | null;
-        payee: string | null;
-      }) => ({
-        title: b.title,
-        amount: `$${Math.round(b.amount_cents / 100).toLocaleString()}`,
-        due: b.due_date,
-        category: b.category,
-        payee: b.payee,
-      })
+    // Categorize messages
+    const respondedMessageIds = new Set((messageResponses || []).map((r: any) => r.message_id));
+    const pendingDecisions = (messages || []).filter(
+      (m: any) => (m.type === "decision" || m.type === "action_required") && !respondedMessageIds.has(m.id)
     );
+    const answeredDecisions = (messages || []).filter(
+      (m: any) => (m.type === "decision" || m.type === "action_required") && respondedMessageIds.has(m.id)
+    );
+    const alerts = (messages || []).filter((m: any) => m.type === "alert");
+    const updates = (messages || []).filter((m: any) => m.type === "update");
 
-    // Count messages needing action
-    const decisionsNeeded = (messages || []).filter(
-      (m: { type: string }) =>
-        m.type === "decision" || m.type === "action_required"
-    ).length;
+    // Build responses lookup
+    const responseLookup = new Map<string, any>();
+    (messageResponses || []).forEach((r: any) => {
+      if (!responseLookup.has(r.message_id)) {
+        responseLookup.set(r.message_id, r);
+      }
+    });
+
+    // Budget summaries by asset
+    const budgetSummaries: { assetName: string; year: number; annualTotal: number }[] = [];
+    (budgets || []).forEach((budget: any) => {
+      const assetName = assetMap.get(budget.asset_id) || "Unknown";
+      const items = (budgetLineItems || []).filter((li: any) => li.budget_id === budget.id);
+      const annualTotal = items.reduce((s: number, li: any) => s + (li.annual_total || 0), 0);
+      if (annualTotal > 0) {
+        budgetSummaries.push({ assetName, year: budget.year, annualTotal });
+      }
+    });
+
+    const fmt = (cents: number) => `$${Math.round(cents / 100).toLocaleString()}`;
+    const fmtVal = (val: number) => `$${Math.round(val).toLocaleString()}`;
 
     return {
-      totalPortfolioValue: `$${Math.round(totalPortfolioValue).toLocaleString()}`,
-      assetCount: (assets || []).length,
-      assets: (assets || []).map(
-        (a: {
-          id: string;
-          name: string;
-          category: string;
-          estimated_value: number;
-        }) => ({
+      portfolio: {
+        totalValue: fmtVal(totalPortfolioValue),
+        assetCount: (assets || []).length,
+        assets: (assets || []).map((a: any) => ({
           id: a.id,
           name: a.name,
           category: a.category,
-          value: `$${Math.round(a.estimated_value || 0).toLocaleString()}`,
-        })
-      ),
-      monthlyBills: {
-        count: (pendingBills || []).length,
-        total: `$${Math.round(totalDueThisMonth / 100).toLocaleString()}`,
+          value: fmtVal(a.estimated_value || 0),
+          description: a.description,
+        })),
+        byCategory: Object.entries(
+          (assets || []).reduce((acc: any, a: any) => {
+            acc[a.category] = (acc[a.category] || 0) + (a.estimated_value || 0);
+            return acc;
+          }, {})
+        ).map(([cat, val]) => `${cat}: ${fmtVal(val as number)}`),
       },
-      upcoming14Days: upcomingFormatted,
+      billing: {
+        dueThisMonth: fmt(totalDueThisMonth),
+        dueCount: (allBillsThisMonth || []).length,
+        paidThisMonth: fmt(totalPaidThisMonth),
+        overdueCount: (overdueBills || []).length,
+        overdueTotal: fmt(totalOverdue),
+        overdueBills: (overdueBills || []).map((b: any) => ({
+          title: b.title,
+          amount: fmt(b.amount_cents),
+          dueDate: b.due_date,
+          asset: assetMap.get(b.asset_id) || null,
+        })),
+        upcoming30Days: (upcomingBills || []).slice(0, 15).map((b: any) => ({
+          title: b.title,
+          amount: fmt(b.amount_cents),
+          dueDate: b.due_date,
+          category: b.category,
+          payee: b.payee,
+          asset: assetMap.get(b.asset_id) || null,
+        })),
+        byCategory: Array.from(billsByCategory.entries()).map(([cat, data]) => ({
+          category: cat,
+          count: data.count,
+          total: fmt(data.total),
+        })),
+        byAsset: Array.from(billsByAsset.entries()).map(([name, data]) => ({
+          asset: name,
+          count: data.count,
+          total: fmt(data.total),
+        })),
+      },
       messages: {
         total: (messages || []).length,
-        decisionsNeeded,
-        recent: (messages || [])
-          .slice(0, 5)
-          .map((m: { title: string; type: string; priority: string }) => ({
+        pendingDecisions: pendingDecisions.map((m: any) => ({
+          id: m.id,
+          title: m.title,
+          body: m.body,
+          type: m.type,
+          priority: m.priority,
+          asset: assetMap.get(m.asset_id) || null,
+        })),
+        answeredDecisions: answeredDecisions.map((m: any) => {
+          const resp = responseLookup.get(m.id);
+          return {
             title: m.title,
-            type: m.type,
-            priority: m.priority,
-          })),
+            response: resp?.response_type || "unknown",
+            comment: resp?.comment || null,
+            respondedAt: resp?.created_at || null,
+          };
+        }),
+        alerts: alerts.map((m: any) => ({
+          title: m.title,
+          body: m.body,
+          priority: m.priority,
+          asset: assetMap.get(m.asset_id) || null,
+        })),
+        updates: updates.map((m: any) => ({
+          title: m.title,
+          body: m.body,
+        })),
       },
+      budgets: budgetSummaries.length > 0 ? budgetSummaries.map((b) => ({
+        asset: b.assetName,
+        year: b.year,
+        annualBudget: fmtVal(b.annualTotal),
+      })) : null,
     };
   } catch (error) {
     console.error("Error fetching data snapshot:", error);
@@ -125,35 +203,61 @@ async function fetchDataSnapshot(supabaseUrl: string, supabaseKey: string) {
   }
 }
 
-function buildSystemPrompt(snapshot: any): string {
-  return `You are the Fusion Cell AI assistant for a high-net-worth individual. You help them navigate their financial overview quickly and find the information they need.
+function buildSystemPrompt(data: any): string {
+  return `You are the Fusion Cell AI assistant — a concierge intelligence system for a high-net-worth individual. You have complete visibility into their financial operations.
 
-CURRENT DATA SNAPSHOT:
-- Portfolio Value: ${snapshot.totalPortfolioValue} across ${snapshot.assetCount} assets
-- Assets: ${snapshot.assets.map((a: any) => `${a.name} (${a.category}, ${a.value})`).join(", ")}
-- Bills due this month: ${snapshot.monthlyBills.count} bills totaling ${snapshot.monthlyBills.total}
-- Upcoming 14 days: ${snapshot.upcoming14Days.length > 0 ? snapshot.upcoming14Days.map((b: any) => `${b.title} — ${b.amount} on ${b.due}`).join("; ") : "No upcoming bills"}
-- Messages: ${snapshot.messages.total} active, ${snapshot.messages.decisionsNeeded} decisions/actions needed
+═══ PORTFOLIO OVERVIEW ═══
+Total Value: ${data.portfolio.totalValue} across ${data.portfolio.assetCount} assets
+By Category: ${data.portfolio.byCategory.join(" | ")}
 
-NAVIGATION LINKS (include these when relevant):
-- Dashboard: /
-- All Assets: /assets
-- Specific asset: /assets/[asset-id] (use actual IDs from the asset list above)
-- Fiscal Calendar: /calendar
-- Messages: /messages
-- Settings: /settings
+Assets:
+${data.portfolio.assets.map((a: any) => `• ${a.name} (${a.category}) — ${a.value}${a.description ? ` — ${a.description}` : ""}`).join("\n")}
 
-ASSET IDS FOR DEEP LINKS:
-${snapshot.assets.map((a: any) => `- ${a.name}: /assets/${a.id}`).join("\n")}
+═══ BILLING & CASH FLOW ═══
+Due This Month: ${data.billing.dueThisMonth} (${data.billing.dueCount} bills)
+Already Paid: ${data.billing.paidThisMonth}
+${data.billing.overdueCount > 0 ? `⚠️ OVERDUE: ${data.billing.overdueCount} bills totaling ${data.billing.overdueTotal}\n${data.billing.overdueBills.map((b: any) => `  • ${b.title} — ${b.amount} (due ${b.dueDate}${b.asset ? `, ${b.asset}` : ""})`).join("\n")}` : "No overdue bills."}
 
-RULES:
-1. Be concise and direct. This person values their time.
-2. Use clear dollar amounts, not jargon.
-3. When mentioning an asset, bill, or message, include a navigation link in markdown format: [Link Text](/path)
-4. If asked about something not in the data, say so honestly.
-5. Format currency consistently: $1,234,567
-6. Keep responses under 150 words unless the question requires detail.
-7. If asked "what should I look at" or similar, prioritize: decisions needing action > overdue bills > high-priority messages > upcoming large payments.`;
+By Category: ${data.billing.byCategory.map((c: any) => `${c.category}: ${c.total} (${c.count})`).join(" | ")}
+${data.billing.byAsset.length > 0 ? `By Asset: ${data.billing.byAsset.map((a: any) => `${a.asset}: ${a.total} (${a.count})`).join(" | ")}` : ""}
+
+Upcoming 30 Days:
+${data.billing.upcoming30Days.map((b: any) => `• ${b.dueDate}: ${b.title} — ${b.amount}${b.payee ? ` to ${b.payee}` : ""}${b.asset ? ` (${b.asset})` : ""}`).join("\n")}
+
+═══ MESSAGES & DECISIONS ═══
+${data.messages.pendingDecisions.length > 0 ? `🔴 PENDING DECISIONS (${data.messages.pendingDecisions.length}):
+${data.messages.pendingDecisions.map((m: any) => `• [${m.priority.toUpperCase()}] ${m.title}${m.asset ? ` (${m.asset})` : ""}\n  ${m.body || "No details"}\n  → Respond at [Messages](/messages)`).join("\n")}` : "No pending decisions."}
+
+${data.messages.answeredDecisions.length > 0 ? `✅ Resolved Decisions:
+${data.messages.answeredDecisions.map((m: any) => `• ${m.title} → ${m.response}${m.comment ? ` ("${m.comment}")` : ""}`).join("\n")}` : ""}
+
+${data.messages.alerts.length > 0 ? `⚠️ Active Alerts:
+${data.messages.alerts.map((m: any) => `• [${m.priority}] ${m.title}${m.asset ? ` (${m.asset})` : ""}: ${m.body || ""}`).join("\n")}` : ""}
+
+${data.messages.updates.length > 0 ? `📋 Recent Updates:
+${data.messages.updates.map((m: any) => `• ${m.title}: ${m.body || ""}`).join("\n")}` : ""}
+
+${data.budgets ? `═══ BUDGETS ═══\n${data.budgets.map((b: any) => `• ${b.asset} (${b.year}): ${b.annualBudget} annual budget`).join("\n")}` : ""}
+
+═══ NAVIGATION DEEP LINKS ═══
+Include these as markdown links when relevant:
+- Dashboard: [Dashboard](/)
+- All Assets: [Assets](/assets)
+${data.portfolio.assets.map((a: any) => `- ${a.name}: [View ${a.name}](/assets/${a.id})`).join("\n")}
+- Fiscal Calendar: [Calendar](/calendar)
+- Messages: [Messages](/messages)
+- Settings: [Settings](/settings)
+
+═══ YOUR ROLE ═══
+1. Be concise and direct. This person is busy.
+2. Prioritize: overdue items → pending decisions → upcoming large payments → general overview.
+3. When mentioning assets, bills, or messages, always include a navigation link.
+4. Use specific dollar amounts, dates, and names — never vague.
+5. If asked "what needs my attention" or similar, lead with actionable items.
+6. If asked about something not in the data, say so clearly.
+7. Keep responses under 200 words unless detailed analysis is requested.
+8. For financial analysis, do the math — show totals, comparisons, and trends.
+9. When a decision is pending, summarize the context and what action is needed.`;
 }
 
 export async function POST(request: NextRequest) {
@@ -168,27 +272,19 @@ export async function POST(request: NextRequest) {
     const { messages, conversationHistory } = await request.json();
 
     if (!messages || !Array.isArray(messages)) {
-      return NextResponse.json(
-        { error: "Messages array required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Messages array required" }, { status: 400 });
     }
 
-    // Fetch live data for context
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-    const snapshot = await fetchDataSnapshot(supabaseUrl, supabaseKey);
+    const snapshot = await fetchComprehensiveSnapshot(supabaseUrl, supabaseKey);
 
     if (!snapshot) {
-      return NextResponse.json(
-        { error: "Failed to fetch data context" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Failed to fetch data context" }, { status: 500 });
     }
 
     const systemPrompt = buildSystemPrompt(snapshot);
 
-    // Build conversation for Claude
     const claudeMessages = [
       ...(conversationHistory || []),
       ...messages,
@@ -197,7 +293,6 @@ export async function POST(request: NextRequest) {
       content: m.content,
     }));
 
-    // Call Anthropic API
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -207,7 +302,7 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 1024,
+        max_tokens: 1500,
         system: systemPrompt,
         messages: claudeMessages,
       }),
@@ -216,25 +311,15 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Anthropic API error:", errorText);
-      return NextResponse.json(
-        { error: "AI service temporarily unavailable" },
-        { status: 502 }
-      );
+      return NextResponse.json({ error: "AI service temporarily unavailable" }, { status: 502 });
     }
 
     const data = await response.json();
-    const assistantMessage =
-      data.content?.[0]?.text || "I couldn't process that request.";
+    const assistantMessage = data.content?.[0]?.text || "I couldn't process that request.";
 
-    return NextResponse.json({
-      message: assistantMessage,
-      role: "assistant",
-    });
+    return NextResponse.json({ message: assistantMessage, role: "assistant" });
   } catch (error) {
     console.error("AI chat error:", error);
-    return NextResponse.json(
-      { error: "An error occurred processing your request" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "An error occurred processing your request" }, { status: 500 });
   }
 }
