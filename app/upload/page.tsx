@@ -271,7 +271,7 @@ export default function UploadPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">Budget Upload</h1>
-            <p className="text-sm text-muted-foreground">Upload Excel budget spreadsheets for your assets</p>
+            <p className="text-sm text-muted-foreground">Upload operating budgets for your assets</p>
           </div>
         </div>
 
