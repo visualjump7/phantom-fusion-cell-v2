@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Loader2, DollarSign, Calendar, MessageSquare,
   Building2, AlertTriangle, CheckCircle, HelpCircle, Bell,
-  TrendingUp, Upload, Plus,
+  TrendingUp, Upload, Plus, ThumbsUp, ThumbsDown, Eye,
+  ShieldCheck, X,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +20,10 @@ import { fetchBillsForAsset, Bill } from "@/lib/bill-service";
 import { formatCentsToDisplay } from "@/lib/bill-parser";
 import { BudgetView } from "@/components/budget/BudgetView";
 import { useRole } from "@/lib/use-role";
+import {
+  fetchMessages, respondToMessage, getMessageStatus,
+  Message,
+} from "@/lib/message-service";
 
 interface Asset {
   id: string;
@@ -27,15 +32,6 @@ interface Asset {
   estimated_value: number;
   description: string | null;
   status: string;
-}
-
-interface Message {
-  id: string;
-  title: string;
-  type: string;
-  priority: string;
-  body: string | null;
-  created_at: string;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -51,21 +47,25 @@ export default function AssetDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"budget" | "overview" | "bills" | "messages">("budget");
 
+  const [respondingTo, setRespondingTo] = useState<Message | null>(null);
+  const [respondAction, setRespondAction] = useState<"approved" | "rejected" | null>(null);
+  const [respondComment, setRespondComment] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   useEffect(() => {
     async function loadData() {
       const id = params.id as string;
-      const [assetRes, billsData, msgRes, budgetRes] = await Promise.all([
+      const [assetRes, billsData, assetMessages, budgetRes] = await Promise.all([
         db.from("assets").select("*").eq("id", id).single(),
         fetchBillsForAsset(id),
-        db.from("messages").select("id, title, type, priority, body, created_at").eq("asset_id", id).eq("is_deleted", false).order("created_at", { ascending: false }),
+        fetchMessages({ asset_id: id }),
         db.from("budgets").select("id").eq("asset_id", id).limit(1),
       ]);
       setAsset(assetRes.data);
       setBills(billsData);
-      setMessages(msgRes.data || []);
+      setMessages(assetMessages);
       setHasBudget(budgetRes.data && budgetRes.data.length > 0);
 
-      // Default to budget tab if budget exists, otherwise overview
       if (budgetRes.data && budgetRes.data.length > 0) {
         setActiveTab("budget");
       } else {
@@ -76,6 +76,34 @@ export default function AssetDetailPage() {
     }
     loadData();
   }, [params.id]);
+
+  const openResponseModal = (msg: Message, action: "approved" | "rejected") => {
+    setRespondingTo(msg);
+    setRespondAction(action);
+    setRespondComment("");
+  };
+
+  const handleQuickAcknowledge = async (messageId: string) => {
+    setIsSubmitting(true);
+    await respondToMessage(messageId, "acknowledged");
+    const updated = await fetchMessages({ asset_id: params.id as string });
+    setMessages(updated);
+    setIsSubmitting(false);
+  };
+
+  const handleConfirmResponse = async () => {
+    if (!respondingTo || !respondAction) return;
+    setIsSubmitting(true);
+    const result = await respondToMessage(respondingTo.id, respondAction, respondComment || undefined);
+    if (result.success) {
+      setRespondingTo(null);
+      setRespondComment("");
+      setRespondAction(null);
+      const updated = await fetchMessages({ asset_id: params.id as string });
+      setMessages(updated);
+    }
+    setIsSubmitting(false);
+  };
 
   const pendingBills = bills.filter((b) => b.status === "pending");
   const paidBills = bills.filter((b) => b.status === "paid");
@@ -279,21 +307,88 @@ export default function AssetDetailPage() {
                   <p className="text-sm text-muted-foreground italic">No messages for this asset</p>
                 ) : (
                   <div className="space-y-3">
-                    {messages.map((msg) => (
-                      <div key={msg.id} className="rounded-lg bg-background/30 p-4">
-                        <div className="flex items-start gap-3">
-                          {typeIcons[msg.type]}
-                          <div>
-                            <p className="text-sm font-medium text-foreground">{msg.title}</p>
-                            {msg.body && <p className="mt-1 text-xs text-muted-foreground">{msg.body}</p>}
-                            <div className="mt-2 flex items-center gap-2">
-                              <Badge variant="outline" className="text-[10px] capitalize">{msg.type.replace("_", " ")}</Badge>
-                              <Badge variant="outline" className="text-[10px]">{msg.priority}</Badge>
+                    {messages.map((msg) => {
+                      const status = getMessageStatus(msg);
+                      return (
+                        <div key={msg.id} className="rounded-lg bg-background/30 p-4">
+                          <div className="flex items-start gap-3">
+                            {typeIcons[msg.type]}
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-foreground">{msg.title}</p>
+                              {msg.body && <p className="mt-1 text-xs text-muted-foreground">{msg.body}</p>}
+                              <div className="mt-2 flex items-center gap-2">
+                                <Badge variant="outline" className="text-[10px] capitalize">{msg.type.replace("_", " ")}</Badge>
+                                <Badge variant="outline" className="text-[10px]">{msg.priority}</Badge>
+                              </div>
+
+                              {status === "approved" && !msg.response?.confirmed_at && (
+                                <div className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3">
+                                  <div className="flex items-center gap-2">
+                                    <ThumbsUp className="h-3.5 w-3.5 text-emerald-400" />
+                                    <span className="text-xs font-semibold text-emerald-400">Approved</span>
+                                  </div>
+                                  {msg.response?.comment && (
+                                    <p className="mt-1 text-xs text-muted-foreground italic">&ldquo;{msg.response.comment}&rdquo;</p>
+                                  )}
+                                  <p className="mt-1 text-[10px] text-amber-400">Awaiting team confirmation</p>
+                                </div>
+                              )}
+
+                              {status === "rejected" && !msg.response?.confirmed_at && (
+                                <div className="mt-3 rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+                                  <div className="flex items-center gap-2">
+                                    <ThumbsDown className="h-3.5 w-3.5 text-red-400" />
+                                    <span className="text-xs font-semibold text-red-400">Rejected</span>
+                                  </div>
+                                  {msg.response?.comment && (
+                                    <p className="mt-1 text-xs text-muted-foreground italic">&ldquo;{msg.response.comment}&rdquo;</p>
+                                  )}
+                                  <p className="mt-1 text-[10px] text-amber-400">Awaiting team confirmation</p>
+                                </div>
+                              )}
+
+                              {status === "confirmed" && (
+                                <div className="mt-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
+                                  <div className="flex items-center gap-2">
+                                    <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                                    <span className="text-xs font-semibold text-primary">
+                                      {msg.response?.response_type === "approved" ? "Approved" : "Rejected"} &amp; Confirmed
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
+
+                              {status === "acknowledged" && (
+                                <div className="mt-3 rounded-lg border border-blue-500/30 bg-blue-500/5 p-3">
+                                  <div className="flex items-center gap-2">
+                                    <Eye className="h-3.5 w-3.5 text-blue-400" />
+                                    <span className="text-xs font-semibold text-blue-400">Acknowledged</span>
+                                  </div>
+                                </div>
+                              )}
+
+                              {status === "pending" && (msg.type === "decision" || msg.type === "action_required") && (
+                                <div className="mt-3 flex items-center gap-2">
+                                  <Button size="sm" className="text-xs bg-emerald-600 hover:bg-emerald-700"
+                                    onClick={() => openResponseModal(msg, "approved")} disabled={isSubmitting}>
+                                    <ThumbsUp className="mr-1.5 h-3 w-3" />Approve
+                                  </Button>
+                                  <Button size="sm" variant="outline"
+                                    className="text-xs border-red-500/30 text-red-400 hover:bg-red-500/10"
+                                    onClick={() => openResponseModal(msg, "rejected")} disabled={isSubmitting}>
+                                    <ThumbsDown className="mr-1.5 h-3 w-3" />Reject
+                                  </Button>
+                                  <Button size="sm" variant="ghost" className="text-xs text-muted-foreground"
+                                    onClick={() => handleQuickAcknowledge(msg.id)} disabled={isSubmitting}>
+                                    <Eye className="mr-1.5 h-3 w-3" />Acknowledge
+                                  </Button>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
@@ -301,6 +396,52 @@ export default function AssetDetailPage() {
           </motion.div>
         )}
       </motion.main>
+
+      {/* ═══ RESPONSE CONFIRMATION MODAL ═══ */}
+      <AnimatePresence>
+        {respondingTo && respondAction && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => { setRespondingTo(null); setRespondAction(null); }}
+              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed left-1/2 top-1/2 z-50 w-[min(480px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-card p-6 shadow-2xl">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  {respondAction === "approved"
+                    ? <ThumbsUp className="h-5 w-5 text-emerald-400" />
+                    : <ThumbsDown className="h-5 w-5 text-red-400" />}
+                  <h3 className="text-lg font-semibold text-foreground">
+                    {respondAction === "approved" ? "Approve" : "Reject"}
+                  </h3>
+                </div>
+                <button onClick={() => { setRespondingTo(null); setRespondAction(null); }}>
+                  <X className="h-5 w-5 text-muted-foreground" />
+                </button>
+              </div>
+              <div className="mb-4 rounded-lg bg-background/50 p-3">
+                <p className="text-sm font-medium text-foreground">{respondingTo.title}</p>
+                {respondingTo.body && <p className="mt-1 text-xs text-muted-foreground">{respondingTo.body}</p>}
+              </div>
+              <textarea value={respondComment} onChange={(e) => setRespondComment(e.target.value)}
+                placeholder="Add a note (optional)..." rows={3} autoFocus
+                className="mb-4 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-none" />
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" size="sm" onClick={() => { setRespondingTo(null); setRespondAction(null); }}>Cancel</Button>
+                <Button size="sm"
+                  className={respondAction === "approved" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-red-600 hover:bg-red-700"}
+                  onClick={handleConfirmResponse} disabled={isSubmitting}>
+                  {respondAction === "approved" ? <ThumbsUp className="mr-1.5 h-3 w-3" /> : <ThumbsDown className="mr-1.5 h-3 w-3" />}
+                  Confirm {respondAction === "approved" ? "Approval" : "Rejection"}
+                </Button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
