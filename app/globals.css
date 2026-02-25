@@ -3,7 +3,9 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
+  /* Dark mode (default) */
+  :root,
+  .dark {
     --background: 240 6% 5%;
     --foreground: 0 0% 98%;
     --card: 240 5% 8%;
@@ -25,6 +27,30 @@
     --ring: 95 55% 50%;
     --radius: 0.75rem;
   }
+
+  /* Light mode */
+  .light {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 4%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 4%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 4%;
+    --primary: 95 55% 40%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 6% 10%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+    --accent: 240 5% 96%;
+    --accent-foreground: 240 6% 10%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 95 55% 40%;
+    --radius: 0.75rem;
+  }
 }
 
 @layer base {
@@ -36,21 +62,38 @@
   }
 }
 
-/* Custom scrollbar for dark theme */
-::-webkit-scrollbar {
+/* Custom scrollbar — dark */
+.dark ::-webkit-scrollbar,
+:root ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
-
-::-webkit-scrollbar-track {
+.dark ::-webkit-scrollbar-track,
+:root ::-webkit-scrollbar-track {
   background: transparent;
 }
-
-::-webkit-scrollbar-thumb {
+.dark ::-webkit-scrollbar-thumb,
+:root ::-webkit-scrollbar-thumb {
   background: hsl(240 4% 25%);
   border-radius: 3px;
 }
-
-::-webkit-scrollbar-thumb:hover {
+.dark ::-webkit-scrollbar-thumb:hover,
+:root ::-webkit-scrollbar-thumb:hover {
   background: hsl(240 4% 35%);
+}
+
+/* Custom scrollbar — light */
+.light ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.light ::-webkit-scrollbar-track {
+  background: transparent;
+}
+.light ::-webkit-scrollbar-thumb {
+  background: hsl(240 4% 82%);
+  border-radius: 3px;
+}
+.light ::-webkit-scrollbar-thumb:hover {
+  background: hsl(240 4% 70%);
 }
