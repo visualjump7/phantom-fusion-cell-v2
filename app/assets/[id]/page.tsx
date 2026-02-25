@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import {
   ArrowLeft, Loader2, DollarSign, Calendar, MessageSquare,
   Building2, AlertTriangle, CheckCircle, HelpCircle, Bell,
-  TrendingUp, Upload,
+  TrendingUp, Upload, Plus,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -220,8 +220,15 @@ export default function AssetDetailPage() {
         {activeTab === "bills" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <Card className="border-border bg-card/60">
-              <CardHeader className="pb-3">
+              <CardHeader className="pb-3 flex flex-row items-center justify-between">
                 <CardTitle className="text-base">Linked Bills</CardTitle>
+                {isAdmin && (
+                  <Link href={`/admin/bills?asset=${asset.id}`}>
+                    <Button variant="outline" size="sm">
+                      <Plus className="mr-2 h-4 w-4" /> Add Bill
+                    </Button>
+                  </Link>
+                )}
               </CardHeader>
               <CardContent>
                 {bills.length === 0 ? (

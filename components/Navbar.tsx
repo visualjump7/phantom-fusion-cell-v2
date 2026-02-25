@@ -10,7 +10,7 @@ import {
   Calendar as CalendarIcon,
   MessageSquare,
   TrendingUp,
-  FileSpreadsheet,
+  Receipt,
   SendHorizontal,
   Settings,
   LogOut,
@@ -38,7 +38,7 @@ const allNavItems: NavItem[] = [
   { name: "Calendar", href: "/calendar", icon: CalendarIcon },
   { name: "Messages", href: "/messages", icon: MessageSquare },
   { name: "Budget", href: "/upload", icon: TrendingUp, adminOnly: true },
-  { name: "Bills", href: "/admin/bills", icon: FileSpreadsheet, adminOnly: true },
+  { name: "Bills", href: "/admin/bills", icon: Receipt, adminOnly: true },
   { name: "Compose", href: "/admin/messages", icon: SendHorizontal, adminOnly: true },
 ];
 
