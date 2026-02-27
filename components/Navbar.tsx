@@ -16,7 +16,7 @@ import {
   LogOut,
   Menu,
   X,
-  Sparkles,
+  Star,
   ChevronDown,
   ShieldCheck,
 } from "lucide-react";
@@ -83,9 +83,9 @@ export function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-              <Sparkles className="h-4 w-4 text-primary" />
+              <Star className="h-4 w-4 text-primary" />
             </div>
-            <span className="text-lg font-bold text-foreground">Fusion Cell</span>
+            <span className="text-lg font-bold text-foreground">Fusion <span className="text-primary">Cell</span></span>
           </Link>
 
           {/* Desktop Nav */}
