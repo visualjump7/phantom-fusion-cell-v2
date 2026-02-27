@@ -7,13 +7,8 @@ import {
   Loader2,
   Building2,
   TrendingUp,
-  DollarSign,
   MessageSquare,
   ChevronRight,
-  AlertTriangle,
-  CheckCircle,
-  HelpCircle,
-  Bell,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -91,12 +86,11 @@ export default function DashboardPage() {
     personal: "text-white bg-violet-600",
   };
 
-  const typeIcons: Record<string, React.ReactNode> = {
-    alert: <AlertTriangle className="h-4 w-4 text-amber-400" />,
-    action_required: <CheckCircle className="h-4 w-4 text-orange-400" />,
-    decision: <HelpCircle className="h-4 w-4 text-blue-400" />,
-    update: <Bell className="h-4 w-4 text-muted-foreground" />,
-    comment: <MessageSquare className="h-4 w-4 text-muted-foreground" />,
+  const priorityBarColors: Record<string, string> = {
+    urgent: "bg-red-500",
+    high: "bg-amber-500",
+    medium: "bg-blue-500",
+    low: "bg-white/20",
   };
 
   const priorityColors: Record<string, string> = {
@@ -231,7 +225,7 @@ export default function DashboardPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-2">
+                    <div className="divide-y divide-border">
                       {assets.slice(0, 6).map((asset) => (
                         <Link
                           key={asset.id}
@@ -270,14 +264,14 @@ export default function DashboardPage() {
                     {messages.length === 0 ? (
                       <p className="text-sm text-muted-foreground italic">No messages yet</p>
                     ) : (
-                      <div className="space-y-2">
+                      <div className="divide-y divide-border">
                         {messages.map((msg) => (
                           <Link
                             key={msg.id}
                             href="/messages"
-                            className="flex items-start gap-3 rounded-lg p-2.5 transition-colors hover:bg-muted/30"
+                            className="flex items-stretch gap-3 rounded-lg p-2.5 transition-colors hover:bg-muted/30"
                           >
-                            <div className="mt-0.5">{typeIcons[msg.type]}</div>
+                            <div className={`w-0.5 shrink-0 rounded-full ${priorityBarColors[msg.priority] || "bg-white/20"}`} />
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-foreground truncate">{msg.title}</p>
                               <div className="mt-1 flex items-center gap-2">

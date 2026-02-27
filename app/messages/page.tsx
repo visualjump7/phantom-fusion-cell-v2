@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  MessageSquare, Loader2, AlertTriangle, CheckCircle,
-  HelpCircle, Bell, Building2, X, Send, ThumbsUp,
+  MessageSquare, Loader2, Building2, X, Send, ThumbsUp,
   ThumbsDown, Eye, Archive, ShieldCheck, Clock,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
@@ -119,13 +118,12 @@ export default function MessagesPage() {
     }
   );
 
-  // ─── ICONS & COLORS ───
-  const typeIcons: Record<string, React.ReactNode> = {
-    alert: <AlertTriangle className="h-5 w-5 text-amber-400" />,
-    action_required: <CheckCircle className="h-5 w-5 text-orange-400" />,
-    decision: <HelpCircle className="h-5 w-5 text-blue-400" />,
-    update: <Bell className="h-5 w-5 text-muted-foreground" />,
-    comment: <MessageSquare className="h-5 w-5 text-primary" />,
+  // ─── COLORS ───
+  const priorityBarColors: Record<string, string> = {
+    urgent: "bg-red-500",
+    high: "bg-amber-500",
+    medium: "bg-blue-500",
+    low: "bg-white/20",
   };
 
   const priorityColors: Record<string, string> = {
@@ -231,8 +229,8 @@ export default function MessagesPage() {
       <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <Card className={`border-border bg-card/60 backdrop-blur-sm ${isResolved ? "opacity-70" : ""}`}>
           <CardContent className="p-5">
-            <div className="flex items-start gap-4">
-              <div className="mt-0.5">{typeIcons[msg.type]}</div>
+            <div className="flex items-stretch gap-4">
+              <div className={`w-0.5 shrink-0 rounded-full ${priorityBarColors[msg.priority] || "bg-white/20"}`} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-4">
                   <h3 className="text-sm font-semibold text-foreground">{msg.title}</h3>
