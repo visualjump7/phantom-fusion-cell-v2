@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -32,7 +32,7 @@ interface AssetOption { id: string; name: string; category: string; }
 type StatusFilter = "all" | "pending" | "paid" | "overdue" | "cancelled";
 type DateFilter = "all" | "this_month" | "next_30" | "overdue";
 
-export default function AdminBillsPage() {
+function AdminBillsContent() {
   const searchParams = useSearchParams();
 
   // Data
@@ -616,5 +616,19 @@ export default function AdminBillsPage() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function AdminBillsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-background">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      }
+    >
+      <AdminBillsContent />
+    </Suspense>
   );
 }

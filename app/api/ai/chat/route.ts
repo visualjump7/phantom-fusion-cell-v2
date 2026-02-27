@@ -53,8 +53,10 @@ async function fetchComprehensiveSnapshot(supabaseUrl: string, supabaseKey: stri
       fetchTable("budget_line_items?select=id,budget_id,description,jan,feb,mar,apr,may,jun,jul,aug,sep,oct,dec,annual_total"),
     ]);
 
-    // Build asset lookup
-    const assetMap = new Map((assets || []).map((a: any) => [a.id, a.name]));
+    // Build asset lookup (typed so .get() returns string | undefined and keys are strings)
+    const assetMap = new Map<string, string>(
+      (assets || []).map((a: { id: string; name?: string }) => [a.id, typeof a.name === "string" ? a.name : "Unknown"])
+    );
 
     // Calculate totals
     const totalPortfolioValue = (assets || []).reduce((s: number, a: any) => s + (a.estimated_value || 0), 0);

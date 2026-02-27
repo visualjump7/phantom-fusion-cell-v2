@@ -131,7 +131,9 @@ export async function fetchMessages(options?: FetchMessagesOptions): Promise<Mes
 
   if (confirmedByIds.length > 0) {
     const { data: profiles } = await db.from("profiles").select("id, email").in("id", confirmedByIds);
-    const emailMap = new Map((profiles || []).map((p: any) => [p.id, p.email]));
+    const emailMap = new Map<string, string>(
+      (profiles || []).map((p: { id: string; email?: string }) => [p.id, typeof p.email === "string" ? p.email : ""])
+    );
     responseLookup.forEach((r) => {
       if (r.confirmed_by) r.confirmed_by_email = emailMap.get(r.confirmed_by) || null;
     });

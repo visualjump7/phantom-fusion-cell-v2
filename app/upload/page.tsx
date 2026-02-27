@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -36,7 +36,7 @@ interface Asset {
   category: string;
 }
 
-export default function UploadPage() {
+function UploadPageContent() {
   const searchParams = useSearchParams();
 
   const [step, setStep] = useState<WizardStep>("select");
@@ -560,5 +560,19 @@ export default function UploadPage() {
         )}
       </motion.main>
     </div>
+  );
+}
+
+export default function UploadPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-background">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      }
+    >
+      <UploadPageContent />
+    </Suspense>
   );
 }
