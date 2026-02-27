@@ -166,9 +166,10 @@ export function parseBudgetSheet(buffer: ArrayBuffer, sheetName: string): ParseR
     // Skip known header/total/calculated rows
     if (shouldSkipRow(colC)) continue;
 
-    // Check if this row has any numeric values in month columns (4–15) or total (16)
+    // Check if this row has any NON-ZERO numeric values in month columns (4–15) or total (16)
     const monthsHaveData = hasNumericData(row, 4, 15);
-    const totalHasData = typeof row[16] === "number" || (typeof row[16] === "string" && parseValue(row[16]) !== 0);
+    const totalVal = parseValue(row[16]);
+    const totalHasData = totalVal !== 0;
 
     if (!monthsHaveData && !totalHasData) {
       // No numeric data — this is a CATEGORY HEADER
@@ -188,6 +189,9 @@ export function parseBudgetSheet(buffer: ArrayBuffer, sheetName: string): ParseR
     const computedSum = monthValues.reduce((a, b) => a + b, 0);
     const totalCol = parseValue(row[16]);
     const annualTotal = totalCol !== 0 ? totalCol : computedSum;
+
+    // Skip items where everything is zero (inactive/placeholder rows)
+    if (computedSum === 0 && totalCol === 0) continue;
 
     lineItems.push({
       name: colC,
