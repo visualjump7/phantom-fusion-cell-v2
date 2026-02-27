@@ -50,19 +50,24 @@ export function Navbar() {
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [adminDropdownOpen, setAdminDropdownOpen] = useState(false);
+  const [settingsDropdownOpen, setSettingsDropdownOpen] = useState(false);
   const adminDropdownRef = useRef<HTMLDivElement>(null);
-  const { isAdmin, isExecutive, userName, userEmail, isLoading } = useRole();
+  const settingsDropdownRef = useRef<HTMLDivElement>(null);
+  const { isAdmin } = useRole();
 
   useEffect(() => {
-    if (!adminDropdownOpen) return;
+    if (!adminDropdownOpen && !settingsDropdownOpen) return;
     const handler = (e: MouseEvent) => {
-      if (adminDropdownRef.current && !adminDropdownRef.current.contains(e.target as Node)) {
+      if (adminDropdownOpen && adminDropdownRef.current && !adminDropdownRef.current.contains(e.target as Node)) {
         setAdminDropdownOpen(false);
+      }
+      if (settingsDropdownOpen && settingsDropdownRef.current && !settingsDropdownRef.current.contains(e.target as Node)) {
+        setSettingsDropdownOpen(false);
       }
     };
     document.addEventListener("click", handler);
     return () => document.removeEventListener("click", handler);
-  }, [adminDropdownOpen]);
+  }, [adminDropdownOpen, settingsDropdownOpen]);
 
   const handleSignOut = async () => {
     clearRoleCache();
@@ -70,14 +75,6 @@ export function Navbar() {
     router.push("/login");
     router.refresh();
   };
-
-  const displayName = userName || userEmail?.split("@")[0] || "";
-
-  const roleLabel = isExecutive
-    ? { text: "Client", color: "bg-violet-500/10 text-violet-400" }
-    : isAdmin
-    ? { text: "Admin", color: "bg-primary/10 text-primary" }
-    : null;
 
   return (
     <nav className="dark sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md text-foreground">
@@ -111,8 +108,12 @@ export function Navbar() {
                 </Link>
               );
             })}
+          </div>
+
+          {/* Right side */}
+          <div className="flex items-center gap-2">
             {isAdmin && (
-              <div className="relative" ref={adminDropdownRef}>
+              <div className="relative hidden md:block" ref={adminDropdownRef}>
                 <button
                   type="button"
                   onClick={() => setAdminDropdownOpen((v) => !v)}
@@ -120,12 +121,12 @@ export function Navbar() {
                     "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                     adminNavItems.some((item) => pathname.startsWith(item.href))
                       ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      : "text-primary/70 hover:bg-primary/10 hover:text-primary"
                   )}
                 >
                   <ShieldCheck className="h-4 w-4" />
                   Admin
-                  <ChevronDown className={cn("h-4 w-4 transition-transform", adminDropdownOpen && "rotate-180")} />
+                  <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", adminDropdownOpen && "rotate-180")} />
                 </button>
                 {adminDropdownOpen && (
                   <motion.div
@@ -154,39 +155,40 @@ export function Navbar() {
                 )}
               </div>
             )}
-          </div>
 
-          {/* Right side */}
-          <div className="flex items-center gap-2">
-            {!isLoading && (
-              <div className="hidden items-center gap-2 md:flex">
-                {displayName && (
-                  <span className="text-xs text-muted-foreground">{displayName}</span>
-                )}
-                {roleLabel && (
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${roleLabel.color}`}>
-                    {roleLabel.text}
-                  </span>
-                )}
-              </div>
-            )}
-
-            <Link
-              href="/settings"
-              className="hidden rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground md:block"
-            >
-              <Settings className="h-5 w-5" />
-            </Link>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSignOut}
-              className="hidden text-muted-foreground md:flex"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Sign Out
-            </Button>
+            <div className="relative hidden md:block" ref={settingsDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setSettingsDropdownOpen((v) => !v)}
+                className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              >
+                <Settings className="h-5 w-5" />
+              </button>
+              {settingsDropdownOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="absolute right-0 top-full mt-1 min-w-[160px] rounded-lg border border-border bg-card py-1 shadow-lg"
+                >
+                  <Link
+                    href="/settings"
+                    onClick={() => setSettingsDropdownOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                  >
+                    <Settings className="h-4 w-4" />
+                    Settings
+                  </Link>
+                  <div className="my-1 border-t border-border" />
+                  <button
+                    onClick={() => { setSettingsDropdownOpen(false); handleSignOut(); }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-sm font-medium text-red-400 hover:bg-muted transition-colors"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sign Out
+                  </button>
+                </motion.div>
+              )}
+            </div>
 
             <Button
               variant="ghost"
@@ -207,16 +209,6 @@ export function Navbar() {
           animate={{ opacity: 1, y: 0 }}
           className="dark border-t border-border bg-background px-4 py-4 md:hidden"
         >
-          {!isLoading && displayName && (
-            <div className="mb-3 flex items-center gap-2 px-3 pb-3 border-b border-border">
-              <span className="text-sm text-foreground">{displayName}</span>
-              {roleLabel && (
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${roleLabel.color}`}>
-                  {roleLabel.text}
-                </span>
-              )}
-            </div>
-          )}
           <div className="space-y-1">
             {mainNavItems.map((item) => {
               const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
