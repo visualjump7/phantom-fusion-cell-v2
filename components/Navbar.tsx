@@ -34,9 +34,9 @@ interface NavItem {
 // ADMIN sees: everything + Upload, Bills, Compose
 const allNavItems: NavItem[] = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Assets", href: "/assets", icon: Building2 },
+  { name: "Directory", href: "/assets", icon: Building2 },
   { name: "Calendar", href: "/calendar", icon: CalendarIcon },
-  { name: "Messages", href: "/messages", icon: MessageSquare },
+  { name: "Alerts", href: "/messages", icon: MessageSquare },
   { name: "Budget", href: "/upload", icon: TrendingUp, adminOnly: true },
   { name: "Bills", href: "/admin/bills", icon: Receipt, adminOnly: true },
   { name: "Compose", href: "/admin/messages", icon: SendHorizontal, adminOnly: true },
