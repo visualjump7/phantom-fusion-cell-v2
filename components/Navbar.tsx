@@ -19,6 +19,7 @@ import {
   Star,
   ChevronDown,
   ShieldCheck,
+  DollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,7 @@ const mainNavItems: NavItem[] = [
 const adminNavItems: NavItem[] = [
   { name: "Budget", href: "/upload", icon: TrendingUp },
   { name: "Bills", href: "/admin/bills", icon: Receipt },
+  { name: "Cash Flow", href: "/admin/cashflow", icon: DollarSign },
   { name: "Compose", href: "/admin/messages", icon: SendHorizontal },
 ];
 
