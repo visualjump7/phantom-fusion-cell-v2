@@ -70,7 +70,7 @@ export function Navbar() {
     : null;
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
+    <nav className="dark sticky top-0 z-50 border-b border-[hsl(240,4%,20%)] bg-[hsl(240,6%,5%)]/95 backdrop-blur-md text-[hsl(0,0%,98%)]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
@@ -152,7 +152,7 @@ export function Navbar() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="border-t border-border bg-background px-4 py-4 md:hidden"
+          className="dark border-t border-[hsl(240,4%,20%)] bg-[hsl(240,6%,5%)] px-4 py-4 md:hidden"
         >
           {!isLoading && displayName && (
             <div className="mb-3 flex items-center gap-2 px-3 pb-3 border-b border-border">
