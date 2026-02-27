@@ -3,27 +3,27 @@
 @tailwind utilities;
 
 @layer base {
-  /* Dark mode (default) */
+  /* Dark mode (default) — pure black + sleek neutral grays, accent unchanged */
   :root,
   .dark {
-    --background: 240 6% 5%;
+    --background: 0 0% 0%;
     --foreground: 0 0% 98%;
-    --card: 240 5% 8%;
+    --card: 0 0% 3%;
     --card-foreground: 0 0% 98%;
-    --popover: 240 5% 8%;
+    --popover: 0 0% 3%;
     --popover-foreground: 0 0% 98%;
     --primary: 95 55% 50%;
     --primary-foreground: 0 0% 5%;
-    --secondary: 240 4% 16%;
+    --secondary: 0 0% 9%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 240 4% 16%;
-    --muted-foreground: 240 5% 64%;
-    --accent: 240 4% 16%;
+    --muted: 0 0% 9%;
+    --muted-foreground: 0 0% 58%;
+    --accent: 0 0% 9%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 4% 20%;
-    --input: 240 4% 20%;
+    --border: 0 0% 14%;
+    --input: 0 0% 14%;
     --ring: 95 55% 50%;
     --radius: 0.75rem;
   }
@@ -74,12 +74,12 @@
 }
 .dark ::-webkit-scrollbar-thumb,
 :root ::-webkit-scrollbar-thumb {
-  background: hsl(240 4% 25%);
+  background: hsl(0 0% 18%);
   border-radius: 3px;
 }
 .dark ::-webkit-scrollbar-thumb:hover,
 :root ::-webkit-scrollbar-thumb:hover {
-  background: hsl(240 4% 35%);
+  background: hsl(0 0% 26%);
 }
 
 /* Custom scrollbar — light */

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -17,6 +17,8 @@ import {
   Menu,
   X,
   Sparkles,
+  ChevronDown,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -30,29 +32,37 @@ interface NavItem {
   adminOnly?: boolean;
 }
 
-// CLIENT sees: Dashboard, Assets, Alerts, Calendar
-// ADMIN sees: everything + Upload, Bills, Compose
-const allNavItems: NavItem[] = [
+const mainNavItems: NavItem[] = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Directory", href: "/assets", icon: Building2 },
   { name: "Alerts", href: "/messages", icon: MessageSquare },
   { name: "Calendar", href: "/calendar", icon: CalendarIcon },
-  { name: "Budget", href: "/upload", icon: TrendingUp, adminOnly: true },
-  { name: "Bills", href: "/admin/bills", icon: Receipt, adminOnly: true },
-  { name: "Compose", href: "/admin/messages", icon: SendHorizontal, adminOnly: true },
+];
+
+const adminNavItems: NavItem[] = [
+  { name: "Budget", href: "/upload", icon: TrendingUp },
+  { name: "Bills", href: "/admin/bills", icon: Receipt },
+  { name: "Compose", href: "/admin/messages", icon: SendHorizontal },
 ];
 
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { isAdmin, isExecutive, userName, userEmail, isLoading, role } = useRole();
+  const [adminDropdownOpen, setAdminDropdownOpen] = useState(false);
+  const adminDropdownRef = useRef<HTMLDivElement>(null);
+  const { isAdmin, isExecutive, userName, userEmail, isLoading } = useRole();
 
-  // Filter: hide adminOnly items when user is NOT admin
-  const navItems = allNavItems.filter((item) => {
-    if (item.adminOnly) return isAdmin;
-    return true;
-  });
+  useEffect(() => {
+    if (!adminDropdownOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (adminDropdownRef.current && !adminDropdownRef.current.contains(e.target as Node)) {
+        setAdminDropdownOpen(false);
+      }
+    };
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
+  }, [adminDropdownOpen]);
 
   const handleSignOut = async () => {
     clearRoleCache();
@@ -70,7 +80,7 @@ export function Navbar() {
     : null;
 
   return (
-    <nav className="dark sticky top-0 z-50 border-b border-[hsl(240,4%,20%)] bg-[hsl(240,6%,5%)]/95 backdrop-blur-md text-[hsl(0,0%,98%)]">
+    <nav className="dark sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md text-foreground">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
@@ -83,7 +93,7 @@ export function Navbar() {
 
           {/* Desktop Nav */}
           <div className="hidden items-center gap-1 md:flex">
-            {navItems.map((item) => {
+            {mainNavItems.map((item) => {
               const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
               return (
                 <Link
@@ -101,6 +111,49 @@ export function Navbar() {
                 </Link>
               );
             })}
+            {isAdmin && (
+              <div className="relative" ref={adminDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setAdminDropdownOpen((v) => !v)}
+                  className={cn(
+                    "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    adminNavItems.some((item) => pathname.startsWith(item.href))
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  Admin
+                  <ChevronDown className={cn("h-4 w-4 transition-transform", adminDropdownOpen && "rotate-180")} />
+                </button>
+                {adminDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="absolute right-0 top-full mt-1 min-w-[160px] rounded-lg border border-border bg-card py-1 shadow-lg"
+                  >
+                    {adminNavItems.map((item) => {
+                      const isActive = pathname.startsWith(item.href);
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setAdminDropdownOpen(false)}
+                          className={cn(
+                            "flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors",
+                            isActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
+                          )}
+                        >
+                          <item.icon className="h-4 w-4" />
+                          {item.name}
+                        </Link>
+                      );
+                    })}
+                  </motion.div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Right side */}
@@ -152,7 +205,7 @@ export function Navbar() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="dark border-t border-[hsl(240,4%,20%)] bg-[hsl(240,6%,5%)] px-4 py-4 md:hidden"
+          className="dark border-t border-border bg-background px-4 py-4 md:hidden"
         >
           {!isLoading && displayName && (
             <div className="mb-3 flex items-center gap-2 px-3 pb-3 border-b border-border">
@@ -165,7 +218,7 @@ export function Navbar() {
             </div>
           )}
           <div className="space-y-1">
-            {navItems.map((item) => {
+            {mainNavItems.map((item) => {
               const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
               return (
                 <Link
@@ -182,6 +235,30 @@ export function Navbar() {
                 </Link>
               );
             })}
+            {isAdmin && (
+              <>
+                <div className="px-3 py-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Admin
+                </div>
+                {adminNavItems.map((item) => {
+                  const isActive = pathname.startsWith(item.href);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={cn(
+                        "flex items-center gap-3 rounded-lg px-3 py-2.5 pl-6 text-sm font-medium transition-colors",
+                        isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
+                      )}
+                    >
+                      <item.icon className="h-5 w-5" />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </>
+            )}
             <div className="border-t border-border pt-2 mt-2">
               <Link href="/settings" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted">
                 <Settings className="h-5 w-5" /> Settings

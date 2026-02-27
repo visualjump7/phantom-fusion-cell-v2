@@ -207,10 +207,10 @@ export default function SettingsPage() {
                     theme === "dark" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
                   }`}
                 >
-                  <div className="flex h-20 w-full items-end gap-1.5 rounded-lg bg-[hsl(240,6%,5%)] p-3 border border-[hsl(240,4%,20%)]">
+                  <div className="flex h-20 w-full items-end gap-1.5 rounded-lg bg-black p-3 border border-[hsl(0,0%,14%)]">
                     <div className="h-3 w-8 rounded bg-[hsl(95,55%,50%)]" />
-                    <div className="h-2 w-6 rounded bg-[hsl(240,4%,25%)]" />
-                    <div className="h-4 w-4 rounded bg-[hsl(240,5%,12%)]" />
+                    <div className="h-2 w-6 rounded bg-[hsl(0,0%,18%)]" />
+                    <div className="h-4 w-4 rounded bg-[hsl(0,0%,3%)]" />
                   </div>
                   <div className="flex items-center gap-2">
                     <Moon className="h-4 w-4" />
