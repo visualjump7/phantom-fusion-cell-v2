@@ -86,9 +86,9 @@ export default function DashboardPage() {
   }, {} as Record<string, number>);
 
   const categoryColors: Record<string, string> = {
-    family: "text-emerald-400 bg-emerald-400/10",
-    business: "text-blue-400 bg-blue-400/10",
-    personal: "text-violet-400 bg-violet-400/10",
+    family: "text-white bg-emerald-600",
+    business: "text-white bg-blue-600",
+    personal: "text-white bg-violet-600",
   };
 
   const typeIcons: Record<string, React.ReactNode> = {
@@ -100,9 +100,9 @@ export default function DashboardPage() {
   };
 
   const priorityColors: Record<string, string> = {
-    urgent: "border-red-500/50 text-red-400",
-    high: "border-amber-500/50 text-amber-400",
-    medium: "border-blue-500/50 text-blue-400",
+    urgent: "bg-red-600 text-white border-red-600",
+    high: "bg-amber-600 text-white border-amber-600",
+    medium: "bg-blue-600 text-white border-blue-600",
     low: "border-border text-muted-foreground",
   };
 

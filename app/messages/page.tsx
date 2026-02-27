@@ -129,9 +129,9 @@ export default function MessagesPage() {
   };
 
   const priorityColors: Record<string, string> = {
-    urgent: "border-red-500/50 text-red-400 bg-red-500/10",
-    high: "border-amber-500/50 text-amber-400 bg-amber-500/10",
-    medium: "border-blue-500/50 text-blue-400",
+    urgent: "bg-red-600 text-white border-red-600",
+    high: "bg-amber-600 text-white border-amber-600",
+    medium: "bg-blue-600 text-white border-blue-600",
     low: "border-border text-muted-foreground",
   };
 

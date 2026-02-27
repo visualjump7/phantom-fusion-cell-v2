@@ -615,7 +615,7 @@ export default function AdminMessagesPage() {
                                 <h3 className="text-sm font-semibold text-foreground truncate">{msg.title}</h3>
                                 {msg.is_archived && <Badge variant="outline" className="text-[10px]">Archived</Badge>}
                                 {isOverdue && (
-                                  <Badge variant="outline" className="text-[10px] border-red-500/50 text-red-400 bg-red-500/10">Overdue</Badge>
+                                  <Badge variant="outline" className="text-[10px] bg-red-600 text-white border-red-600">Overdue</Badge>
                                 )}
                               </div>
                             </div>

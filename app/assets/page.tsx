@@ -31,9 +31,9 @@ const db = supabase as any;
 const ORG_ID = "00000000-0000-0000-0000-000000000001";
 
 const CATEGORY_OPTIONS = [
-  { value: "family", label: "Family", color: "bg-emerald-400/10 text-emerald-400 border-emerald-400/30" },
-  { value: "business", label: "Business", color: "bg-blue-400/10 text-blue-400 border-blue-400/30" },
-  { value: "personal", label: "Personal", color: "bg-violet-400/10 text-violet-400 border-violet-400/30" },
+  { value: "family", label: "Family", color: "bg-emerald-600 text-white border-emerald-600" },
+  { value: "business", label: "Business", color: "bg-blue-600 text-white border-blue-600" },
+  { value: "personal", label: "Personal", color: "bg-violet-600 text-white border-violet-600" },
 ];
 
 export default function AssetsPage() {
@@ -94,9 +94,9 @@ export default function AssetsPage() {
   }, [assets, filter, searchQuery]);
 
   const categoryColors: Record<string, string> = {
-    family: "bg-emerald-400/10 text-emerald-400 border-emerald-400/30",
-    business: "bg-blue-400/10 text-blue-400 border-blue-400/30",
-    personal: "bg-violet-400/10 text-violet-400 border-violet-400/30",
+    family: "bg-emerald-600 text-white border-emerald-600",
+    business: "bg-blue-600 text-white border-blue-600",
+    personal: "bg-violet-600 text-white border-violet-600",
   };
 
   const openAddModal = () => {

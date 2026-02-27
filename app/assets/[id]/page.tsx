@@ -110,9 +110,9 @@ export default function AssetDetailPage() {
   const totalPending = pendingBills.reduce((s, b) => s + b.amount_cents, 0);
 
   const categoryColors: Record<string, string> = {
-    family: "bg-emerald-400/10 text-emerald-400",
-    business: "bg-blue-400/10 text-blue-400",
-    personal: "bg-violet-400/10 text-violet-400",
+    family: "bg-emerald-600 text-white border-emerald-600",
+    business: "bg-blue-600 text-white border-blue-600",
+    personal: "bg-violet-600 text-white border-violet-600",
   };
 
   const typeIcons: Record<string, React.ReactNode> = {
