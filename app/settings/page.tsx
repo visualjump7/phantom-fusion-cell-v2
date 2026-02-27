@@ -229,10 +229,10 @@ export default function SettingsPage() {
                     theme === "light" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
                   }`}
                 >
-                  <div className="flex h-20 w-full items-end gap-1.5 rounded-lg bg-white p-3 border border-gray-200">
-                    <div className="h-3 w-8 rounded bg-[hsl(95,55%,40%)]" />
-                    <div className="h-2 w-6 rounded bg-gray-200" />
-                    <div className="h-4 w-4 rounded bg-gray-100" />
+                  <div className="flex h-20 w-full items-end gap-1.5 rounded-lg bg-[#D3D5D8] p-3 border border-[#ACB1B6]">
+                    <div className="h-3 w-8 rounded bg-[hsl(95,55%,38%)]" />
+                    <div className="h-2 w-6 rounded bg-[#ACB1B6]" />
+                    <div className="h-4 w-4 rounded bg-[#E2E3E6]" />
                   </div>
                   <div className="flex items-center gap-2">
                     <Sun className="h-4 w-4" />

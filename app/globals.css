@@ -28,27 +28,27 @@
     --radius: 0.75rem;
   }
 
-  /* Light mode */
+  /* Light mode — Tones palette: Abyssal Stone → Ash Whisper */
   .light {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 4%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 4%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 4%;
-    --primary: 95 55% 40%;
+    --background: 216 5% 84%;
+    --foreground: 214 32% 9%;
+    --card: 216 5% 90%;
+    --card-foreground: 214 32% 9%;
+    --popover: 216 5% 90%;
+    --popover-foreground: 214 32% 9%;
+    --primary: 95 55% 38%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 240 6% 10%;
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 46%;
-    --accent: 240 5% 96%;
-    --accent-foreground: 240 6% 10%;
-    --destructive: 0 84% 60%;
+    --secondary: 210 5% 76%;
+    --secondary-foreground: 214 32% 9%;
+    --muted: 210 5% 76%;
+    --muted-foreground: 210 6% 38%;
+    --accent: 210 5% 76%;
+    --accent-foreground: 214 32% 9%;
+    --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --ring: 95 55% 40%;
+    --border: 213 5% 72%;
+    --input: 213 5% 72%;
+    --ring: 95 55% 38%;
     --radius: 0.75rem;
   }
 }
@@ -91,9 +91,9 @@
   background: transparent;
 }
 .light ::-webkit-scrollbar-thumb {
-  background: hsl(240 4% 82%);
+  background: hsl(210 5% 69%);
   border-radius: 3px;
 }
 .light ::-webkit-scrollbar-thumb:hover {
-  background: hsl(240 4% 70%);
+  background: hsl(210 6% 54%);
 }
