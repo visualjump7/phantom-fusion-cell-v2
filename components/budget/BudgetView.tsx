@@ -436,35 +436,35 @@ export function BudgetView({ assetId }: BudgetViewProps) {
                         transition={{ duration: 0.2 }}
                         className="overflow-hidden"
                       >
-                        <div className="ml-10 mb-2 space-y-1">
-                          {group.items.map((item) => (
-                            <div
-                              key={item.id}
-                              className="flex items-center justify-between rounded-md bg-background/30 px-3 py-2"
-                            >
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-medium text-foreground truncate">{item.description}</p>
-                                <div className="mt-0.5 flex gap-1">
-                                  {MONTH_KEYS.map((key, i) => (
-                                    <div
-                                      key={key}
-                                      className="h-1.5 flex-1 rounded-sm"
-                                      style={{
-                                        backgroundColor: item[key] > 0 ? group.color : "hsl(var(--muted))",
-                                        opacity: item[key] > 0
-                                          ? Math.max(0.3, item[key] / Math.max(...MONTH_KEYS.map((k) => item[k])))
-                                          : 0.15,
-                                      }}
-                                      title={`${MONTHS[i]}: ${formatFull(item[key])}`}
-                                    />
+                        <div className="ml-6 mb-2 overflow-x-auto">
+                          <table className="w-full text-xs">
+                            <thead>
+                              <tr className="text-muted-foreground">
+                                <th className="text-left py-1.5 pr-2 font-medium min-w-[180px]">Line Item</th>
+                                {MONTHS.map((m) => (
+                                  <th key={m} className="text-right py-1.5 px-1.5 font-medium min-w-[70px]">{m}</th>
+                                ))}
+                                <th className="text-right py-1.5 pl-2 font-semibold min-w-[85px]">Total</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {group.items.map((item) => (
+                                <tr key={item.id} className="border-t border-border/30 hover:bg-muted/10">
+                                  <td className="py-2 pr-2 font-medium text-foreground truncate max-w-[200px]" title={item.description}>
+                                    {item.description}
+                                  </td>
+                                  {MONTH_KEYS.map((key) => (
+                                    <td key={key} className={`text-right py-2 px-1.5 tabular-nums ${item[key] > 0 ? "text-foreground" : "text-muted-foreground/40"}`}>
+                                      {item[key] > 0 ? formatK(item[key]) : "—"}
+                                    </td>
                                   ))}
-                                </div>
-                              </div>
-                              <span className="ml-4 text-xs font-semibold text-foreground shrink-0">
-                                {formatFull(item.annual_total)}
-                              </span>
-                            </div>
-                          ))}
+                                  <td className="text-right py-2 pl-2 font-semibold text-foreground tabular-nums">
+                                    {formatFull(item.annual_total)}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
                       </motion.div>
                     )}
