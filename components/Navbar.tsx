@@ -30,13 +30,13 @@ interface NavItem {
   adminOnly?: boolean;
 }
 
-// CLIENT sees: Dashboard, Assets, Calendar, Messages
+// CLIENT sees: Dashboard, Assets, Alerts, Calendar
 // ADMIN sees: everything + Upload, Bills, Compose
 const allNavItems: NavItem[] = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Directory", href: "/assets", icon: Building2 },
-  { name: "Calendar", href: "/calendar", icon: CalendarIcon },
   { name: "Alerts", href: "/messages", icon: MessageSquare },
+  { name: "Calendar", href: "/calendar", icon: CalendarIcon },
   { name: "Budget", href: "/upload", icon: TrendingUp, adminOnly: true },
   { name: "Bills", href: "/admin/bills", icon: Receipt, adminOnly: true },
   { name: "Compose", href: "/admin/messages", icon: SendHorizontal, adminOnly: true },

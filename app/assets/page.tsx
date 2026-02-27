@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
-import { formatCurrency, getCategoryColor } from "@/lib/utils";
+import { formatCurrency, getCategoryColor, cn } from "@/lib/utils";
 import { useRole } from "@/lib/use-role";
 
 interface Asset {
@@ -98,6 +98,13 @@ export default function AssetsPage() {
     business: "bg-blue-600 text-white border-blue-600",
     personal: "bg-violet-600 text-white border-violet-600",
   };
+
+  const strokeClasses: Record<string, string> = {
+    family: "asset-card-stroke asset-card-stroke-emerald",
+    business: "asset-card-stroke asset-card-stroke-blue",
+    personal: "asset-card-stroke asset-card-stroke-violet",
+  };
+  const getStrokeClass = (category: string) => strokeClasses[category] ?? "asset-card-stroke-default";
 
   const openAddModal = () => {
     setEditingAsset(null);
@@ -242,7 +249,7 @@ export default function AssetsPage() {
               <motion.div key={asset.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
                 <div className="relative group">
                   <Link href={`/assets/${asset.id}`}>
-                    <Card className="border-border bg-card/60 backdrop-blur-sm transition-all hover:border-primary/30 hover:bg-card/80">
+                    <Card className={cn(getStrokeClass(asset.category), "bg-card/60 backdrop-blur-sm transition-all hover:bg-card/80")}>
                       <CardContent className="p-5">
                         <div className="flex items-start justify-between">
                           <Badge variant="outline" className={`text-xs capitalize ${categoryColors[asset.category] || ""}`}>

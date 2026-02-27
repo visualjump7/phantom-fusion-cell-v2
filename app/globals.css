@@ -97,3 +97,47 @@
 .light ::-webkit-scrollbar-thumb:hover {
   background: hsl(210 6% 54%);
 }
+
+/* Asset card hover glow — category-colored stroke animation */
+@keyframes asset-stroke-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 2px var(--stroke-color);
+  }
+  50% {
+    box-shadow: 0 0 16px 4px var(--stroke-color);
+  }
+}
+.asset-card-stroke {
+  border: 2px solid var(--stroke-color);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.asset-card-stroke.asset-card-stroke-emerald {
+  --stroke-color: rgba(52, 211, 153, 0.55);
+}
+.asset-card-stroke.asset-card-stroke-emerald:hover {
+  --stroke-color: rgba(52, 211, 153, 0.95);
+  animation: asset-stroke-glow 1.4s ease-in-out infinite;
+}
+.asset-card-stroke.asset-card-stroke-blue {
+  --stroke-color: rgba(96, 165, 250, 0.55);
+}
+.asset-card-stroke.asset-card-stroke-blue:hover {
+  --stroke-color: rgba(96, 165, 250, 0.95);
+  animation: asset-stroke-glow 1.4s ease-in-out infinite;
+}
+.asset-card-stroke.asset-card-stroke-violet {
+  --stroke-color: rgba(167, 139, 250, 0.55);
+}
+.asset-card-stroke.asset-card-stroke-violet:hover {
+  --stroke-color: rgba(167, 139, 250, 0.95);
+  animation: asset-stroke-glow 1.4s ease-in-out infinite;
+}
+.asset-card-stroke-default {
+  --stroke-color: rgba(107, 114, 128, 0.5);
+  border: 2px solid var(--stroke-color);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.asset-card-stroke-default:hover {
+  --stroke-color: rgba(156, 163, 175, 0.9);
+  animation: asset-stroke-glow 1.4s ease-in-out infinite;
+}
