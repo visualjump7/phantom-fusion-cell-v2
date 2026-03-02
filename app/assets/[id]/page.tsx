@@ -49,7 +49,9 @@ export default function AssetDetailPage() {
   const [budgetFixedMonthly, setBudgetFixedMonthly] = useState<number[]>(Array(12).fill(0));
   const [budgetVariableMonthly, setBudgetVariableMonthly] = useState<number[]>(Array(12).fill(0));
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"budget" | "overview" | "bills" | "messages">("budget");
+  const [activeTab, setActiveTab] = useState<"overview" | "budget" | "bills" | "messages">("overview");
+  const [overviewBudgetViewMode, setOverviewBudgetViewMode] = useState<"yearly" | "monthly">("monthly");
+  const [overviewSelectedMonth, setOverviewSelectedMonth] = useState(new Date().getMonth());
 
   const [respondingTo, setRespondingTo] = useState<Message | null>(null);
   const [respondAction, setRespondAction] = useState<"approved" | "rejected" | null>(null);
@@ -72,7 +74,6 @@ export default function AssetDetailPage() {
       setHasBudget(budgetExists);
 
       if (budgetExists) {
-        setActiveTab("budget");
         const latestBudget = budgetRes.data[0];
         const { data: budgetItems } = await db
           .from("budget_line_items")
@@ -93,8 +94,6 @@ export default function AssetDetailPage() {
           setBudgetFixedMonthly(keys.map((k) => fixedItems.reduce((s: number, li: any) => s + (li[k] || 0), 0)));
           setBudgetVariableMonthly(keys.map((k) => variableItems.reduce((s: number, li: any) => s + (li[k] || 0), 0)));
         }
-      } else {
-        setActiveTab("overview");
       }
 
       setIsLoading(false);
@@ -163,6 +162,16 @@ export default function AssetDetailPage() {
     return MONTH_LABELS.map((m, i) => ({ month: m, total: budgetMonthly[i] || 0 }));
   }, [budgetMonthly]);
 
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const overviewAnnualTotal = useMemo(() => budgetMonthly.reduce((s, v) => s + v, 0), [budgetMonthly]);
+  const overviewFixedTotal = useMemo(() => budgetFixedMonthly.reduce((s, v) => s + v, 0), [budgetFixedMonthly]);
+  const overviewVariableTotal = useMemo(() => budgetVariableMonthly.reduce((s, v) => s + v, 0), [budgetVariableMonthly]);
+  const overviewMonthlyAvg = overviewAnnualTotal / 12;
+  const overviewSelectedMonthTotal = budgetMonthly[overviewSelectedMonth] || 0;
+  const overviewSelectedMonthFixed = budgetFixedMonthly[overviewSelectedMonth] || 0;
+  const overviewSelectedMonthVariable = budgetVariableMonthly[overviewSelectedMonth] || 0;
+  const overviewMonthDiff = overviewSelectedMonthTotal - overviewMonthlyAvg;
+
   const formatCompact = (val: number) =>
     `$${val.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
@@ -222,7 +231,7 @@ export default function AssetDetailPage() {
 
         {/* Tabs */}
         <div className="mb-6 flex gap-1 rounded-lg bg-muted/30 p-1">
-          {(["budget", "overview", "bills", "messages"] as const).map((tab) => (
+          {(["overview", "budget", "bills", "messages"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -288,9 +297,98 @@ export default function AssetDetailPage() {
               </Card>
             </div>
 
-            {/* Row 2: Cost Outlook */}
+            {/* Row 2: Budget Summary (yearly/monthly toggle) */}
             {hasBudget && (
               <>
+                <Card className="border-border bg-card/60">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-base font-semibold text-foreground">Budget Summary</h3>
+                      <div className="flex rounded-lg bg-muted/50 p-0.5">
+                        <button
+                          onClick={() => setOverviewBudgetViewMode("yearly")}
+                          className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${overviewBudgetViewMode === "yearly" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                        >
+                          Yearly
+                        </button>
+                        <button
+                          onClick={() => setOverviewBudgetViewMode("monthly")}
+                          className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${overviewBudgetViewMode === "monthly" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                        >
+                          Monthly
+                        </button>
+                      </div>
+                    </div>
+                    <AnimatePresence mode="wait">
+                      {overviewBudgetViewMode === "yearly" ? (
+                        <motion.div key="yearly" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+                          <p className="text-3xl font-bold text-primary">{formatCurrency(overviewAnnualTotal)}</p>
+                          <p className="text-xs text-muted-foreground mb-4">Annual Budget</p>
+                          <div className="mb-4">
+                            <div className="flex items-center justify-between text-xs mb-1.5">
+                              <span className="text-blue-400">Fixed: {formatCurrency(overviewFixedTotal)}</span>
+                              <span className="text-orange-400">Variable: {formatCurrency(overviewVariableTotal)}</span>
+                            </div>
+                            <div className="h-2 rounded-full bg-muted overflow-hidden flex">
+                              <div className="h-full bg-blue-500 rounded-l-full" style={{ width: `${overviewAnnualTotal > 0 ? (overviewFixedTotal / overviewAnnualTotal) * 100 : 0}%` }} />
+                              <div className="h-full bg-orange-500 rounded-r-full" style={{ width: `${overviewAnnualTotal > 0 ? (overviewVariableTotal / overviewAnnualTotal) * 100 : 0}%` }} />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="rounded-lg bg-background/50 p-3 text-center">
+                              <p className="text-lg font-bold text-foreground">{formatCurrency(overviewMonthlyAvg)}</p>
+                              <p className="text-[10px] text-muted-foreground">Monthly Avg</p>
+                            </div>
+                            <div className="rounded-lg bg-background/50 p-3 text-center">
+                              <p className="text-lg font-bold text-foreground">{formatCurrency(overviewAnnualTotal)}</p>
+                              <p className="text-[10px] text-muted-foreground">Annual Total</p>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ) : (
+                        <motion.div key="monthly" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+                          <div className="flex gap-1 mb-4 overflow-x-auto pb-1">
+                            {MONTHS.map((m, i) => (
+                              <button
+                                key={m}
+                                onClick={() => setOverviewSelectedMonth(i)}
+                                className={`shrink-0 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${overviewSelectedMonth === i ? "bg-primary text-primary-foreground" : "bg-muted/50 text-muted-foreground hover:text-foreground"}`}
+                              >
+                                {m}
+                              </button>
+                            ))}
+                          </div>
+                          <p className="text-3xl font-bold text-primary">{formatCurrency(overviewSelectedMonthTotal)}</p>
+                          <p className="text-xs text-muted-foreground mb-4">{MONTHS[overviewSelectedMonth]} Expenses</p>
+                          <div className="mb-4">
+                            <div className="flex items-center justify-between text-xs mb-1.5">
+                              <span className="text-blue-400">Fixed: {formatCurrency(overviewSelectedMonthFixed)}</span>
+                              <span className="text-orange-400">Variable: {formatCurrency(overviewSelectedMonthVariable)}</span>
+                            </div>
+                            <div className="h-2 rounded-full bg-muted overflow-hidden flex">
+                              <div className="h-full bg-blue-500 rounded-l-full" style={{ width: `${overviewSelectedMonthTotal > 0 ? (overviewSelectedMonthFixed / overviewSelectedMonthTotal) * 100 : 0}%` }} />
+                              <div className="h-full bg-orange-500 rounded-r-full" style={{ width: `${overviewSelectedMonthTotal > 0 ? (overviewSelectedMonthVariable / overviewSelectedMonthTotal) * 100 : 0}%` }} />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="rounded-lg bg-background/50 p-3 text-center">
+                              <p className={`text-lg font-bold ${overviewMonthDiff >= 0 ? "text-red-400" : "text-emerald-400"}`}>
+                                {overviewMonthDiff >= 0 ? "+" : "-"}{formatCurrency(Math.abs(overviewMonthDiff))}
+                              </p>
+                              <p className="text-[10px] text-muted-foreground">vs. Monthly Avg</p>
+                            </div>
+                            <div className="rounded-lg bg-background/50 p-3 text-center">
+                              <p className="text-lg font-bold text-foreground">{formatCurrency(overviewMonthlyAvg)}</p>
+                              <p className="text-[10px] text-muted-foreground">Monthly Avg</p>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </CardContent>
+                </Card>
+
+                {/* Row 3: Cost Outlook */}
                 <div>
                   <h3 className="text-base font-semibold text-foreground mb-1">Cost Outlook</h3>
                   <p className="text-xs text-muted-foreground mb-4">Projected costs for this asset</p>

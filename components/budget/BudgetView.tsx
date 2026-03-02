@@ -252,8 +252,48 @@ export function BudgetView({ assetId }: BudgetViewProps) {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-      {/* ROW 1: Summary + Monthly Burn */}
+      {/* ROW 1: Monthly Burn + Summary */}
       <div className="grid gap-6 lg:grid-cols-2">
+        {/* Monthly Burn Chart */}
+        <Card className="border-border bg-card/60">
+          <CardContent className="p-6">
+            <h3 className="text-base font-semibold text-foreground mb-4">Monthly Burn</h3>
+            <div className="h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={monthlyData} margin={{ top: 5, right: 5, left: 5, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="burnGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#7ac142" stopOpacity={0.4} />
+                      <stop offset="100%" stopColor="#7ac142" stopOpacity={0.05} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fill: "#64748b", fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tickFormatter={formatK}
+                    tick={{ fill: "#64748b", fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={50}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area
+                    type="monotone"
+                    dataKey="total"
+                    stroke="#7ac142"
+                    strokeWidth={2}
+                    fill="url(#burnGradient)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Budget Summary */}
         <Card className="border-border bg-card/60">
           <CardContent className="p-6">
@@ -350,46 +390,6 @@ export function BudgetView({ assetId }: BudgetViewProps) {
                 </motion.div>
               )}
             </AnimatePresence>
-          </CardContent>
-        </Card>
-
-        {/* Monthly Burn Chart */}
-        <Card className="border-border bg-card/60">
-          <CardContent className="p-6">
-            <h3 className="text-base font-semibold text-foreground mb-4">Monthly Burn</h3>
-            <div className="h-[220px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={monthlyData} margin={{ top: 5, right: 5, left: 5, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="burnGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#7ac142" stopOpacity={0.4} />
-                      <stop offset="100%" stopColor="#7ac142" stopOpacity={0.05} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis
-                    dataKey="month"
-                    tick={{ fill: "#64748b", fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tickFormatter={formatK}
-                    tick={{ fill: "#64748b", fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                    width={50}
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Area
-                    type="monotone"
-                    dataKey="total"
-                    stroke="#7ac142"
-                    strokeWidth={2}
-                    fill="url(#burnGradient)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
           </CardContent>
         </Card>
       </div>
