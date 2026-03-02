@@ -71,6 +71,8 @@ export function BudgetView({ assetId }: BudgetViewProps) {
   const [availableYears, setAvailableYears] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<"yearly" | "monthly">("yearly");
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
 
   useEffect(() => {
     async function loadBudget() {
@@ -134,6 +136,26 @@ export function BudgetView({ assetId }: BudgetViewProps) {
       return { month, total };
     });
   }, [lineItems]);
+
+  const monthlyFixed = useMemo(() => {
+    return MONTHS.map((_, i) => {
+      const key = MONTH_KEYS[i];
+      return lineItems.filter(isFixedCost).reduce((s, li) => s + (li[key] || 0), 0);
+    });
+  }, [lineItems]);
+
+  const monthlyVariable = useMemo(() => {
+    return MONTHS.map((_, i) => {
+      const key = MONTH_KEYS[i];
+      return lineItems.filter((li) => !isFixedCost(li)).reduce((s, li) => s + (li[key] || 0), 0);
+    });
+  }, [lineItems]);
+
+  const monthlyAvg = annualTotal / 12;
+  const selectedMonthTotal = monthlyData[selectedMonth]?.total || 0;
+  const selectedMonthFixed = monthlyFixed[selectedMonth] || 0;
+  const selectedMonthVariable = monthlyVariable[selectedMonth] || 0;
+  const monthDiff = selectedMonthTotal - monthlyAvg;
 
   const categoryGroups: CategoryGroup[] = useMemo(() => {
     const map = new Map<string, CategoryGroup>();
@@ -237,53 +259,97 @@ export function BudgetView({ assetId }: BudgetViewProps) {
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-semibold text-foreground">Budget Summary</h3>
-              {availableYears.length > 1 ? (
-                <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(Number(e.target.value))}
-                  className="rounded-lg border border-border bg-background px-2 py-1 text-sm text-foreground"
-                >
-                  {availableYears.map((y) => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </select>
+              <div className="flex items-center gap-2">
+                <div className="flex rounded-lg bg-muted/50 p-0.5">
+                  <button onClick={() => setViewMode("yearly")}
+                    className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${viewMode === "yearly" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                    Yearly
+                  </button>
+                  <button onClick={() => setViewMode("monthly")}
+                    className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${viewMode === "monthly" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                    Monthly
+                  </button>
+                </div>
+                {availableYears.length > 1 ? (
+                  <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))}
+                    className="rounded-lg border border-border bg-background px-2 py-1 text-sm text-foreground">
+                    {availableYears.map((y) => <option key={y} value={y}>{y}</option>)}
+                  </select>
+                ) : (
+                  <span className="text-sm text-muted-foreground">{selectedYear}</span>
+                )}
+              </div>
+            </div>
+
+            <AnimatePresence mode="wait">
+              {viewMode === "yearly" ? (
+                <motion.div key="yearly" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+                  <p className="text-3xl font-bold text-primary">{formatFull(annualTotal)}</p>
+                  <p className="text-xs text-muted-foreground mb-4">Annual Budget</p>
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between text-xs mb-1.5">
+                      <span className="text-blue-400">Fixed: {formatFull(fixedTotal)}</span>
+                      <span className="text-orange-400">Variable: {formatFull(variableTotal)}</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-muted overflow-hidden flex">
+                      <div className="h-full bg-blue-500 rounded-l-full" style={{ width: `${annualTotal > 0 ? (fixedTotal / annualTotal) * 100 : 0}%` }} />
+                      <div className="h-full bg-orange-500 rounded-r-full" style={{ width: `${annualTotal > 0 ? (variableTotal / annualTotal) * 100 : 0}%` }} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-lg bg-background/50 p-3 text-center">
+                      <p className="text-lg font-bold text-foreground">{formatFull(annualTotal / 12)}</p>
+                      <p className="text-[10px] text-muted-foreground">Monthly Avg</p>
+                    </div>
+                    <div className="rounded-lg bg-background/50 p-3 text-center">
+                      <p className="text-lg font-bold text-foreground">{lineItems.length}</p>
+                      <p className="text-[10px] text-muted-foreground">Line Items</p>
+                    </div>
+                  </div>
+                </motion.div>
               ) : (
-                <span className="text-sm text-muted-foreground">{selectedYear}</span>
+                <motion.div key="monthly" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+                  {/* Month selector */}
+                  <div className="flex gap-1 mb-4 overflow-x-auto pb-1">
+                    {MONTHS.map((m, i) => (
+                      <button key={m} onClick={() => setSelectedMonth(i)}
+                        className={`shrink-0 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                          selectedMonth === i ? "bg-primary text-primary-foreground" : "bg-muted/50 text-muted-foreground hover:text-foreground"
+                        }`}>
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+
+                  <p className="text-3xl font-bold text-primary">{formatFull(selectedMonthTotal)}</p>
+                  <p className="text-xs text-muted-foreground mb-4">{MONTHS[selectedMonth]} Expenses</p>
+
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between text-xs mb-1.5">
+                      <span className="text-blue-400">Fixed: {formatFull(selectedMonthFixed)}</span>
+                      <span className="text-orange-400">Variable: {formatFull(selectedMonthVariable)}</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-muted overflow-hidden flex">
+                      <div className="h-full bg-blue-500 rounded-l-full" style={{ width: `${selectedMonthTotal > 0 ? (selectedMonthFixed / selectedMonthTotal) * 100 : 0}%` }} />
+                      <div className="h-full bg-orange-500 rounded-r-full" style={{ width: `${selectedMonthTotal > 0 ? (selectedMonthVariable / selectedMonthTotal) * 100 : 0}%` }} />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-lg bg-background/50 p-3 text-center">
+                      <p className={`text-lg font-bold ${monthDiff >= 0 ? "text-red-400" : "text-emerald-400"}`}>
+                        {monthDiff >= 0 ? "+" : ""}{formatK(monthDiff)}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">vs. Monthly Avg</p>
+                    </div>
+                    <div className="rounded-lg bg-background/50 p-3 text-center">
+                      <p className="text-lg font-bold text-foreground">{lineItems.length}</p>
+                      <p className="text-[10px] text-muted-foreground">Line Items</p>
+                    </div>
+                  </div>
+                </motion.div>
               )}
-            </div>
-
-            <p className="text-3xl font-bold text-primary">{formatFull(annualTotal)}</p>
-            <p className="text-xs text-muted-foreground mb-4">Annual Budget</p>
-
-            {/* Fixed vs Variable bar */}
-            <div className="mb-4">
-              <div className="flex items-center justify-between text-xs mb-1.5">
-                <span className="text-blue-400">Fixed: {formatFull(fixedTotal)}</span>
-                <span className="text-orange-400">Variable: {formatFull(variableTotal)}</span>
-              </div>
-              <div className="h-2 rounded-full bg-muted overflow-hidden flex">
-                <div
-                  className="h-full bg-blue-500 rounded-l-full"
-                  style={{ width: `${(fixedTotal / annualTotal) * 100}%` }}
-                />
-                <div
-                  className="h-full bg-orange-500 rounded-r-full"
-                  style={{ width: `${(variableTotal / annualTotal) * 100}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-lg bg-background/50 p-3 text-center">
-                <p className="text-lg font-bold text-foreground">{formatFull(annualTotal / 12)}</p>
-                <p className="text-[10px] text-muted-foreground">Monthly Avg</p>
-              </div>
-              <div className="rounded-lg bg-background/50 p-3 text-center">
-                <p className="text-lg font-bold text-foreground">{lineItems.length}</p>
-                <p className="text-[10px] text-muted-foreground">Line Items</p>
-              </div>
-            </div>
+            </AnimatePresence>
           </CardContent>
         </Card>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -20,6 +20,7 @@ import { fetchBillsForAsset, Bill } from "@/lib/bill-service";
 import { formatCentsToDisplay } from "@/lib/bill-parser";
 import { BudgetView } from "@/components/budget/BudgetView";
 import { useRole } from "@/lib/use-role";
+import { AreaChart, Area, ResponsiveContainer } from "recharts";
 import {
   fetchMessages, respondToMessage, getMessageStatus,
   Message,
@@ -44,6 +45,9 @@ export default function AssetDetailPage() {
   const [bills, setBills] = useState<Bill[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [hasBudget, setHasBudget] = useState(false);
+  const [budgetMonthly, setBudgetMonthly] = useState<number[]>(Array(12).fill(0));
+  const [budgetFixedMonthly, setBudgetFixedMonthly] = useState<number[]>(Array(12).fill(0));
+  const [budgetVariableMonthly, setBudgetVariableMonthly] = useState<number[]>(Array(12).fill(0));
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"budget" | "overview" | "bills" | "messages">("budget");
 
@@ -64,10 +68,31 @@ export default function AssetDetailPage() {
       setAsset(assetRes.data);
       setBills(billsData);
       setMessages(assetMessages);
-      setHasBudget(budgetRes.data && budgetRes.data.length > 0);
+      const budgetExists = budgetRes.data && budgetRes.data.length > 0;
+      setHasBudget(budgetExists);
 
-      if (budgetRes.data && budgetRes.data.length > 0) {
+      if (budgetExists) {
         setActiveTab("budget");
+        const latestBudget = budgetRes.data[0];
+        const { data: budgetItems } = await db
+          .from("budget_line_items")
+          .select("jan,feb,mar,apr,may,jun,jul,aug,sep,oct,nov,dec,annual_total")
+          .eq("budget_id", latestBudget.id);
+        if (budgetItems) {
+          const keys = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
+          const totals = keys.map((k) => budgetItems.reduce((s: number, li: any) => s + (li[k] || 0), 0));
+          setBudgetMonthly(totals);
+          const isFixed = (li: any) => {
+            const vals = keys.map((k) => li[k] || 0).filter((v: number) => v > 0);
+            if (vals.length < 2) return false;
+            const avg = vals.reduce((a: number, b: number) => a + b, 0) / vals.length;
+            return avg > 0 && vals.every((v: number) => Math.abs(v - avg) / avg < 0.05);
+          };
+          const fixedItems = budgetItems.filter(isFixed);
+          const variableItems = budgetItems.filter((li: any) => !isFixed(li));
+          setBudgetFixedMonthly(keys.map((k) => fixedItems.reduce((s: number, li: any) => s + (li[k] || 0), 0)));
+          setBudgetVariableMonthly(keys.map((k) => variableItems.reduce((s: number, li: any) => s + (li[k] || 0), 0)));
+        }
       } else {
         setActiveTab("overview");
       }
@@ -122,6 +147,34 @@ export default function AssetDetailPage() {
     update: <Bell className="h-4 w-4 text-muted-foreground" />,
     comment: <MessageSquare className="h-4 w-4 text-muted-foreground" />,
   };
+
+  const costOutlook = useMemo(() => {
+    const curMonth = new Date().getMonth();
+    const periods = [
+      { label: "This Month", months: 1 },
+      { label: "Next 3 Mo.", months: 3 },
+      { label: "Next 6 Mo.", months: 6 },
+      { label: "Next 12 Mo.", months: 12 },
+    ];
+    return periods.map(({ label, months }) => {
+      let total = 0, fixed = 0, variable = 0;
+      for (let i = 0; i < months; i++) {
+        const idx = (curMonth + i) % 12;
+        total += budgetMonthly[idx] || 0;
+        fixed += budgetFixedMonthly[idx] || 0;
+        variable += budgetVariableMonthly[idx] || 0;
+      }
+      return { label, total, fixed, variable };
+    });
+  }, [budgetMonthly, budgetFixedMonthly, budgetVariableMonthly]);
+
+  const sparklineData = useMemo(() => {
+    const MONTH_LABELS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return MONTH_LABELS.map((m, i) => ({ month: m, total: budgetMonthly[i] || 0 }));
+  }, [budgetMonthly]);
+
+  const formatCompact = (val: number) =>
+    `$${val.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
   if (isLoading) {
     return (
@@ -221,26 +274,73 @@ export default function AssetDetailPage() {
 
         {/* ═══ OVERVIEW TAB ═══ */}
         {activeTab === "overview" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid gap-4 sm:grid-cols-3">
-            <Card className="border-border bg-card/60">
-              <CardContent className="p-5">
-                <p className="text-xs text-muted-foreground">Estimated Value</p>
-                <p className="mt-1 text-2xl font-bold text-foreground">{formatCurrency(asset.estimated_value)}</p>
-              </CardContent>
-            </Card>
-            <Card className="border-border bg-card/60">
-              <CardContent className="p-5">
-                <p className="text-xs text-muted-foreground">Pending Bills</p>
-                <p className="mt-1 text-2xl font-bold text-foreground">{pendingBills.length}</p>
-                <p className="text-xs text-muted-foreground">{formatCentsToDisplay(totalPending)} due</p>
-              </CardContent>
-            </Card>
-            <Card className="border-border bg-card/60">
-              <CardContent className="p-5">
-                <p className="text-xs text-muted-foreground">Messages</p>
-                <p className="mt-1 text-2xl font-bold text-foreground">{messages.length}</p>
-              </CardContent>
-            </Card>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+            {/* Row 1: Existing stats */}
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Card className="border-border bg-card/60">
+                <CardContent className="p-5">
+                  <p className="text-xs text-muted-foreground">Estimated Value</p>
+                  <p className="mt-1 text-2xl font-bold text-foreground">{formatCurrency(asset.estimated_value)}</p>
+                </CardContent>
+              </Card>
+              <Card className="border-border bg-card/60">
+                <CardContent className="p-5">
+                  <p className="text-xs text-muted-foreground">Pending Bills</p>
+                  <p className="mt-1 text-2xl font-bold text-foreground">{pendingBills.length}</p>
+                  <p className="text-xs text-muted-foreground">{formatCentsToDisplay(totalPending)} due</p>
+                </CardContent>
+              </Card>
+              <Card className="border-border bg-card/60">
+                <CardContent className="p-5">
+                  <p className="text-xs text-muted-foreground">Messages</p>
+                  <p className="mt-1 text-2xl font-bold text-foreground">{messages.length}</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Row 2: Cost Outlook */}
+            {hasBudget && (
+              <>
+                <div>
+                  <h3 className="text-base font-semibold text-foreground mb-1">Cost Outlook</h3>
+                  <p className="text-xs text-muted-foreground mb-4">Projected costs for this asset</p>
+                  <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+                    {costOutlook.map((period, i) => (
+                      <Card key={period.label} className={`border-border bg-card/60 ${i === 0 ? "border-primary/30" : ""}`}>
+                        <CardContent className="p-4">
+                          <p className="text-xs text-muted-foreground mb-2">{period.label}</p>
+                          <p className="text-xl font-bold text-foreground">{formatCompact(period.total)}</p>
+                          <div className="mt-2 space-y-0.5">
+                            <p className="text-[10px] text-blue-400">Fixed: {formatCompact(period.fixed)}</p>
+                            <p className="text-[10px] text-orange-400">Variable: {formatCompact(period.variable)}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Row 3: Sparkline */}
+                <Card className="border-border bg-card/60">
+                  <CardContent className="p-4">
+                    <p className="text-xs text-muted-foreground mb-2">12-Month Cost Trend</p>
+                    <div className="h-[60px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={sparklineData} margin={{ top: 2, right: 2, left: 2, bottom: 0 }}>
+                          <defs>
+                            <linearGradient id="sparkGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#7ac142" stopOpacity={0.4} />
+                              <stop offset="100%" stopColor="#7ac142" stopOpacity={0.05} />
+                            </linearGradient>
+                          </defs>
+                          <Area type="monotone" dataKey="total" stroke="#7ac142" strokeWidth={1.5} fill="url(#sparkGradient)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </motion.div>
         )}
 
