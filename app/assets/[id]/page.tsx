@@ -149,23 +149,13 @@ export default function AssetDetailPage() {
   };
 
   const costOutlook = useMemo(() => {
-    const curMonth = new Date().getMonth();
-    const periods = [
-      { label: "This Month", months: 1 },
-      { label: "Next 3 Mo.", months: 3 },
-      { label: "Next 6 Mo.", months: 6 },
-      { label: "Next 12 Mo.", months: 12 },
-    ];
-    return periods.map(({ label, months }) => {
-      let total = 0, fixed = 0, variable = 0;
-      for (let i = 0; i < months; i++) {
-        const idx = (curMonth + i) % 12;
-        total += budgetMonthly[idx] || 0;
-        fixed += budgetFixedMonthly[idx] || 0;
-        variable += budgetVariableMonthly[idx] || 0;
-      }
-      return { label, total, fixed, variable };
-    });
+    const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return MONTH_NAMES.map((label, i) => ({
+      label,
+      total: budgetMonthly[i] || 0,
+      fixed: budgetFixedMonthly[i] || 0,
+      variable: budgetVariableMonthly[i] || 0,
+    }));
   }, [budgetMonthly, budgetFixedMonthly, budgetVariableMonthly]);
 
   const sparklineData = useMemo(() => {
@@ -304,19 +294,22 @@ export default function AssetDetailPage() {
                 <div>
                   <h3 className="text-base font-semibold text-foreground mb-1">Cost Outlook</h3>
                   <p className="text-xs text-muted-foreground mb-4">Projected costs for this asset</p>
-                  <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-                    {costOutlook.map((period, i) => (
-                      <Card key={period.label} className={`border-border bg-card/60 ${i === 0 ? "border-primary/30" : ""}`}>
-                        <CardContent className="p-4">
-                          <p className="text-xs text-muted-foreground mb-2">{period.label}</p>
-                          <p className="text-xl font-bold text-foreground">{formatCompact(period.total)}</p>
-                          <div className="mt-2 space-y-0.5">
-                            <p className="text-[10px] text-blue-400">Fixed: {formatCompact(period.fixed)}</p>
-                            <p className="text-[10px] text-orange-400">Variable: {formatCompact(period.variable)}</p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                  <div className="grid gap-3 grid-cols-3 sm:grid-cols-4 lg:grid-cols-6">
+                    {costOutlook.map((period, i) => {
+                      const isCurrent = i === new Date().getMonth();
+                      return (
+                        <Card key={period.label} className={`border-border bg-card/60 ${isCurrent ? "border-primary/40 ring-1 ring-primary/20" : ""}`}>
+                          <CardContent className="p-3">
+                            <p className={`text-xs font-medium mb-1 ${isCurrent ? "text-primary" : "text-muted-foreground"}`}>{period.label}</p>
+                            <p className="text-base font-bold text-foreground">{formatCompact(period.total)}</p>
+                            <div className="mt-1.5 space-y-0.5">
+                              <p className="text-[10px] text-blue-400">F: {formatCompact(period.fixed)}</p>
+                              <p className="text-[10px] text-orange-400">V: {formatCompact(period.variable)}</p>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 </div>
 
