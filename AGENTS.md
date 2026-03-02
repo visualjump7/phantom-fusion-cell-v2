@@ -4,13 +4,13 @@
 
 ### Overview
 
-**Fusion Cell** is a Next.js 14 (App Router) executive financial command center / family-office management platform. It uses Supabase (hosted PostgreSQL + Auth) as its backend and optionally calls the Anthropic Claude API for an AI assistant feature.
+**Fusion Cell** is a Next.js 14 (App Router) executive financial command center / family-office management platform for high-net-worth individuals. It uses Supabase (hosted PostgreSQL + Auth) as its backend. Key modules: Dashboard, Directory (assets), Calendar, Alerts (messages), Budget uploads, Bill management, Cash Flow, and Settings (with dark/light theme).
 
 ### Running the app
 
 - `npm run dev` starts the dev server on port 3000.
 - The app requires a `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Without valid Supabase credentials the app still starts but auth calls return "Invalid API key".
-- `ANTHROPIC_API_KEY` is optional; without it only the AI chat feature errors, all other pages work.
+- The AI assistant feature has been removed from the layout; `ANTHROPIC_API_KEY` is not required.
 
 ### Lint / Build / Test
 
