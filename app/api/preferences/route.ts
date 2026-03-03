@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { appendFileSync } from "fs";
 import { createServerSupabase } from "@/lib/supabase-server";
 import {
   isMissingThemePreferenceColumnError,
@@ -7,20 +6,6 @@ import {
   isThemeDensity,
   normalizeThemePreferences,
 } from "@/lib/theme-preferences";
-
-function debugLog(payload: {
-  hypothesisId: string;
-  location: string;
-  message: string;
-  data: Record<string, unknown>;
-  timestamp: number;
-}) {
-  try {
-    appendFileSync("/opt/cursor/logs/debug.log", `${JSON.stringify(payload)}\n`);
-  } catch {
-    // Intentionally ignore logging failures in debug mode.
-  }
-}
 
 function mergeThemePreferencesIntoMetadata(
   metadata: unknown,
@@ -67,21 +52,6 @@ export async function GET() {
     .eq("id", user.id)
     .maybeSingle();
 
-  // #region agent log
-  debugLog({
-    hypothesisId: "H3",
-    location: "app/api/preferences/route.ts:GET",
-    message: "Fetched profile preferences for API GET",
-    data: {
-      hasUser: Boolean(user),
-      queryError: error?.message ?? null,
-      theme_color: data?.theme_color ?? null,
-      theme_density: data?.theme_density ?? null,
-    },
-    timestamp: Date.now(),
-  });
-  // #endregion
-
   if (error) {
     if (isMissingThemePreferenceColumnError(error.message)) {
       const { data: fallbackData, error: fallbackError } = await supabase
@@ -123,19 +93,6 @@ export async function PATCH(request: NextRequest) {
   }
 
   const body = await request.json();
-  // #region agent log
-  debugLog({
-    hypothesisId: "H1",
-    location: "app/api/preferences/route.ts:PATCH",
-    message: "Received PATCH body for theme preferences",
-    data: {
-      theme_color: body?.theme_color ?? null,
-      theme_density: body?.theme_density ?? null,
-    },
-    timestamp: Date.now(),
-  });
-  // #endregion
-
   const updates: Record<string, string> = {
     updated_at: new Date().toISOString(),
   };
@@ -147,19 +104,6 @@ export async function PATCH(request: NextRequest) {
   if (isThemeDensity(body?.theme_density)) {
     updates.theme_density = body.theme_density;
   }
-
-  // #region agent log
-  debugLog({
-    hypothesisId: "H1",
-    location: "app/api/preferences/route.ts:PATCH",
-    message: "Prepared profile preference update payload",
-    data: {
-      theme_color: updates.theme_color ?? null,
-      theme_density: updates.theme_density ?? null,
-    },
-    timestamp: Date.now(),
-  });
-  // #endregion
 
   if (!updates.theme_color && !updates.theme_density) {
     return NextResponse.json(
@@ -174,20 +118,6 @@ export async function PATCH(request: NextRequest) {
     .eq("id", user.id)
     .select("theme_color, theme_density, metadata")
     .maybeSingle();
-
-  // #region agent log
-  debugLog({
-    hypothesisId: "H2",
-    location: "app/api/preferences/route.ts:PATCH",
-    message: "Database update result for theme preferences",
-    data: {
-      updateError: error?.message ?? null,
-      returned_theme_color: data?.theme_color ?? null,
-      returned_theme_density: data?.theme_density ?? null,
-    },
-    timestamp: Date.now(),
-  });
-  // #endregion
 
   if (error) {
     if (isMissingThemePreferenceColumnError(error.message)) {
@@ -215,20 +145,6 @@ export async function PATCH(request: NextRequest) {
         .eq("id", user.id)
         .select("metadata")
         .maybeSingle();
-
-      // #region agent log
-      debugLog({
-        hypothesisId: "H2",
-        location: "app/api/preferences/route.ts:PATCH",
-        message: "Fallback metadata update result for theme preferences",
-        data: {
-          fallbackUpdateError: fallbackError?.message ?? null,
-          wroteThemeColor: updates.theme_color ?? null,
-          wroteThemeDensity: updates.theme_density ?? null,
-        },
-        timestamp: Date.now(),
-      });
-      // #endregion
 
       if (fallbackError) {
         return NextResponse.json({ error: fallbackError.message }, { status: 500 });

@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Bill, updateBillStatus } from "@/lib/bill-service";
 import { formatCentsToDisplay } from "@/lib/bill-parser";
 import { useState } from "react";
+import { useThemePreferences } from "@/components/ThemeProvider";
 
 interface BillDrawerProps {
   isOpen: boolean;
@@ -62,6 +63,7 @@ export function BillDrawer({
   bills,
   total,
 }: BillDrawerProps) {
+  const { density } = useThemePreferences();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const handleMarkPaid = async (billId: string) => {
@@ -108,15 +110,15 @@ export function BillDrawer({
               <div>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-semibold text-foreground">
+                  <h3 className="text-[length:var(--font-size-section-header)] font-semibold text-foreground">
                     {formatDate(date)}
                   </h3>
                 </div>
                 <div className="mt-1 flex items-center gap-3">
-                  <span className="text-2xl font-bold text-foreground">
+                  <span className="data-value text-[length:var(--font-size-page-title)] font-bold text-foreground">
                     {formatCentsToDisplay(total)}
                   </span>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-[length:var(--font-size-body)] text-muted-foreground">
                     {bills.length} bill{bills.length !== 1 ? "s" : ""}
                   </span>
                   {isOverdue && (
@@ -143,7 +145,7 @@ export function BillDrawer({
                     key={bill.id}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="rounded-xl border border-border bg-background/50 p-4 transition-colors hover:bg-muted/20"
+                    className={`rounded-xl border border-border bg-background/50 transition-colors hover:bg-muted/20 ${density === "comfort" ? "p-[var(--card-padding)]" : "p-4"}`}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">

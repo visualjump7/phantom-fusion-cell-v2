@@ -3,98 +3,343 @@
 @tailwind utilities;
 
 @layer base {
-  /* Dark mode (default) — pure black + sleek neutral grays, accent unchanged */
+  /* ================================================================
+     LAYER 1: COLOR THEME (Light / Dark)
+     ================================================================ */
   :root,
-  .dark {
-    --background: 0 0% 0%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 95 55% 50%;
+  [data-theme="dark"] {
+    --bg-page: #0a0a0a;
+    --bg-card: #1a1a1a;
+    --bg-card-alt: #111111;
+    --bg-zebra-stripe: #141414;
+    --text-primary: #e0e0e0;
+    --text-secondary: #a0a0a0;
+    --accent-primary: #4a9eff;
+    --accent-navy: #1565c0;
+    --border-color: #333333;
+
+    --color-success: #4caf50;
+    --color-warning: #ff9800;
+    --color-danger: #f44336;
+    --color-info: #90a4ae;
+
+    --chart-1: #4a9eff;
+    --chart-2: #26c6da;
+    --chart-3: #66bb6a;
+    --chart-4: #ab47bc;
+    --chart-5: #ff7043;
+    --chart-neutral: #555555;
+
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --focus-ring-color: #4a9eff;
+
+    --background: 0 0% 4%;
+    --foreground: 0 0% 88%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 88%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 88%;
+    --primary: 212 100% 64%;
     --primary-foreground: 0 0% 5%;
-    --secondary: 0 0% 9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 9%;
-    --muted-foreground: 0 0% 58%;
-    --accent: 0 0% 9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 84% 60%;
+    --secondary: 0 0% 11%;
+    --secondary-foreground: 0 0% 88%;
+    --muted: 0 0% 11%;
+    --muted-foreground: 0 0% 63%;
+    --accent: 0 0% 11%;
+    --accent-foreground: 0 0% 88%;
+    --destructive: 4 90% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14%;
-    --input: 0 0% 14%;
-    --ring: 95 55% 50%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 212 100% 64%;
     --radius: 0.75rem;
   }
 
-  /* Light mode — Tones palette: Abyssal Stone → Ash Whisper */
-  .light {
-    --background: 216 5% 84%;
-    --foreground: 214 32% 9%;
-    --card: 216 5% 90%;
-    --card-foreground: 214 32% 9%;
-    --popover: 216 5% 90%;
-    --popover-foreground: 214 32% 9%;
-    --primary: 95 55% 38%;
+  [data-theme="light"] {
+    --bg-page: #f5f7fa;
+    --bg-card: #ffffff;
+    --bg-card-alt: #f0f2f5;
+    --bg-zebra-stripe: #f5f7fa;
+    --text-primary: #1a1a1a;
+    --text-secondary: #4a4a4a;
+    --accent-primary: #004a99;
+    --accent-navy: #0a2647;
+    --border-color: #d0d5dd;
+
+    --color-success: #1b5e20;
+    --color-warning: #e65100;
+    --color-danger: #b71c1c;
+    --color-info: #37474f;
+
+    --chart-1: #004a99;
+    --chart-2: #0277bd;
+    --chart-3: #00695c;
+    --chart-4: #4527a0;
+    --chart-5: #e65100;
+    --chart-neutral: #b0bec5;
+
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --focus-ring-color: #004a99;
+
+    --background: 214 33% 97%;
+    --foreground: 0 0% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+    --primary: 211 100% 30%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 5% 76%;
-    --secondary-foreground: 214 32% 9%;
-    --muted: 210 5% 76%;
-    --muted-foreground: 210 6% 38%;
-    --accent: 210 5% 76%;
-    --accent-foreground: 214 32% 9%;
-    --destructive: 0 72% 50%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 213 5% 72%;
-    --input: 213 5% 72%;
-    --ring: 95 55% 38%;
+    --secondary: 214 20% 95%;
+    --secondary-foreground: 0 0% 10%;
+    --muted: 214 20% 95%;
+    --muted-foreground: 0 0% 29%;
+    --accent: 214 20% 95%;
+    --accent-foreground: 0 0% 10%;
+    --destructive: 356 73% 42%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 16% 84%;
+    --input: 214 16% 84%;
+    --ring: 211 100% 30%;
     --radius: 0.75rem;
   }
-}
 
-@layer base {
+  /* ================================================================
+     LAYER 2: DENSITY MODE (Compact / Comfort)
+     ================================================================ */
+  :root,
+  [data-density="compact"] {
+    --font-family-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-family-mono: "Roboto Mono", monospace;
+    --font-size-page-title: 24px;
+    --font-size-section-header: 20px;
+    --font-size-body: 14px;
+    --font-size-data: 14px;
+    --font-size-caption: 12px;
+    --font-size-button: 14px;
+    --font-weight-body: 400;
+    --font-weight-data: 400;
+    --line-height-body: 1.4;
+    --letter-spacing-body: normal;
+
+    --tap-target-min: 44px;
+    --card-padding: 16px;
+    --gap: 12px;
+    --grid-cols-desktop: 3;
+    --grid-cols-tablet: 2;
+    --grid-cols-mobile: 1;
+    --paragraph-spacing: 12px;
+
+    --table-row-height: 40px;
+    --table-cell-padding-x: 8px;
+    --table-cell-padding-y: 6px;
+
+    --button-height: 44px;
+    --focus-ring-width: 2px;
+    --decision-button-gap: 12px;
+
+    --nav-show-labels: 0;
+  }
+
+  [data-density="comfort"] {
+    --font-family-body: "Atkinson Hyperlegible", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-family-mono: "Atkinson Hyperlegible Mono", "Roboto Mono", monospace;
+    --font-size-page-title: 30px;
+    --font-size-section-header: 24px;
+    --font-size-body: 18px;
+    --font-size-data: 20px;
+    --font-size-caption: 16px;
+    --font-size-button: 18px;
+    --font-weight-body: 500;
+    --font-weight-data: 500;
+    --line-height-body: 1.6;
+    --letter-spacing-body: 0.02em;
+
+    --tap-target-min: 60px;
+    --card-padding: 28px;
+    --gap: 20px;
+    --grid-cols-desktop: 2;
+    --grid-cols-tablet: 1;
+    --grid-cols-mobile: 1;
+    --paragraph-spacing: 20px;
+
+    --table-row-height: 60px;
+    --table-cell-padding-x: 16px;
+    --table-cell-padding-y: 12px;
+
+    --button-height: 60px;
+    --focus-ring-width: 3px;
+    --decision-button-gap: 24px;
+
+    --nav-show-labels: 1;
+  }
+
   * {
     @apply border-border;
   }
+
+  html,
   body {
-    @apply bg-background text-foreground;
+    min-height: 100%;
+  }
+
+  body {
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    font-family: var(--font-family-body);
+    font-size: var(--font-size-body);
+    font-weight: var(--font-weight-body);
+    line-height: var(--line-height-body);
+    letter-spacing: var(--letter-spacing-body);
+  }
+
+  h1,
+  .page-title {
+    font-size: var(--font-size-page-title);
+    line-height: 1.2;
+  }
+
+  h2,
+  h3,
+  .section-title {
+    font-size: var(--font-size-section-header);
+    line-height: 1.3;
+  }
+
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 var(--focus-ring-width) var(--focus-ring-color);
+  }
+}
+
+/* Density and data helpers */
+.body-text {
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+}
+
+.caption-text {
+  font-size: var(--font-size-caption);
+  color: var(--text-secondary);
+}
+
+.data-value {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-data);
+  font-weight: var(--font-weight-data);
+}
+
+.density-table-wrap {
+  overflow: auto;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.75rem;
+  background: var(--bg-card);
+}
+
+.density-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 720px;
+}
+
+.density-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg-card-alt);
+  color: var(--text-secondary);
+  font-size: var(--font-size-caption);
+  font-weight: 600;
+  text-align: left;
+  padding: var(--table-cell-padding-y) var(--table-cell-padding-x);
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.density-table tbody td {
+  min-height: var(--table-row-height);
+  padding: var(--table-cell-padding-y) var(--table-cell-padding-x);
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+html[data-density="comfort"] .density-table tbody tr:nth-child(even) {
+  background: var(--bg-zebra-stripe);
+}
+
+.density-table .sticky-first-col {
+  position: sticky;
+  left: 0;
+  z-index: 4;
+  background: inherit;
+}
+
+.density-table .number-cell {
+  text-align: right;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-data);
+  font-weight: var(--font-weight-data);
+}
+
+.decision-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--decision-button-gap);
+}
+
+.decision-actions > * {
+  flex: 1 1 180px;
+}
+
+.comfort-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-cols-mobile), minmax(0, 1fr));
+  gap: var(--gap);
+}
+
+@media (min-width: 768px) {
+  .comfort-grid {
+    grid-template-columns: repeat(var(--grid-cols-tablet), minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .comfort-grid {
+    grid-template-columns: repeat(var(--grid-cols-desktop), minmax(0, 1fr));
   }
 }
 
 /* Custom scrollbar — dark */
-.dark ::-webkit-scrollbar,
+[data-theme="dark"] ::-webkit-scrollbar,
 :root ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
-.dark ::-webkit-scrollbar-track,
+[data-theme="dark"] ::-webkit-scrollbar-track,
 :root ::-webkit-scrollbar-track {
   background: transparent;
 }
-.dark ::-webkit-scrollbar-thumb,
+[data-theme="dark"] ::-webkit-scrollbar-thumb,
 :root ::-webkit-scrollbar-thumb {
   background: hsl(0 0% 18%);
   border-radius: 3px;
 }
-.dark ::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover,
 :root ::-webkit-scrollbar-thumb:hover {
   background: hsl(0 0% 26%);
 }
 
 /* Custom scrollbar — light */
-.light ::-webkit-scrollbar {
+[data-theme="light"] ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
-.light ::-webkit-scrollbar-track {
+[data-theme="light"] ::-webkit-scrollbar-track {
   background: transparent;
 }
-.light ::-webkit-scrollbar-thumb {
+[data-theme="light"] ::-webkit-scrollbar-thumb {
   background: hsl(210 5% 69%);
   border-radius: 3px;
 }
-.light ::-webkit-scrollbar-thumb:hover {
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
   background: hsl(210 6% 54%);
 }
 

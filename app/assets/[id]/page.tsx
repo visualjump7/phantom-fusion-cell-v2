@@ -20,6 +20,7 @@ import { fetchBillsForAsset, Bill } from "@/lib/bill-service";
 import { formatCentsToDisplay } from "@/lib/bill-parser";
 import { BudgetView } from "@/components/budget/BudgetView";
 import { useRole } from "@/lib/use-role";
+import { useThemePreferences } from "@/components/ThemeProvider";
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 import {
   fetchMessages, respondToMessage, getMessageStatus,
@@ -41,6 +42,7 @@ const db = supabase as any;
 export default function AssetDetailPage() {
   const params = useParams();
   const { isAdmin } = useRole();
+  const { density } = useThemePreferences();
   const [asset, setAsset] = useState<Asset | null>(null);
   const [bills, setBills] = useState<Bill[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -210,7 +212,7 @@ export default function AssetDetailPage() {
       <Navbar />
       <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Back link */}
-        <Link href="/assets" className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+        <Link href="/assets" className="mb-6 inline-flex items-center gap-2 text-[length:var(--font-size-body)] text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Back to Projects
         </Link>
 
@@ -222,22 +224,22 @@ export default function AssetDetailPage() {
                 {asset.category}
               </Badge>
             </div>
-            <h1 className="mt-2 text-3xl font-bold text-foreground">{asset.name}</h1>
-            {asset.description && <p className="mt-1 text-sm text-muted-foreground">{asset.description}</p>}
+            <h1 className="page-title mt-2 font-bold text-foreground">{asset.name}</h1>
+            {asset.description && <p className="mt-1 text-[length:var(--font-size-body)] text-muted-foreground">{asset.description}</p>}
           </div>
           <div className="text-right">
-            <p className="text-3xl font-bold text-primary">{formatCurrency(asset.estimated_value)}</p>
-            <p className="text-xs text-muted-foreground">Estimated Value</p>
+            <p className="data-value text-[length:var(--font-size-page-title)] font-bold text-primary">{formatCurrency(asset.estimated_value)}</p>
+            <p className="text-[length:var(--font-size-caption)] text-muted-foreground">Estimated Value</p>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="mb-6 flex gap-1 rounded-lg bg-muted/30 p-1">
+        <div className="mb-6 flex flex-wrap gap-1 rounded-lg bg-muted/30 p-1">
           {(["overview", "budget", "bills", "messages"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium capitalize transition-colors ${
+              className={`flex min-h-[var(--tap-target-min)] items-center gap-2 rounded-md px-4 py-2 text-[length:var(--font-size-body)] font-medium capitalize transition-colors ${
                 activeTab === tab ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -301,8 +303,8 @@ export default function AssetDetailPage() {
                     <AnimatePresence mode="wait">
                       {overviewBudgetViewMode === "yearly" ? (
                         <motion.div key="yearly" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-                          <p className="text-3xl font-bold text-primary">{formatCurrency(overviewAnnualTotal)}</p>
-                          <p className="text-xs text-muted-foreground mb-4">Annual Budget</p>
+                          <p className="data-value text-[length:var(--font-size-page-title)] font-bold text-primary">{formatCurrency(overviewAnnualTotal)}</p>
+                          <p className="text-[length:var(--font-size-caption)] text-muted-foreground mb-4">Annual Budget</p>
                           <div className="mb-4">
                             <div className="flex items-center justify-between text-xs mb-1.5">
                               <span className="text-blue-400">Fixed: {formatCurrency(overviewFixedTotal)}</span>
@@ -315,12 +317,12 @@ export default function AssetDetailPage() {
                           </div>
                           <div className="grid grid-cols-2 gap-3">
                             <div className="rounded-lg bg-background/50 p-3 text-center">
-                              <p className="text-lg font-bold text-foreground">{formatCurrency(overviewMonthlyAvg)}</p>
-                              <p className="text-[10px] text-muted-foreground">Monthly Avg</p>
+                              <p className="data-value font-bold text-foreground">{formatCurrency(overviewMonthlyAvg)}</p>
+                              <p className="text-[length:var(--font-size-caption)] text-muted-foreground">Monthly Avg</p>
                             </div>
                             <div className="rounded-lg bg-background/50 p-3 text-center">
-                              <p className="text-lg font-bold text-foreground">{formatCurrency(overviewAnnualTotal)}</p>
-                              <p className="text-[10px] text-muted-foreground">Annual Total</p>
+                              <p className="data-value font-bold text-foreground">{formatCurrency(overviewAnnualTotal)}</p>
+                              <p className="text-[length:var(--font-size-caption)] text-muted-foreground">Annual Total</p>
                             </div>
                           </div>
                         </motion.div>
@@ -337,8 +339,8 @@ export default function AssetDetailPage() {
                               </button>
                             ))}
                           </div>
-                          <p className="text-3xl font-bold text-primary">{formatCurrency(overviewSelectedMonthTotal)}</p>
-                          <p className="text-xs text-muted-foreground mb-4">{MONTHS[overviewSelectedMonth]} Expenses</p>
+                          <p className="data-value text-[length:var(--font-size-page-title)] font-bold text-primary">{formatCurrency(overviewSelectedMonthTotal)}</p>
+                          <p className="text-[length:var(--font-size-caption)] text-muted-foreground mb-4">{MONTHS[overviewSelectedMonth]} Expenses</p>
                           <div className="mb-4">
                             <div className="flex items-center justify-between text-xs mb-1.5">
                               <span className="text-blue-400">Fixed: {formatCurrency(overviewSelectedMonthFixed)}</span>
@@ -354,11 +356,11 @@ export default function AssetDetailPage() {
                               <p className={`text-lg font-bold ${overviewMonthDiff >= 0 ? "text-red-400" : "text-emerald-400"}`}>
                                 {overviewMonthDiff >= 0 ? "+" : "-"}{formatCurrency(Math.abs(overviewMonthDiff))}
                               </p>
-                              <p className="text-[10px] text-muted-foreground">vs. Monthly Avg</p>
+                              <p className="text-[length:var(--font-size-caption)] text-muted-foreground">vs. Monthly Avg</p>
                             </div>
                             <div className="rounded-lg bg-background/50 p-3 text-center">
-                              <p className="text-lg font-bold text-foreground">{formatCurrency(overviewMonthlyAvg)}</p>
-                              <p className="text-[10px] text-muted-foreground">Monthly Avg</p>
+                              <p className="data-value font-bold text-foreground">{formatCurrency(overviewMonthlyAvg)}</p>
+                              <p className="text-[length:var(--font-size-caption)] text-muted-foreground">Monthly Avg</p>
                             </div>
                           </div>
                         </motion.div>
@@ -376,19 +378,19 @@ export default function AssetDetailPage() {
                         <AreaChart data={sparklineData} margin={{ top: 5, right: 5, left: 5, bottom: 0 }}>
                           <defs>
                             <linearGradient id="overviewBurnGradient" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#7ac142" stopOpacity={0.4} />
-                              <stop offset="100%" stopColor="#7ac142" stopOpacity={0.05} />
+                              <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.4} />
+                              <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0.05} />
                             </linearGradient>
                           </defs>
                           <XAxis
                             dataKey="month"
-                            tick={{ fill: "#64748b", fontSize: 11 }}
+                            tick={{ fill: "var(--text-secondary)", fontSize: 11 }}
                             axisLine={false}
                             tickLine={false}
                           />
                           <YAxis
                             tickFormatter={(v: number) => formatChartVal(v)}
-                            tick={{ fill: "#64748b", fontSize: 11 }}
+                            tick={{ fill: "var(--text-secondary)", fontSize: 11 }}
                             axisLine={false}
                             tickLine={false}
                             width={50}
@@ -405,7 +407,7 @@ export default function AssetDetailPage() {
                           <Area
                             type="monotone"
                             dataKey="total"
-                            stroke="#7ac142"
+                            stroke="var(--chart-1)"
                             strokeWidth={2}
                             fill="url(#overviewBurnGradient)"
                           />
@@ -418,24 +420,24 @@ export default function AssetDetailPage() {
             )}
 
             {/* Row 2: Stats */}
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className={density === "comfort" ? "grid gap-[var(--gap)] grid-cols-1 md:grid-cols-2" : "grid gap-4 sm:grid-cols-3"}>
               <Card className="border-border bg-card/60">
                 <CardContent className="p-5">
-                  <p className="text-xs text-muted-foreground">Estimated Value</p>
-                  <p className="mt-1 text-2xl font-bold text-foreground">{formatCurrency(asset.estimated_value)}</p>
+                  <p className="text-[length:var(--font-size-caption)] text-muted-foreground">Estimated Value</p>
+                  <p className="data-value mt-1 text-[length:var(--font-size-section-header)] font-bold text-foreground">{formatCurrency(asset.estimated_value)}</p>
                 </CardContent>
               </Card>
               <Card className="border-border bg-card/60">
                 <CardContent className="p-5">
-                  <p className="text-xs text-muted-foreground">Pending Bills</p>
-                  <p className="mt-1 text-2xl font-bold text-foreground">{pendingBills.length}</p>
-                  <p className="text-xs text-muted-foreground">{formatCentsToDisplay(totalPending)} due</p>
+                  <p className="text-[length:var(--font-size-caption)] text-muted-foreground">Pending Bills</p>
+                  <p className="data-value mt-1 text-[length:var(--font-size-section-header)] font-bold text-foreground">{pendingBills.length}</p>
+                  <p className="text-[length:var(--font-size-caption)] text-muted-foreground">{formatCentsToDisplay(totalPending)} due</p>
                 </CardContent>
               </Card>
               <Card className="border-border bg-card/60">
                 <CardContent className="p-5">
-                  <p className="text-xs text-muted-foreground">Alerts</p>
-                  <p className="mt-1 text-2xl font-bold text-foreground">{messages.length}</p>
+                  <p className="text-[length:var(--font-size-caption)] text-muted-foreground">Alerts</p>
+                  <p className="data-value mt-1 text-[length:var(--font-size-section-header)] font-bold text-foreground">{messages.length}</p>
                 </CardContent>
               </Card>
             </div>
@@ -447,7 +449,7 @@ export default function AssetDetailPage() {
                 <div>
                   <h3 className="text-base font-semibold text-foreground mb-1">Cost Outlook</h3>
                   <p className="text-xs text-muted-foreground mb-4">Projected costs for this asset</p>
-                  <div className="grid gap-3 grid-cols-3 sm:grid-cols-4 lg:grid-cols-6">
+                  <div className={density === "comfort" ? "grid gap-[var(--gap)] grid-cols-1 md:grid-cols-2" : "grid gap-3 grid-cols-3 sm:grid-cols-4 lg:grid-cols-6"}>
                     {costOutlook.map((period, i) => {
                       const isCurrent = i === new Date().getMonth();
                       return (
@@ -475,11 +477,11 @@ export default function AssetDetailPage() {
                         <AreaChart data={sparklineData} margin={{ top: 2, right: 2, left: 2, bottom: 0 }}>
                           <defs>
                             <linearGradient id="sparkGradient" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#7ac142" stopOpacity={0.4} />
-                              <stop offset="100%" stopColor="#7ac142" stopOpacity={0.05} />
+                              <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.4} />
+                              <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0.05} />
                             </linearGradient>
                           </defs>
-                          <Area type="monotone" dataKey="total" stroke="#7ac142" strokeWidth={1.5} fill="url(#sparkGradient)" />
+                          <Area type="monotone" dataKey="total" stroke="var(--chart-1)" strokeWidth={1.5} fill="url(#sparkGradient)" />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
@@ -508,32 +510,39 @@ export default function AssetDetailPage() {
                 {bills.length === 0 ? (
                   <p className="text-sm text-muted-foreground italic">No bills linked to this project</p>
                 ) : (
-                  <div className="space-y-2">
-                    {pendingBills.map((bill) => (
-                      <div key={bill.id} className="flex items-center justify-between rounded-lg bg-background/30 p-3">
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{bill.title}</p>
-                          <div className="mt-1 flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground">{bill.due_date}</span>
-                            {bill.category && <Badge variant="outline" className="text-[10px]">{bill.category}</Badge>}
-                            <Badge variant="outline" className="border-amber-500/30 text-amber-400 text-[10px]">pending</Badge>
-                          </div>
-                        </div>
-                        <p className="text-sm font-bold text-foreground">{formatCentsToDisplay(bill.amount_cents)}</p>
-                      </div>
-                    ))}
-                    {paidBills.map((bill) => (
-                      <div key={bill.id} className="flex items-center justify-between rounded-lg bg-background/30 p-3 opacity-60">
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{bill.title}</p>
-                          <div className="mt-1 flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground">{bill.due_date}</span>
-                            <Badge variant="outline" className="border-emerald-500/30 text-emerald-400 text-[10px]">paid</Badge>
-                          </div>
-                        </div>
-                        <p className="text-sm text-muted-foreground line-through">{formatCentsToDisplay(bill.amount_cents)}</p>
-                      </div>
-                    ))}
+                  <div className="density-table-wrap">
+                    <table className="density-table">
+                      <thead>
+                        <tr>
+                          <th className="sticky-first-col min-w-[240px]">Bill</th>
+                          <th className="min-w-[140px]">Due date</th>
+                          <th className="min-w-[150px]">Status</th>
+                          <th className="min-w-[150px]">Category</th>
+                          <th className="text-right min-w-[150px]">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {bills.map((bill) => {
+                          const isPending = bill.status === "pending";
+                          return (
+                            <tr key={bill.id}>
+                              <td className="sticky-first-col text-[length:var(--font-size-body)] font-medium text-foreground">{bill.title}</td>
+                              <td className="text-[length:var(--font-size-body)] text-muted-foreground">{bill.due_date}</td>
+                              <td>
+                                <span className="inline-flex items-center gap-2 text-[length:var(--font-size-caption)] font-medium" style={{ color: isPending ? "var(--color-warning)" : "var(--color-success)" }}>
+                                  {isPending ? <AlertTriangle className="h-3.5 w-3.5" /> : <CheckCircle className="h-3.5 w-3.5" />}
+                                  {isPending ? "Pending" : "Paid"}
+                                </span>
+                              </td>
+                              <td className="text-[length:var(--font-size-body)] text-foreground">{bill.category || "—"}</td>
+                              <td className={`number-cell ${isPending ? "text-foreground" : "text-muted-foreground line-through"}`}>
+                                {formatCentsToDisplay(bill.amount_cents)}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </CardContent>
@@ -556,13 +565,13 @@ export default function AssetDetailPage() {
                     {messages.map((msg) => {
                       const status = getMessageStatus(msg);
                       return (
-                        <div key={msg.id} className="rounded-lg bg-background/30 p-4">
+                        <div key={msg.id} className={`rounded-lg bg-background/30 ${density === "comfort" ? "p-[var(--card-padding)]" : "p-4"}`}>
                           <div className="flex items-start gap-3">
                             {typeIcons[msg.type]}
                             <div className="flex-1">
                               <p className="text-sm font-medium text-foreground">{msg.title}</p>
                               {msg.body && <p className="mt-1 text-xs text-muted-foreground">{msg.body}</p>}
-                              <div className="mt-2 flex items-center gap-2">
+                              <div className={`mt-2 flex items-center ${density === "comfort" ? "gap-4" : "gap-2"}`}>
                                 <Badge variant="outline" className="text-[10px] capitalize">{msg.type.replace("_", " ")}</Badge>
                                 <Badge variant="outline" className="text-[10px]">{msg.priority}</Badge>
                               </div>
@@ -614,17 +623,16 @@ export default function AssetDetailPage() {
                               )}
 
                               {status === "pending" && (msg.type === "decision" || msg.type === "action_required") && (
-                                <div className="mt-3 flex items-center gap-2">
-                                  <Button size="sm" className="text-xs bg-emerald-600 hover:bg-emerald-700"
+                                <div className="decision-actions mt-3">
+                                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700"
                                     onClick={() => openResponseModal(msg, "approved")} disabled={isSubmitting}>
                                     <ThumbsUp className="mr-1.5 h-3 w-3" />Approve
                                   </Button>
-                                  <Button size="sm" variant="outline"
-                                    className="text-xs border-red-500/30 text-red-400 hover:bg-red-500/10"
+                                  <Button size="sm" className="bg-red-600 text-white hover:bg-red-700"
                                     onClick={() => openResponseModal(msg, "rejected")} disabled={isSubmitting}>
                                     <ThumbsDown className="mr-1.5 h-3 w-3" />Reject
                                   </Button>
-                                  <Button size="sm" variant="ghost" className="text-xs text-muted-foreground"
+                                  <Button size="sm" variant={density === "comfort" ? "secondary" : "ghost"} className={density === "comfort" ? "" : "text-xs text-muted-foreground"}
                                     onClick={() => handleQuickAcknowledge(msg.id)} disabled={isSubmitting}>
                                     <Eye className="mr-1.5 h-3 w-3" />Acknowledge
                                   </Button>
@@ -674,7 +682,7 @@ export default function AssetDetailPage() {
               </div>
               <textarea value={respondComment} onChange={(e) => setRespondComment(e.target.value)}
                 placeholder="Add a note (optional)..." rows={3} autoFocus
-                className="mb-4 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-none" />
+                className="mb-4 min-h-[var(--tap-target-min)] w-full rounded-lg border border-border bg-background px-3 py-2 text-[length:var(--font-size-body)] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-none" />
               <div className="flex justify-end gap-2">
                 <Button variant="outline" size="sm" onClick={() => { setRespondingTo(null); setRespondAction(null); }}>Cancel</Button>
                 <Button size="sm"
