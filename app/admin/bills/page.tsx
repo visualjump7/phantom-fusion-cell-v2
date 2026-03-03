@@ -165,7 +165,7 @@ function AdminBillsContent() {
     if (!formTitle.trim()) { setFormError("Title is required"); return; }
     if (!formAmount || parseFloat(formAmount) <= 0) { setFormError("Valid amount is required"); return; }
     if (!formDueDate) { setFormError("Due date is required"); return; }
-    if (!formAssetId) { setFormError("Please select an asset"); return; }
+    if (!formAssetId) { setFormError("Please select a project"); return; }
     setIsSaving(true); setFormError(null);
     try {
       const payload = {
@@ -426,7 +426,7 @@ function AdminBillsContent() {
           <div className="flex flex-col gap-2 sm:flex-row">
             <select value={assetFilter} onChange={(e) => setAssetFilter(e.target.value)}
               className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary sm:w-48">
-              <option value="">All Assets</option>
+              <option value="">All Projects</option>
               {Object.entries(groupedAssets).map(([cat, items]) => (
                 <optgroup key={cat} label={cat.charAt(0).toUpperCase() + cat.slice(1)}>
                   {items.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
@@ -551,7 +551,7 @@ function AdminBillsContent() {
                   <div><label className="mb-1 block text-sm font-medium text-foreground">Due Date *</label>
                     <Input type="date" value={formDueDate} onChange={(e) => setFormDueDate(e.target.value)} /></div>
                 </div>
-                <div><label className="mb-1 block text-sm font-medium text-foreground">Asset *</label>
+                <div><label className="mb-1 block text-sm font-medium text-foreground">Project *</label>
                   <select value={formAssetId} onChange={(e) => setFormAssetId(e.target.value)}
                     className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary">
                     <option value="">Select an asset...</option>

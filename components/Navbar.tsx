@@ -19,6 +19,7 @@ import {
   Star,
   ChevronDown,
   ShieldCheck,
+  DollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -35,14 +36,15 @@ interface NavItem {
 const mainNavItems: NavItem[] = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Directory", href: "/assets", icon: Building2 },
-  { name: "Alerts", href: "/messages", icon: MessageSquare },
   { name: "Calendar", href: "/calendar", icon: CalendarIcon },
+  { name: "Alerts", href: "/messages", icon: MessageSquare },
 ];
 
 const adminNavItems: NavItem[] = [
-  { name: "Budget", href: "/upload", icon: TrendingUp },
+  { name: "Budget Upload", href: "/upload", icon: TrendingUp },
   { name: "Bills", href: "/admin/bills", icon: Receipt },
-  { name: "Compose", href: "/admin/messages", icon: SendHorizontal },
+  { name: "Cash Flow", href: "/calendar", icon: DollarSign },
+  { name: "Send Alerts", href: "/admin/messages", icon: SendHorizontal },
 ];
 
 export function Navbar() {

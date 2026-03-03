@@ -505,7 +505,7 @@ export default function AdminMessagesPage() {
                     {/* Asset — always shown */}
                     <div>
                       <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                        <Building2 className="inline h-3 w-3 mr-1" />Related Asset
+                        <Building2 className="inline h-3 w-3 mr-1" />Related Project
                       </label>
                       <select value={composeAssetId} onChange={(e) => setComposeAssetId(e.target.value)}
                         className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary">

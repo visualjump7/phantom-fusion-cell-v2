@@ -313,10 +313,8 @@ export default function MessagesPage() {
               <MessageSquare className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Messages</h1>
-              <p className="text-sm text-muted-foreground">
-                {isExecutive ? "Communications from your Fusion Cell team" : "Manage principal communications"}
-              </p>
+              <h1 className="text-2xl font-bold text-foreground">Alerts</h1>
+              <p className="text-sm text-muted-foreground">Review and respond</p>
             </div>
           </div>
           <Button size="sm" variant="outline" onClick={() => setShowReply(!showReply)}>
@@ -365,7 +363,7 @@ export default function MessagesPage() {
         {isLoading ? (
           <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
         ) : messages.length === 0 ? (
-          <p className="text-center text-muted-foreground py-20">No messages</p>
+          <p className="text-center text-muted-foreground py-20">No alerts</p>
         ) : (
           <div className="space-y-6">
             {pendingDecisions.length > 0 && (
@@ -390,7 +388,7 @@ export default function MessagesPage() {
 
             {otherMessages.length > 0 && (
               <div>
-                <h2 className="mb-3 text-sm font-semibold text-muted-foreground">Other Messages</h2>
+                <h2 className="mb-3 text-sm font-semibold text-muted-foreground">Other Alerts</h2>
                 <div className="space-y-3">{otherMessages.map(renderMessage)}</div>
               </div>
             )}

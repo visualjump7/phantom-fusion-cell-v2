@@ -130,7 +130,7 @@ export default function AssetsPage() {
   };
 
   const handleSave = async () => {
-    if (!formName.trim()) { setFormError("Asset name is required"); return; }
+    if (!formName.trim()) { setFormError("Project name is required"); return; }
     setIsSaving(true);
     setFormError(null);
 
@@ -196,13 +196,12 @@ export default function AssetsPage() {
               <Building2 className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Assets</h1>
-              <p className="text-sm text-muted-foreground">Your complete portfolio</p>
+              <h1 className="text-2xl font-bold text-foreground">Projects</h1>
             </div>
           </div>
           {isAdmin && (
             <Button size="sm" onClick={openAddModal}>
-              <Plus className="mr-2 h-4 w-4" /> Add Asset
+              <Plus className="mr-2 h-4 w-4" /> Add Project
             </Button>
           )}
         </div>
@@ -227,7 +226,7 @@ export default function AssetsPage() {
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search assets..."
+              placeholder="Search projects..."
               className="pl-9 text-sm h-9"
             />
           </div>
@@ -241,7 +240,7 @@ export default function AssetsPage() {
         ) : filtered.length === 0 ? (
           <div className="text-center py-20">
             <Building2 className="mx-auto mb-3 h-10 w-10 text-muted-foreground/30" />
-            <p className="text-muted-foreground">{searchQuery ? "No assets match your search" : "No assets found"}</p>
+            <p className="text-muted-foreground">{searchQuery ? "No projects match your search" : "No projects found"}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -288,7 +287,7 @@ export default function AssetsPage() {
                         onClick={(e) => { e.preventDefault(); openEditModal(asset); }}
                         className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-foreground hover:bg-muted"
                       >
-                        <Pencil className="h-3 w-3" /> Edit Asset
+                        <Pencil className="h-3 w-3" /> Edit Project
                       </button>
                       <button
                         onClick={(e) => {
@@ -303,7 +302,7 @@ export default function AssetsPage() {
                         onClick={(e) => { e.preventDefault(); setDeleteTarget(asset); setOpenMenuId(null); }}
                         className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-red-400 hover:bg-muted"
                       >
-                        <Trash2 className="h-3 w-3" /> Remove Asset
+                        <Trash2 className="h-3 w-3" /> Remove Project
                       </button>
                     </div>
                   )}
@@ -328,7 +327,7 @@ export default function AssetsPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-bold text-foreground">{editingAsset ? "Edit Asset" : "Add Asset"}</h2>
+                <h2 className="text-lg font-bold text-foreground">{editingAsset ? "Edit Project" : "Add Project"}</h2>
                 <button onClick={() => setShowModal(false)} className="rounded-lg p-1 text-muted-foreground hover:text-foreground">
                   <X className="h-5 w-5" />
                 </button>
@@ -357,7 +356,7 @@ export default function AssetsPage() {
 
                 {/* Name */}
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-foreground">Asset Name *</label>
+                  <label className="mb-1.5 block text-sm font-medium text-foreground">Project Name *</label>
                   <Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="e.g. Aspen Mountain Estate" />
                 </div>
 
@@ -400,7 +399,7 @@ export default function AssetsPage() {
                   <Button variant="outline" onClick={() => setShowModal(false)}>Cancel</Button>
                   <Button onClick={handleSave} disabled={isSaving}>
                     {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    {editingAsset ? "Save Changes" : "Add Asset"}
+                    {editingAsset ? "Save Changes" : "Add Project"}
                   </Button>
                 </div>
               </div>
@@ -426,9 +425,9 @@ export default function AssetsPage() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/10">
                   <Trash2 className="h-5 w-5 text-red-400" />
                 </div>
-                <h2 className="text-lg font-bold text-foreground">Remove Asset</h2>
+                <h2 className="text-lg font-bold text-foreground">Remove Project</h2>
               </div>
-              <p className="text-sm text-muted-foreground mb-2">Are you sure you want to remove this asset?</p>
+              <p className="text-sm text-muted-foreground mb-2">Are you sure you want to remove this project?</p>
               <div className="rounded-lg border border-border bg-background/50 p-3 mb-4">
                 <p className="text-sm font-semibold text-foreground">{deleteTarget.name}</p>
                 <p className="text-sm text-muted-foreground">{formatCurrency(deleteTarget.estimated_value)}</p>

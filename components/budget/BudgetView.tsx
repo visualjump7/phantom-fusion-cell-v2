@@ -252,152 +252,10 @@ export function BudgetView({ assetId }: BudgetViewProps) {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-      {/* ROW 1: Monthly Burn + Summary */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Monthly Burn Chart */}
-        <Card className="border-border bg-card/60">
-          <CardContent className="p-6">
-            <h3 className="text-base font-semibold text-foreground mb-4">Monthly Burn</h3>
-            <div className="h-[220px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={monthlyData} margin={{ top: 5, right: 5, left: 5, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="burnGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#7ac142" stopOpacity={0.4} />
-                      <stop offset="100%" stopColor="#7ac142" stopOpacity={0.05} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis
-                    dataKey="month"
-                    tick={{ fill: "#64748b", fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tickFormatter={formatK}
-                    tick={{ fill: "#64748b", fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                    width={50}
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Area
-                    type="monotone"
-                    dataKey="total"
-                    stroke="#7ac142"
-                    strokeWidth={2}
-                    fill="url(#burnGradient)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Budget Summary */}
-        <Card className="border-border bg-card/60">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-foreground">Budget Summary</h3>
-              <div className="flex items-center gap-2">
-                <div className="flex rounded-lg bg-muted/50 p-0.5">
-                  <button onClick={() => setViewMode("yearly")}
-                    className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${viewMode === "yearly" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-                    Yearly
-                  </button>
-                  <button onClick={() => setViewMode("monthly")}
-                    className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${viewMode === "monthly" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-                    Monthly
-                  </button>
-                </div>
-                {availableYears.length > 1 ? (
-                  <select value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))}
-                    className="rounded-lg border border-border bg-background px-2 py-1 text-sm text-foreground">
-                    {availableYears.map((y) => <option key={y} value={y}>{y}</option>)}
-                  </select>
-                ) : (
-                  <span className="text-sm text-muted-foreground">{selectedYear}</span>
-                )}
-              </div>
-            </div>
-
-            <AnimatePresence mode="wait">
-              {viewMode === "yearly" ? (
-                <motion.div key="yearly" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-                  <p className="text-3xl font-bold text-primary">{formatFull(annualTotal)}</p>
-                  <p className="text-xs text-muted-foreground mb-4">Annual Budget</p>
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between text-xs mb-1.5">
-                      <span className="text-blue-400">Fixed: {formatFull(fixedTotal)}</span>
-                      <span className="text-orange-400">Variable: {formatFull(variableTotal)}</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-muted overflow-hidden flex">
-                      <div className="h-full bg-blue-500 rounded-l-full" style={{ width: `${annualTotal > 0 ? (fixedTotal / annualTotal) * 100 : 0}%` }} />
-                      <div className="h-full bg-orange-500 rounded-r-full" style={{ width: `${annualTotal > 0 ? (variableTotal / annualTotal) * 100 : 0}%` }} />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-lg bg-background/50 p-3 text-center">
-                      <p className="text-lg font-bold text-foreground">{formatFull(annualTotal / 12)}</p>
-                      <p className="text-[10px] text-muted-foreground">Monthly Avg</p>
-                    </div>
-                    <div className="rounded-lg bg-background/50 p-3 text-center">
-                      <p className="text-lg font-bold text-foreground">{lineItems.length}</p>
-                      <p className="text-[10px] text-muted-foreground">Line Items</p>
-                    </div>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div key="monthly" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-                  {/* Month selector */}
-                  <div className="flex gap-1 mb-4 overflow-x-auto pb-1">
-                    {MONTHS.map((m, i) => (
-                      <button key={m} onClick={() => setSelectedMonth(i)}
-                        className={`shrink-0 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-                          selectedMonth === i ? "bg-primary text-primary-foreground" : "bg-muted/50 text-muted-foreground hover:text-foreground"
-                        }`}>
-                        {m}
-                      </button>
-                    ))}
-                  </div>
-
-                  <p className="text-3xl font-bold text-primary">{formatFull(selectedMonthTotal)}</p>
-                  <p className="text-xs text-muted-foreground mb-4">{MONTHS[selectedMonth]} Expenses</p>
-
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between text-xs mb-1.5">
-                      <span className="text-blue-400">Fixed: {formatFull(selectedMonthFixed)}</span>
-                      <span className="text-orange-400">Variable: {formatFull(selectedMonthVariable)}</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-muted overflow-hidden flex">
-                      <div className="h-full bg-blue-500 rounded-l-full" style={{ width: `${selectedMonthTotal > 0 ? (selectedMonthFixed / selectedMonthTotal) * 100 : 0}%` }} />
-                      <div className="h-full bg-orange-500 rounded-r-full" style={{ width: `${selectedMonthTotal > 0 ? (selectedMonthVariable / selectedMonthTotal) * 100 : 0}%` }} />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-lg bg-background/50 p-3 text-center">
-                      <p className={`text-lg font-bold ${monthDiff >= 0 ? "text-red-400" : "text-emerald-400"}`}>
-                        {monthDiff >= 0 ? "+" : ""}{formatK(monthDiff)}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground">vs. Monthly Avg</p>
-                    </div>
-                    <div className="rounded-lg bg-background/50 p-3 text-center">
-                      <p className="text-lg font-bold text-foreground">{lineItems.length}</p>
-                      <p className="text-[10px] text-muted-foreground">Line Items</p>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* ROW 2: Category Breakdown */}
+      {/* Category Breakdown Overview */}
       <Card className="border-border bg-card/60">
         <CardContent className="p-6">
-          <h3 className="text-base font-semibold text-foreground mb-4">Category Breakdown</h3>
+          <h3 className="text-lg font-bold tracking-tight text-foreground mb-4">Category Breakdown Overview</h3>
           <div className="flex flex-col items-center gap-6 lg:flex-row">
             {/* Donut Chart */}
             <div className="w-full lg:w-1/2 h-[280px]">
@@ -448,11 +306,11 @@ export function BudgetView({ assetId }: BudgetViewProps) {
         </CardContent>
       </Card>
 
-      {/* ROW 3: Line Items */}
+      {/* Line Item Details */}
       <Card className="border-border bg-card/60">
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-semibold text-foreground">Line Items</h3>
+            <h3 className="text-lg font-bold tracking-tight text-foreground">Line Item Details</h3>
             <div className="relative w-48">
               <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input

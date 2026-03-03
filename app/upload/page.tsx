@@ -220,7 +220,7 @@ function UploadPageContent() {
   };
 
   const steps: { key: WizardStep; label: string }[] = [
-    { key: "select", label: "Select Asset" },
+    { key: "select", label: "Select Project" },
     { key: "upload", label: "Upload File" },
     { key: "sheet", label: "Select Sheet" },
     { key: "preview", label: "Preview" },
@@ -559,7 +559,7 @@ function UploadPageContent() {
               {selectedAssetId && (
                 <Button asChild>
                   <Link href={`/assets/${selectedAssetId}`}>
-                    View Asset <ArrowRight className="ml-2 h-4 w-4" />
+                    View Project <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
               )}

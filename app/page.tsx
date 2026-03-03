@@ -150,7 +150,7 @@ export default function DashboardPage() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-3xl font-bold text-foreground">{formatCurrency(totalValue)}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">{assets.length} assets</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{assets.length} projects</p>
                     <div className="mt-4 space-y-2">
                       {Object.entries(categoryTotals).map(([cat, val]) => (
                         <div key={cat} className="flex items-center justify-between">
@@ -164,7 +164,7 @@ export default function DashboardPage() {
                       ))}
                     </div>
                     <Link href="/assets" className="mt-4 flex items-center gap-1 text-xs text-primary hover:underline">
-                      View all assets <ChevronRight className="h-3 w-3" />
+                      View all projects <ChevronRight className="h-3 w-3" />
                     </Link>
                   </CardContent>
                 </Card>
@@ -183,7 +183,7 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                   <Card className="border-border bg-card/60 backdrop-blur-sm">
                     <CardContent className="p-4">
-                      <p className="text-xs text-muted-foreground">Total Assets</p>
+                      <p className="text-xs text-muted-foreground">Total Projects</p>
                       <p className="text-2xl font-bold text-foreground">{assets.length}</p>
                     </CardContent>
                   </Card>
@@ -203,21 +203,21 @@ export default function DashboardPage() {
                   </Card>
                   <Card className="border-border bg-card/60 backdrop-blur-sm">
                     <CardContent className="p-4">
-                      <p className="text-xs text-muted-foreground">Messages</p>
+                      <p className="text-xs text-muted-foreground">Alerts</p>
                       <p className="text-2xl font-bold text-foreground">{messages.length}</p>
                     </CardContent>
                   </Card>
                 </div>
               </motion.div>
 
-              {/* Asset List */}
+              {/* Project List */}
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
                 <Card className="border-border bg-card/60 backdrop-blur-sm">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="flex items-center gap-2 text-base">
                         <Building2 className="h-4 w-4 text-primary" />
-                        Assets
+                        Projects
                       </CardTitle>
                       <Link href="/assets" className="text-xs text-primary hover:underline">
                         View all \u2192
@@ -246,14 +246,14 @@ export default function DashboardPage() {
                 </Card>
               </motion.div>
 
-              {/* Messages */}
+              {/* Alerts */}
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
                 <Card className="border-border bg-card/60 backdrop-blur-sm">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="flex items-center gap-2 text-base">
                         <MessageSquare className="h-4 w-4 text-primary" />
-                        Recent Messages
+                        Recent Alerts
                       </CardTitle>
                       <Link href="/messages" className="text-xs text-primary hover:underline">
                         View all \u2192
@@ -262,7 +262,7 @@ export default function DashboardPage() {
                   </CardHeader>
                   <CardContent>
                     {messages.length === 0 ? (
-                      <p className="text-sm text-muted-foreground italic">No messages yet</p>
+                      <p className="text-sm text-muted-foreground italic">No alerts yet</p>
                     ) : (
                       <div className="divide-y divide-border">
                         {messages.map((msg) => (

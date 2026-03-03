@@ -20,7 +20,7 @@ import { fetchBillsForAsset, Bill } from "@/lib/bill-service";
 import { formatCentsToDisplay } from "@/lib/bill-parser";
 import { BudgetView } from "@/components/budget/BudgetView";
 import { useRole } from "@/lib/use-role";
-import { AreaChart, Area, ResponsiveContainer } from "recharts";
+import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 import {
   fetchMessages, respondToMessage, getMessageStatus,
   Message,
@@ -174,6 +174,8 @@ export default function AssetDetailPage() {
 
   const formatCompact = (val: number) =>
     `$${val.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  const formatChartVal = (val: number) =>
+    val >= 1000000 ? `$${(val / 1000000).toFixed(1)}M` : val >= 1000 ? `$${Math.round(val / 1000)}K` : `$${val}`;
 
   if (isLoading) {
     return (
@@ -191,9 +193,9 @@ export default function AssetDetailPage() {
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="mx-auto max-w-7xl px-4 py-20 text-center">
-          <p className="text-muted-foreground">Asset not found</p>
+          <p className="text-muted-foreground">Project not found</p>
           <Button asChild variant="outline" className="mt-4">
-            <Link href="/assets">Back to Assets</Link>
+            <Link href="/assets">Back to Projects</Link>
           </Button>
         </div>
       </div>
@@ -209,7 +211,7 @@ export default function AssetDetailPage() {
       <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Back link */}
         <Link href="/assets" className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Back to Assets
+          <ArrowLeft className="h-4 w-4" /> Back to Projects
         </Link>
 
         {/* Header */}
@@ -243,7 +245,7 @@ export default function AssetDetailPage() {
               {tab === "overview" && <DollarSign className="h-4 w-4" />}
               {tab === "bills" && <Calendar className="h-4 w-4" />}
               {tab === "messages" && <MessageSquare className="h-4 w-4" />}
-              {tab}
+              {tab === "messages" ? "Alerts" : tab}
               {tab === "bills" && pendingBills.length > 0 && (
                 <Badge variant="secondary" className="ml-1 text-[10px]">{pendingBills.length}</Badge>
               )}
@@ -274,32 +276,9 @@ export default function AssetDetailPage() {
         {/* ═══ OVERVIEW TAB ═══ */}
         {activeTab === "overview" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-            {/* Row 1: Existing stats */}
-            <div className="grid gap-4 sm:grid-cols-3">
-              <Card className="border-border bg-card/60">
-                <CardContent className="p-5">
-                  <p className="text-xs text-muted-foreground">Estimated Value</p>
-                  <p className="mt-1 text-2xl font-bold text-foreground">{formatCurrency(asset.estimated_value)}</p>
-                </CardContent>
-              </Card>
-              <Card className="border-border bg-card/60">
-                <CardContent className="p-5">
-                  <p className="text-xs text-muted-foreground">Pending Bills</p>
-                  <p className="mt-1 text-2xl font-bold text-foreground">{pendingBills.length}</p>
-                  <p className="text-xs text-muted-foreground">{formatCentsToDisplay(totalPending)} due</p>
-                </CardContent>
-              </Card>
-              <Card className="border-border bg-card/60">
-                <CardContent className="p-5">
-                  <p className="text-xs text-muted-foreground">Messages</p>
-                  <p className="mt-1 text-2xl font-bold text-foreground">{messages.length}</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Row 2: Budget Summary (yearly/monthly toggle) */}
+            {/* Row 1: Budget Summary + Monthly Burn (when has budget) */}
             {hasBudget && (
-              <>
+              <div className="grid gap-6 lg:grid-cols-2">
                 <Card className="border-border bg-card/60">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-4">
@@ -388,7 +367,83 @@ export default function AssetDetailPage() {
                   </CardContent>
                 </Card>
 
-                {/* Row 3: Cost Outlook */}
+                {/* Monthly Burn */}
+                <Card className="border-border bg-card/60">
+                  <CardContent className="p-6">
+                    <h3 className="text-base font-semibold text-foreground mb-4">Monthly Burn</h3>
+                    <div className="h-[220px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={sparklineData} margin={{ top: 5, right: 5, left: 5, bottom: 0 }}>
+                          <defs>
+                            <linearGradient id="overviewBurnGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#7ac142" stopOpacity={0.4} />
+                              <stop offset="100%" stopColor="#7ac142" stopOpacity={0.05} />
+                            </linearGradient>
+                          </defs>
+                          <XAxis
+                            dataKey="month"
+                            tick={{ fill: "#64748b", fontSize: 11 }}
+                            axisLine={false}
+                            tickLine={false}
+                          />
+                          <YAxis
+                            tickFormatter={(v: number) => formatChartVal(v)}
+                            tick={{ fill: "#64748b", fontSize: 11 }}
+                            axisLine={false}
+                            tickLine={false}
+                            width={50}
+                          />
+                          <Tooltip
+                            formatter={(value: number) => [formatCurrency(value), ""]}
+                            contentStyle={{
+                              backgroundColor: "hsl(var(--card))",
+                              border: "1px solid hsl(var(--border))",
+                              borderRadius: "8px",
+                              fontSize: "12px",
+                            }}
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="total"
+                            stroke="#7ac142"
+                            strokeWidth={2}
+                            fill="url(#overviewBurnGradient)"
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Row 2: Stats */}
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Card className="border-border bg-card/60">
+                <CardContent className="p-5">
+                  <p className="text-xs text-muted-foreground">Estimated Value</p>
+                  <p className="mt-1 text-2xl font-bold text-foreground">{formatCurrency(asset.estimated_value)}</p>
+                </CardContent>
+              </Card>
+              <Card className="border-border bg-card/60">
+                <CardContent className="p-5">
+                  <p className="text-xs text-muted-foreground">Pending Bills</p>
+                  <p className="mt-1 text-2xl font-bold text-foreground">{pendingBills.length}</p>
+                  <p className="text-xs text-muted-foreground">{formatCentsToDisplay(totalPending)} due</p>
+                </CardContent>
+              </Card>
+              <Card className="border-border bg-card/60">
+                <CardContent className="p-5">
+                  <p className="text-xs text-muted-foreground">Alerts</p>
+                  <p className="mt-1 text-2xl font-bold text-foreground">{messages.length}</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Cost Outlook + Sparkline (when has budget) */}
+            {hasBudget && (
+              <>
+                {/* Cost Outlook */}
                 <div>
                   <h3 className="text-base font-semibold text-foreground mb-1">Cost Outlook</h3>
                   <p className="text-xs text-muted-foreground mb-4">Projected costs for this asset</p>
@@ -451,7 +506,7 @@ export default function AssetDetailPage() {
               </CardHeader>
               <CardContent>
                 {bills.length === 0 ? (
-                  <p className="text-sm text-muted-foreground italic">No bills linked to this asset</p>
+                  <p className="text-sm text-muted-foreground italic">No bills linked to this project</p>
                 ) : (
                   <div className="space-y-2">
                     {pendingBills.map((bill) => (
@@ -491,11 +546,11 @@ export default function AssetDetailPage() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <Card className="border-border bg-card/60">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">Asset Messages</CardTitle>
+                <CardTitle className="text-base">Project Alerts</CardTitle>
               </CardHeader>
               <CardContent>
                 {messages.length === 0 ? (
-                  <p className="text-sm text-muted-foreground italic">No messages for this asset</p>
+                  <p className="text-sm text-muted-foreground italic">No alerts for this project</p>
                 ) : (
                   <div className="space-y-3">
                     {messages.map((msg) => {
