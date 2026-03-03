@@ -1,0 +1,66 @@
+name: Agent Task Request
+description: Request code changes to be implemented directly from GitHub.
+title: "[agent] "
+labels:
+  - agent-task
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template to request implementation work that can be completed end-to-end from GitHub.
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: What should be built, fixed, or changed?
+      placeholder: Implement a Google OAuth sign-in button on the login page.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Include business context, links, screenshots, or related issues.
+      placeholder: |
+        Users with Google-only Supabase auth cannot log in using email/password.
+        Related issue: #123
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints and non-goals
+      description: Clarify what must not change.
+      placeholder: Do not modify middleware auth logic.
+    validations:
+      required: false
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      description: One requirement per line.
+      placeholder: |
+        - Login page includes "Sign in with Google".
+        - Existing email/password login still works.
+        - Lint passes.
+    validations:
+      required: true
+  - type: textarea
+    id: testing
+    attributes:
+      label: Required test procedure
+      description: If blank, standard lint + focused manual checks will be used.
+      placeholder: Verify by signing in with a Google OAuth account in the browser.
+    validations:
+      required: false
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0 - Urgent
+        - P1 - High
+        - P2 - Normal
+        - P3 - Low
+    validations:
+      required: true
