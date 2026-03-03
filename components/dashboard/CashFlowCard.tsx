@@ -32,7 +32,7 @@ export function CashFlowCard({ summary, upcomingBills }: CashFlowCardProps) {
           </CardTitle>
           <Link
             href="/calendar"
-            className="flex items-center gap-1 text-xs text-primary hover:underline"
+            className="flex items-center gap-1 text-[length:var(--font-size-caption)] text-primary hover:underline"
           >
             Calendar
             <ChevronRight className="h-3 w-3" />
@@ -42,12 +42,12 @@ export function CashFlowCard({ summary, upcomingBills }: CashFlowCardProps) {
       <CardContent className="space-y-4">
         {/* Monthly due */}
         <div>
-          <p className="text-xs text-muted-foreground">Due this month</p>
-          <p className="text-2xl font-bold text-foreground">
+          <p className="text-[length:var(--font-size-caption)] text-muted-foreground">Due this month</p>
+          <p className="data-value text-[length:var(--font-size-section-header)] font-bold text-foreground">
             {formatCentsToDisplay(summary.totalDueThisMonth)}
           </p>
           {summary.paidThisMonth > 0 && (
-            <p className="mt-0.5 text-xs text-emerald-400">
+            <p className="mt-0.5 text-[length:var(--font-size-caption)]" style={{ color: "var(--color-success)" }}>
               {formatCentsToDisplay(summary.paidThisMonth)} paid
             </p>
           )}
@@ -55,9 +55,9 @@ export function CashFlowCard({ summary, upcomingBills }: CashFlowCardProps) {
 
         {/* Overdue warning */}
         {summary.overdueCount > 0 && (
-          <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2">
-            <AlertTriangle className="h-4 w-4 text-red-400" />
-            <span className="text-xs text-red-300">
+          <div className="flex items-center gap-2 rounded-lg border px-3 py-2" style={{ borderColor: "color-mix(in srgb, var(--color-danger) 40%, transparent)", background: "color-mix(in srgb, var(--color-danger) 12%, transparent)" }}>
+            <AlertTriangle className="h-4 w-4" style={{ color: "var(--color-danger)" }} />
+            <span className="text-[length:var(--font-size-caption)]" style={{ color: "var(--color-danger)" }}>
               {summary.overdueCount} overdue bill{summary.overdueCount !== 1 ? "s" : ""}{" "}
               ({formatCentsToDisplay(summary.overdueTotal)})
             </span>
@@ -67,16 +67,16 @@ export function CashFlowCard({ summary, upcomingBills }: CashFlowCardProps) {
         {/* Next 7 days */}
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-xs font-medium text-muted-foreground">
+            <p className="text-[length:var(--font-size-caption)] font-medium text-muted-foreground">
               Next 7 days
             </p>
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline">
               {summary.upcoming7DaysCount} bill{summary.upcoming7DaysCount !== 1 ? "s" : ""}
             </Badge>
           </div>
 
           {summary.upcoming7DaysTotal > 0 && (
-            <p className="mb-3 text-lg font-semibold text-foreground">
+            <p className="data-value mb-3 text-[length:var(--font-size-section-header)] font-semibold text-foreground">
               {formatCentsToDisplay(summary.upcoming7DaysTotal)}
             </p>
           )}
@@ -87,13 +87,13 @@ export function CashFlowCard({ summary, upcomingBills }: CashFlowCardProps) {
               {upcomingBills.slice(0, 4).map((bill) => (
                 <div
                   key={bill.id}
-                  className="flex items-center justify-between rounded-lg bg-background/30 px-2.5 py-1.5"
+                  className="flex min-h-[var(--table-row-height)] items-center justify-between rounded-lg bg-background/30 px-[var(--table-cell-padding-x)] py-[var(--table-cell-padding-y)]"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-medium text-foreground">
+                    <p className="truncate text-[length:var(--font-size-body)] font-medium text-foreground">
                       {bill.title}
                     </p>
-                    <p className="text-[10px] text-muted-foreground">
+                    <p className="text-[length:var(--font-size-caption)] text-muted-foreground">
                       {new Date(bill.due_date + "T00:00:00").toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
@@ -101,7 +101,7 @@ export function CashFlowCard({ summary, upcomingBills }: CashFlowCardProps) {
                       {bill.asset_name && ` · ${bill.asset_name}`}
                     </p>
                   </div>
-                  <p className="ml-2 text-xs font-semibold text-foreground">
+                  <p className="data-value ml-2 font-semibold text-foreground">
                     {formatCentsToDisplay(bill.amount_cents)}
                   </p>
                 </div>
@@ -110,7 +110,7 @@ export function CashFlowCard({ summary, upcomingBills }: CashFlowCardProps) {
               {upcomingBills.length > 4 && (
                 <Link
                   href="/calendar"
-                  className="block pt-1 text-center text-xs text-primary hover:underline"
+                  className="block pt-1 text-center text-[length:var(--font-size-caption)] text-primary hover:underline"
                 >
                   +{upcomingBills.length - 4} more →
                 </Link>
@@ -119,7 +119,7 @@ export function CashFlowCard({ summary, upcomingBills }: CashFlowCardProps) {
           )}
 
           {upcomingBills.length === 0 && summary.upcoming7DaysCount === 0 && (
-            <p className="text-xs text-muted-foreground italic">
+            <p className="text-[length:var(--font-size-caption)] text-muted-foreground italic">
               No bills in the next 7 days
             </p>
           )}

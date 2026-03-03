@@ -196,7 +196,7 @@ export default function AssetsPage() {
               <Building2 className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Projects</h1>
+              <h1 className="page-title font-bold text-foreground">Projects</h1>
             </div>
           </div>
           {isAdmin && (
@@ -207,13 +207,13 @@ export default function AssetsPage() {
         </div>
 
         {/* Search + Filters */}
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-6 flex flex-col gap-[var(--gap)] sm:flex-row sm:items-center sm:justify-between">
           <div className="flex gap-2 flex-wrap">
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setFilter(cat)}
-                className={`rounded-lg px-3 py-1.5 text-sm font-medium capitalize transition-colors ${
+                className={`rounded-lg px-3 py-1.5 text-[length:var(--font-size-body)] font-medium capitalize transition-colors ${
                   filter === cat ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -227,7 +227,7 @@ export default function AssetsPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search projects..."
-              className="pl-9 text-sm h-9"
+              className="pl-9"
             />
           </div>
         </div>
@@ -240,16 +240,16 @@ export default function AssetsPage() {
         ) : filtered.length === 0 ? (
           <div className="text-center py-20">
             <Building2 className="mx-auto mb-3 h-10 w-10 text-muted-foreground/30" />
-            <p className="text-muted-foreground">{searchQuery ? "No projects match your search" : "No projects found"}</p>
+            <p className="text-[length:var(--font-size-body)] text-muted-foreground">{searchQuery ? "No projects match your search" : "No projects found"}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="comfort-grid">
             {filtered.map((asset, i) => (
               <motion.div key={asset.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
                 <div className="relative group">
                   <Link href={`/assets/${asset.id}`}>
                     <Card className={cn(getStrokeClass(asset.category), "bg-card/60 backdrop-blur-sm transition-all hover:bg-card/80")}>
-                      <CardContent className="p-5">
+                      <CardContent>
                         <div className="flex items-start justify-between">
                           <Badge variant="outline" className={`text-xs capitalize ${categoryColors[asset.category] || ""}`}>
                             {asset.category}
@@ -271,10 +271,10 @@ export default function AssetsPage() {
                             <ChevronRight className="h-4 w-4 text-muted-foreground" />
                           </div>
                         </div>
-                        <h3 className="mt-3 text-lg font-semibold text-foreground">{asset.name}</h3>
-                        <p className="mt-1 text-2xl font-bold text-foreground">{formatCurrency(asset.estimated_value)}</p>
+                        <h3 className="mt-3 text-[length:var(--font-size-section-header)] font-semibold text-foreground">{asset.name}</h3>
+                        <p className="data-value mt-1 text-[length:var(--font-size-data)] font-bold text-foreground">{formatCurrency(asset.estimated_value)}</p>
                         {asset.description && (
-                          <p className="mt-2 text-xs text-muted-foreground line-clamp-2">{asset.description}</p>
+                          <p className="mt-2 text-[length:var(--font-size-body)] text-muted-foreground line-clamp-2">{asset.description}</p>
                         )}
                       </CardContent>
                     </Card>
@@ -285,7 +285,7 @@ export default function AssetsPage() {
                     <div className="absolute right-2 top-12 z-10 min-w-[160px] rounded-lg border border-border bg-card shadow-lg py-1">
                       <button
                         onClick={(e) => { e.preventDefault(); openEditModal(asset); }}
-                        className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-foreground hover:bg-muted"
+                        className="flex w-full items-center gap-2 px-3 py-1.5 text-[length:var(--font-size-caption)] text-foreground hover:bg-muted"
                       >
                         <Pencil className="h-3 w-3" /> Edit Project
                       </button>
@@ -294,13 +294,13 @@ export default function AssetsPage() {
                           e.preventDefault();
                           window.location.href = `/upload?asset=${asset.id}&year=${new Date().getFullYear()}`;
                         }}
-                        className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-foreground hover:bg-muted"
+                        className="flex w-full items-center gap-2 px-3 py-1.5 text-[length:var(--font-size-caption)] text-foreground hover:bg-muted"
                       >
                         <Upload className="h-3 w-3" /> Upload Budget
                       </button>
                       <button
                         onClick={(e) => { e.preventDefault(); setDeleteTarget(asset); setOpenMenuId(null); }}
-                        className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-red-400 hover:bg-muted"
+                        className="flex w-full items-center gap-2 px-3 py-1.5 text-[length:var(--font-size-caption)] text-red-400 hover:bg-muted"
                       >
                         <Trash2 className="h-3 w-3" /> Remove Project
                       </button>
@@ -342,7 +342,7 @@ export default function AssetsPage() {
                       <button
                         key={opt.value}
                         onClick={() => setFormCategory(opt.value)}
-                        className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                        className={`flex-1 rounded-lg border px-3 py-2 text-[length:var(--font-size-body)] font-medium transition-colors ${
                           formCategory === opt.value
                             ? `${opt.color} border-current`
                             : "border-border text-muted-foreground hover:text-foreground"
@@ -389,11 +389,11 @@ export default function AssetsPage() {
                     onChange={(e) => setFormDescription(e.target.value)}
                     placeholder="Brief description of the asset"
                     rows={2}
-                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-none"
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 text-[length:var(--font-size-body)] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-none"
                   />
                 </div>
 
-                {formError && <p className="text-sm text-red-400">{formError}</p>}
+                {formError && <p className="text-[length:var(--font-size-body)] text-red-400">{formError}</p>}
 
                 <div className="flex justify-end gap-2 pt-2">
                   <Button variant="outline" onClick={() => setShowModal(false)}>Cancel</Button>
@@ -429,8 +429,8 @@ export default function AssetsPage() {
               </div>
               <p className="text-sm text-muted-foreground mb-2">Are you sure you want to remove this project?</p>
               <div className="rounded-lg border border-border bg-background/50 p-3 mb-4">
-                <p className="text-sm font-semibold text-foreground">{deleteTarget.name}</p>
-                <p className="text-sm text-muted-foreground">{formatCurrency(deleteTarget.estimated_value)}</p>
+                <p className="text-[length:var(--font-size-body)] font-semibold text-foreground">{deleteTarget.name}</p>
+                <p className="data-value text-muted-foreground">{formatCurrency(deleteTarget.estimated_value)}</p>
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>

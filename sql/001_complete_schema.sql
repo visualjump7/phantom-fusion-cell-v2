@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS profiles (
   avatar_url TEXT,
   role TEXT DEFAULT 'user',
   phone TEXT,
+  theme_color TEXT CHECK (theme_color IN ('dark', 'light')) DEFAULT 'dark',
+  theme_density TEXT CHECK (theme_density IN ('compact', 'comfort')) DEFAULT 'compact',
   metadata JSONB DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()

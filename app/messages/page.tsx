@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRole } from "@/lib/use-role";
+import { useThemePreferences } from "@/components/ThemeProvider";
 import {
   fetchMessages,
   respondToMessage,
@@ -30,6 +31,7 @@ export default function MessagesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
   const { isAdmin, isExecutive } = useRole();
+  const { density } = useThemePreferences();
 
   // Response modal
   const [respondingTo, setRespondingTo] = useState<Message | null>(null);
@@ -228,16 +230,16 @@ export default function MessagesPage() {
     return (
       <motion.div key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <Card className={`border-border bg-card/60 backdrop-blur-sm ${isResolved ? "opacity-70" : ""}`}>
-          <CardContent className="p-5">
+          <CardContent className={density === "comfort" ? "space-y-[var(--gap)]" : ""}>
             <div className="flex items-stretch gap-4">
               <div className={`w-0.5 shrink-0 rounded-full ${priorityBarColors[msg.priority] || "bg-white/20"}`} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-4">
-                  <h3 className="text-sm font-semibold text-foreground">{msg.title}</h3>
-                  <span className="shrink-0 text-xs text-muted-foreground">{formatTimeAgo(msg.created_at)}</span>
+                  <h3 className={density === "comfort" ? "text-[length:var(--font-size-section-header)] font-semibold text-foreground" : "text-sm font-semibold text-foreground"}>{msg.title}</h3>
+                  <span className="shrink-0 text-[length:var(--font-size-caption)] text-muted-foreground">{formatTimeAgo(msg.created_at)}</span>
                 </div>
 
-                {msg.body && <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{msg.body}</p>}
+                {msg.body && <p className="mt-2 text-[length:var(--font-size-body)] text-muted-foreground leading-relaxed">{msg.body}</p>}
 
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <Badge variant="outline" className={`text-xs ${priorityColors[msg.priority]}`}>{msg.priority}</Badge>
@@ -254,10 +256,10 @@ export default function MessagesPage() {
 
                 {/* Action buttons — only for pending decisions */}
                 {status === "pending" && (msg.type === "decision" || msg.type === "action_required") && (
-                  <div className="mt-4 flex items-center gap-2">
+                  <div className="decision-actions mt-4">
                     <Button
                       size="sm"
-                      className="text-xs bg-emerald-600 hover:bg-emerald-700"
+                      className="bg-emerald-600 hover:bg-emerald-700"
                       onClick={() => openResponseModal(msg, "approved")}
                       disabled={isSubmitting}
                     >
@@ -265,8 +267,7 @@ export default function MessagesPage() {
                     </Button>
                     <Button
                       size="sm"
-                      variant="outline"
-                      className="text-xs border-red-500/30 text-red-400 hover:bg-red-500/10"
+                      className="bg-red-600 text-white hover:bg-red-700"
                       onClick={() => openResponseModal(msg, "rejected")}
                       disabled={isSubmitting}
                     >
@@ -274,8 +275,8 @@ export default function MessagesPage() {
                     </Button>
                     <Button
                       size="sm"
-                      variant="ghost"
-                      className="text-xs text-muted-foreground"
+                      variant={density === "comfort" ? "secondary" : "ghost"}
+                      className={density === "comfort" ? "" : "text-xs text-muted-foreground"}
                       onClick={() => handleQuickAcknowledge(msg.id)}
                       disabled={isSubmitting}
                     >
@@ -313,11 +314,11 @@ export default function MessagesPage() {
               <MessageSquare className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Alerts</h1>
-              <p className="text-sm text-muted-foreground">Review and respond</p>
+              <h1 className="page-title font-bold text-foreground">Alerts</h1>
+              <p className="text-[length:var(--font-size-body)] text-muted-foreground">Review and respond</p>
             </div>
           </div>
-          <Button size="sm" variant="outline" onClick={() => setShowReply(!showReply)}>
+          <Button size="sm" variant={density === "comfort" ? "default" : "outline"} onClick={() => setShowReply(!showReply)}>
             <Send className="mr-2 h-4 w-4" />Send Message
           </Button>
         </div>
@@ -328,7 +329,7 @@ export default function MessagesPage() {
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="mb-6">
               <Card className="border-primary/30 bg-card/80">
                 <CardContent className="p-4">
-                  <p className="mb-3 text-sm font-medium text-foreground">
+                  <p className="mb-3 text-[length:var(--font-size-body)] font-medium text-foreground">
                     {isExecutive ? "Send a message to your Fusion Cell team" : "Send a message"}
                   </p>
                   <div className="flex gap-2">
@@ -345,10 +346,10 @@ export default function MessagesPage() {
         </AnimatePresence>
 
         {/* Filters */}
-        <div className="mb-6 flex flex-wrap gap-2">
+        <div className="mb-6 flex flex-wrap gap-[calc(var(--gap)/2)]">
           {["all", "decision", "action_required", "alert", "update", "comment"].map((t) => (
             <button key={t} onClick={() => setFilter(t)}
-              className={`rounded-lg px-3 py-1.5 text-sm font-medium capitalize transition-colors ${
+              className={`rounded-lg px-3 py-1.5 text-[length:var(--font-size-body)] font-medium capitalize transition-colors ${
                 filter === t ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
               }`}>
               {t === "all" ? "All" : t === "comment" ? "Replies" : t.replace("_", " ")}
@@ -363,12 +364,12 @@ export default function MessagesPage() {
         {isLoading ? (
           <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
         ) : messages.length === 0 ? (
-          <p className="text-center text-muted-foreground py-20">No alerts</p>
+          <p className="text-center text-[length:var(--font-size-body)] text-muted-foreground py-20">No alerts</p>
         ) : (
           <div className="space-y-6">
             {pendingDecisions.length > 0 && (
               <div>
-                <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+                <h2 className="mb-3 flex items-center gap-2 text-[length:var(--font-size-body)] font-semibold text-foreground">
                   <div className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
                   Needs Your Response ({pendingDecisions.length})
                 </h2>
@@ -378,7 +379,7 @@ export default function MessagesPage() {
 
             {awaitingConfirmation.length > 0 && (
               <div>
-                <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+                <h2 className="mb-3 flex items-center gap-2 text-[length:var(--font-size-body)] font-semibold text-foreground">
                   <Clock className="h-4 w-4 text-amber-400" />
                   Awaiting Team Confirmation ({awaitingConfirmation.length})
                 </h2>
@@ -388,14 +389,14 @@ export default function MessagesPage() {
 
             {otherMessages.length > 0 && (
               <div>
-                <h2 className="mb-3 text-sm font-semibold text-muted-foreground">Other Alerts</h2>
+                <h2 className="mb-3 text-[length:var(--font-size-body)] font-semibold text-muted-foreground">Other Alerts</h2>
                 <div className="space-y-3">{otherMessages.map(renderMessage)}</div>
               </div>
             )}
 
             {confirmed.length > 0 && (
               <div>
-                <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                <h2 className="mb-3 flex items-center gap-2 text-[length:var(--font-size-body)] font-semibold text-muted-foreground">
                   <ShieldCheck className="h-4 w-4 text-primary" />
                   Completed ({confirmed.length})
                 </h2>
@@ -449,7 +450,7 @@ export default function MessagesPage() {
                 value={respondComment}
                 onChange={(e) => setRespondComment(e.target.value)}
                 placeholder="Add a note (optional)..."
-                className="mb-4 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-none"
+                className="mb-4 min-h-[var(--tap-target-min)] w-full rounded-lg border border-border bg-background px-3 py-2 text-[length:var(--font-size-body)] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-none"
                 rows={3}
                 autoFocus
               />
