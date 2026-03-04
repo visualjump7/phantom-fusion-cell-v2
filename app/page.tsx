@@ -92,7 +92,7 @@ export default function DashboardPage() {
     urgent: "bg-red-500",
     high: "bg-amber-500",
     medium: "bg-blue-500",
-    low: "bg-white/20",
+    low: "bg-border",
   };
 
   const priorityColors: Record<string, string> = {
@@ -285,7 +285,7 @@ export default function DashboardPage() {
                             href="/messages"
                             className="flex min-h-[var(--table-row-height)] items-stretch gap-3 rounded-lg px-[var(--table-cell-padding-x)] py-[var(--table-cell-padding-y)] transition-colors hover:bg-muted/30"
                           >
-                            <div className={`w-0.5 shrink-0 rounded-full ${priorityBarColors[msg.priority] || "bg-white/20"}`} />
+                            <div className={`w-0.5 shrink-0 rounded-full ${priorityBarColors[msg.priority] || "bg-border"}`} />
                             <div className="flex-1 min-w-0">
                               <p className="text-[length:var(--font-size-body)] font-medium text-foreground truncate">{msg.title}</p>
                               <div className="mt-1 flex items-center gap-2">

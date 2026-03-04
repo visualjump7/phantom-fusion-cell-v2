@@ -125,7 +125,7 @@ export default function MessagesPage() {
     urgent: "bg-red-500",
     high: "bg-amber-500",
     medium: "bg-blue-500",
-    low: "bg-white/20",
+    low: "bg-border",
   };
 
   const priorityColors: Record<string, string> = {
@@ -232,7 +232,7 @@ export default function MessagesPage() {
         <Card className={`border-border bg-card/60 backdrop-blur-sm ${isResolved ? "opacity-70" : ""}`}>
           <CardContent className={density === "comfort" ? "space-y-[var(--gap)]" : ""}>
             <div className="flex items-stretch gap-4">
-              <div className={`w-0.5 shrink-0 rounded-full ${priorityBarColors[msg.priority] || "bg-white/20"}`} />
+              <div className={`w-0.5 shrink-0 rounded-full ${priorityBarColors[msg.priority] || "bg-border"}`} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-4">
                   <h3 className={density === "comfort" ? "text-[length:var(--font-size-section-header)] font-semibold text-foreground" : "text-sm font-semibold text-foreground"}>{msg.title}</h3>
