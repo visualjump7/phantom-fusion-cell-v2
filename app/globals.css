@@ -599,48 +599,48 @@ html[data-density="comfort"] .density-table tbody tr:nth-child(even) {
 }
 
 /* ================================================================
-   LIGHT THEME — Navbar: clean white with subtle bottom border
+   LIGHT THEME — Navbar: dark/black header for contrast
    ================================================================ */
 [data-theme="light"] nav.sticky {
-  background-color: rgba(255, 255, 255, 0.92) !important;
-  border-bottom-color: #d2d2d7 !important;
-  color: #1d1d1f !important;
-  backdrop-filter: saturate(180%) blur(20px) !important;
-  -webkit-backdrop-filter: saturate(180%) blur(20px) !important;
+  background-color: #1d1d1f !important;
+  border-bottom-color: #000000 !important;
+  color: #f5f5f7 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 [data-theme="light"] nav.sticky a,
 [data-theme="light"] nav.sticky button {
-  color: #6e6e73 !important;
+  color: rgba(255, 255, 255, 0.7) !important;
 }
 [data-theme="light"] nav.sticky a:hover,
 [data-theme="light"] nav.sticky button:hover {
-  color: #1d1d1f !important;
-  background-color: rgba(0, 0, 0, 0.04) !important;
+  color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
 }
 [data-theme="light"] nav.sticky [class*="bg-primary\/10"] {
-  background-color: rgba(0, 113, 227, 0.08) !important;
+  background-color: rgba(255, 255, 255, 0.12) !important;
 }
 [data-theme="light"] nav.sticky [class*="text-primary"] {
-  color: #0071e3 !important;
+  color: #ffffff !important;
 }
 [data-theme="light"] nav.sticky a[class*="border-primary"] {
-  border-color: #0071e3 !important;
+  border-color: #ffffff !important;
 }
 [data-theme="light"] nav.sticky [class*="bg-card"] {
-  background-color: #ffffff !important;
-  border-color: #d2d2d7 !important;
+  background-color: #2d2d2f !important;
+  border-color: #3d3d3f !important;
 }
 [data-theme="light"] nav.sticky [class*="bg-card"] a,
 [data-theme="light"] nav.sticky [class*="bg-card"] button {
-  color: #1d1d1f !important;
+  color: rgba(255, 255, 255, 0.85) !important;
 }
 [data-theme="light"] nav.sticky [class*="bg-card"] a:hover,
 [data-theme="light"] nav.sticky [class*="bg-card"] button:hover {
-  color: #0071e3 !important;
-  background-color: rgba(0, 113, 227, 0.06) !important;
+  color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.10) !important;
 }
 [data-theme="light"] nav.sticky [class*="bg-background"] {
-  background-color: rgba(255, 255, 255, 0.92) !important;
+  background-color: #1d1d1f !important;
 }
 [data-theme="light"] nav.sticky a[class*="bg-primary"],
 [data-theme="light"] nav.sticky button[class*="bg-primary"] {
@@ -648,10 +648,14 @@ html[data-density="comfort"] .density-table tbody tr:nth-child(even) {
 }
 [data-theme="light"] nav.sticky .text-foreground,
 [data-theme="light"] nav.sticky span.text-foreground {
-  color: #1d1d1f !important;
+  color: #ffffff !important;
 }
 [data-theme="light"] nav.sticky .text-lg {
-  color: #1d1d1f !important;
+  color: #ffffff !important;
+}
+[data-theme="light"] nav.sticky .border-t.border-border.bg-background {
+  background-color: #1d1d1f !important;
+  border-color: #3d3d3f !important;
 }
 
 /* ================================================================
@@ -709,11 +713,6 @@ html[data-density="comfort"] .density-table tbody tr:nth-child(even) {
 /* Light theme: cards get clean rounded corners with subtle shadows */
 [data-theme="light"] .rounded-lg.border.bg-card {
   box-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.03);
-}
-
-/* Light theme: mobile menu */
-[data-theme="light"] nav.sticky .border-t.border-border.bg-background {
-  background-color: #ffffff !important;
 }
 
 /* Light theme: login page */
@@ -812,3 +811,91 @@ html[data-density="comfort"] .density-table tbody tr:nth-child(even) {
 [data-theme="light"] .bg-black\/60 {
   background-color: rgba(0, 0, 0, 0.35) !important;
 }
+
+/* ================================================================
+   LIGHT THEME — Section differentials: alternating black & white
+   ================================================================ */
+[data-theme="light"] .section-dark {
+  background-color: #1d1d1f;
+  color: #f5f5f7;
+}
+[data-theme="light"] .section-dark .text-foreground {
+  color: #f5f5f7 !important;
+}
+[data-theme="light"] .section-dark .text-muted-foreground {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+[data-theme="light"] .section-dark .caption-text {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+[data-theme="light"] .section-dark .text-primary {
+  color: #64d2ff !important;
+}
+[data-theme="light"] .section-dark .bg-primary\/10 {
+  background-color: rgba(100, 210, 255, 0.12) !important;
+}
+
+[data-theme="light"] .section-white {
+  background-color: #ffffff;
+}
+
+[data-theme="light"] .section-gray {
+  background-color: #f5f5f7;
+}
+
+/* Light theme: mobile menu on dark navbar */
+[data-theme="light"] nav.sticky .border-t.border-border.bg-background {
+  background-color: #1d1d1f !important;
+  border-color: #3d3d3f !important;
+}
+
+/* ================================================================
+   Smooth entrance animation utilities
+   ================================================================ */
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-slide-up {
+  animation: fadeSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.10s; }
+.stagger-3 { animation-delay: 0.18s; }
+.stagger-4 { animation-delay: 0.26s; }
+.stagger-5 { animation-delay: 0.34s; }
+.stagger-6 { animation-delay: 0.42s; }
+.stagger-7 { animation-delay: 0.50s; }
+.stagger-8 { animation-delay: 0.58s; }

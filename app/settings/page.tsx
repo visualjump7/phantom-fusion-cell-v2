@@ -96,8 +96,8 @@ export default function SettingsPage() {
         <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
       </div>
       <Navbar />
-      <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-8 flex items-center gap-3">
+      <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }} className="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }} className="mb-8 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
             <Settings className="h-5 w-5 text-primary" />
           </div>
@@ -105,10 +105,11 @@ export default function SettingsPage() {
             <h1 className="text-2xl font-bold text-foreground">Settings</h1>
             <p className="text-sm text-muted-foreground">Manage your account and preferences</p>
           </div>
-        </div>
+        </motion.div>
 
         <div className="space-y-6">
           {/* ═══ PROFILE ═══ */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
           <Card className="border-border bg-card/60">
             <CardHeader className="pb-4">
               <div className="flex items-center gap-2">
@@ -153,8 +154,10 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
+          </motion.div>
 
           {/* ═══ PASSWORD ═══ */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
           <Card className="border-border bg-card/60">
             <CardHeader className="pb-4">
               <div className="flex items-center gap-2">
@@ -189,8 +192,10 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
+          </motion.div>
 
           {/* ═══ APPEARANCE ═══ */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
           <Card className="border-border bg-card/60">
             <CardHeader className="pb-4">
               <div className="flex items-center gap-2">
@@ -279,6 +284,7 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
+          </motion.div>
         </div>
       </motion.main>
     </div>

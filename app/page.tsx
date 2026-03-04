@@ -51,7 +51,7 @@ export default function DashboardPage() {
   const [billSummary, setBillSummary] = useState<BillSummary | null>(null);
   const [upcomingBills, setUpcomingBills] = useState<Bill[]>([]);
   const { userName, isAdmin, isExecutive } = useRole();
-  const { density } = useThemePreferences();
+  const { density, theme } = useThemePreferences();
 
   useEffect(() => {
     async function loadData() {
@@ -107,6 +107,19 @@ export default function DashboardPage() {
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const displayName = userName ? userName.charAt(0).toUpperCase() + userName.slice(1) : "Guest";
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.08, delayChildren: 0.1 },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } },
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="fixed inset-0 -z-10 overflow-hidden">
@@ -116,22 +129,31 @@ export default function DashboardPage() {
 
       <Navbar />
 
-      <motion.main
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="mx-auto max-w-7xl px-4 py-[var(--gap)] sm:px-6 lg:px-8"
-      >
-        {/* Header */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+      {/* Hero Header — dark on light theme */}
+      <div className={theme === "light" ? "section-dark" : ""}>
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8"
+        >
           <h1 className="page-title font-bold text-foreground">
             {greeting}, {displayName}
           </h1>
-          <p className="caption-text">
+          <p className={theme === "light" ? "caption-text" : "caption-text"}>
             {isExecutive
               ? "Here\u2019s your financial overview"
               : "Fusion Cell command center"}
           </p>
         </motion.div>
+      </div>
+
+      <motion.main
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        className="mx-auto max-w-7xl px-4 py-[var(--gap)] sm:px-6 lg:px-8"
+      >
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
@@ -148,7 +170,7 @@ export default function DashboardPage() {
             {/* Left Column */}
             <div className={density === "comfort" ? "space-y-[var(--gap)]" : "space-y-6 lg:col-span-4"}>
               {/* Portfolio Value */}
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} data-section="portfolio">
+              <motion.div variants={itemVariants} data-section="portfolio">
                 <Card className="border-border bg-card/60 backdrop-blur-sm">
                   <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2 text-base">
@@ -179,7 +201,7 @@ export default function DashboardPage() {
               </motion.div>
 
               {/* Cash Flow */}
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} data-section="cashflow">
+              <motion.div variants={itemVariants} data-section="cashflow">
                 <CashFlowCard summary={billSummary} upcomingBills={upcomingBills} />
               </motion.div>
             </div>
@@ -187,7 +209,7 @@ export default function DashboardPage() {
             {/* Right Column */}
             <div className={density === "comfort" ? "space-y-[var(--gap)]" : "space-y-6 lg:col-span-8"}>
               {/* Quick Stats */}
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} data-section="stats">
+              <motion.div variants={itemVariants} data-section="stats">
                 <div
                   className={
                     density === "comfort"
@@ -225,7 +247,7 @@ export default function DashboardPage() {
               </motion.div>
 
               {/* Project List */}
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} data-section="projects">
+              <motion.div variants={itemVariants} data-section="projects">
                 <Card className="border-border bg-card/60 backdrop-blur-sm">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
@@ -261,7 +283,7 @@ export default function DashboardPage() {
               </motion.div>
 
               {/* Alerts */}
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} data-section="alerts">
+              <motion.div variants={itemVariants} data-section="alerts">
                 <Card className="border-border bg-card/60 backdrop-blur-sm">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">

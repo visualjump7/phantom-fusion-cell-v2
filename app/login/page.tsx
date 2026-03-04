@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -41,9 +42,19 @@ export default function LoginPage() {
         <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-primary/5 blur-3xl" />
       </div>
 
-      <div className="w-full max-w-md px-4">
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full max-w-md px-4"
+      >
         {/* Logo */}
-        <div className="mb-8 text-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.15, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="mb-8 text-center"
+        >
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
             <Sparkles className="h-8 w-8 text-primary" />
           </div>
@@ -51,10 +62,15 @@ export default function LoginPage() {
           <p className="mt-1 text-sm text-muted-foreground">
             Executive Financial Command Center
           </p>
-        </div>
+        </motion.div>
 
         {/* Login Form */}
-        <div className="rounded-2xl border border-border bg-card/60 p-8 backdrop-blur-sm">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="rounded-2xl border border-border bg-card/60 p-8 backdrop-blur-sm"
+        >
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="mb-1.5 block text-sm font-medium text-foreground">
@@ -97,8 +113,8 @@ export default function LoginPage() {
               )}
             </Button>
           </form>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }

@@ -188,9 +188,9 @@ export default function AssetsPage() {
         <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
       </div>
       <Navbar />
-      <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }} className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }} className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
               <Building2 className="h-5 w-5 text-primary" />
@@ -204,10 +204,10 @@ export default function AssetsPage() {
               <Plus className="mr-2 h-4 w-4" /> Add Project
             </Button>
           )}
-        </div>
+        </motion.div>
 
         {/* Search + Filters */}
-        <div className="mb-6 flex flex-col gap-[var(--gap)] sm:flex-row sm:items-center sm:justify-between">
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08, duration: 0.5, ease: [0.16, 1, 0.3, 1] }} className="mb-6 flex flex-col gap-[var(--gap)] sm:flex-row sm:items-center sm:justify-between">
           <div className="flex gap-2 flex-wrap">
             {categories.map((cat) => (
               <button
@@ -230,7 +230,7 @@ export default function AssetsPage() {
               className="pl-9"
             />
           </div>
-        </div>
+          </motion.div>
 
         {/* Asset Grid */}
         {isLoading ? (
@@ -245,7 +245,7 @@ export default function AssetsPage() {
         ) : (
           <div className="comfort-grid">
             {filtered.map((asset, i) => (
-              <motion.div key={asset.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+              <motion.div key={asset.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
                 <div className="relative group">
                   <Link href={`/assets/${asset.id}`}>
                     <Card className={cn(getStrokeClass(asset.category), "bg-card/60 backdrop-blur-sm transition-all hover:bg-card/80")}>
