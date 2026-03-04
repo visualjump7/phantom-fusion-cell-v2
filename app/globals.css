@@ -14,8 +14,8 @@
     --bg-zebra-stripe: #141414;
     --text-primary: #e0e0e0;
     --text-secondary: #a0a0a0;
-    --accent-primary: #4a9eff;
-    --accent-navy: #1565c0;
+    --accent-primary: #4ade80;
+    --accent-navy: #166534;
     --border-color: #333333;
 
     --color-success: #4caf50;
@@ -23,7 +23,7 @@
     --color-danger: #f44336;
     --color-info: #90a4ae;
 
-    --chart-1: #4a9eff;
+    --chart-1: #4ade80;
     --chart-2: #26c6da;
     --chart-3: #66bb6a;
     --chart-4: #ab47bc;
@@ -31,7 +31,7 @@
     --chart-neutral: #555555;
 
     --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-    --focus-ring-color: #4a9eff;
+    --focus-ring-color: #4ade80;
 
     --background: 0 0% 4%;
     --foreground: 0 0% 88%;
@@ -39,7 +39,7 @@
     --card-foreground: 0 0% 88%;
     --popover: 0 0% 10%;
     --popover-foreground: 0 0% 88%;
-    --primary: 212 100% 64%;
+    --primary: 142 71% 65%;
     --primary-foreground: 0 0% 5%;
     --secondary: 0 0% 11%;
     --secondary-foreground: 0 0% 88%;
@@ -51,7 +51,7 @@
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 20%;
     --input: 0 0% 20%;
-    --ring: 212 100% 64%;
+    --ring: 142 71% 65%;
     --radius: 0.75rem;
   }
 
@@ -66,16 +66,16 @@
     --accent-navy: #0a2647;
     --border-color: #d0d5dd;
 
-    --color-success: #1b5e20;
-    --color-warning: #e65100;
-    --color-danger: #b71c1c;
-    --color-info: #37474f;
+    --color-success: #2e7d5b;
+    --color-warning: #b07d3a;
+    --color-danger: #9e4a4a;
+    --color-info: #5a6f7a;
 
     --chart-1: #004a99;
     --chart-2: #0277bd;
     --chart-3: #00695c;
     --chart-4: #4527a0;
-    --chart-5: #e65100;
+    --chart-5: #b07d3a;
     --chart-neutral: #b0bec5;
 
     --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -110,26 +110,26 @@
   [data-density="compact"] {
     --font-family-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --font-family-mono: "Roboto Mono", monospace;
-    --font-size-page-title: 24px;
-    --font-size-section-header: 20px;
-    --font-size-body: 14px;
-    --font-size-data: 14px;
-    --font-size-caption: 12px;
-    --font-size-button: 14px;
+    --font-size-page-title: 22px;
+    --font-size-section-header: 18px;
+    --font-size-body: 13px;
+    --font-size-data: 13px;
+    --font-size-caption: 11px;
+    --font-size-button: 13px;
     --font-weight-body: 400;
     --font-weight-data: 400;
-    --line-height-body: 1.4;
+    --line-height-body: 1.35;
     --letter-spacing-body: normal;
 
     --tap-target-min: 44px;
-    --card-padding: 16px;
-    --gap: 12px;
+    --card-padding: 14px;
+    --gap: 10px;
     --grid-cols-desktop: 3;
     --grid-cols-tablet: 2;
     --grid-cols-mobile: 1;
-    --paragraph-spacing: 12px;
+    --paragraph-spacing: 10px;
 
-    --table-row-height: 40px;
+    --table-row-height: 36px;
     --table-cell-padding-x: 8px;
     --table-cell-padding-y: 6px;
 
@@ -143,32 +143,32 @@
   [data-density="comfort"] {
     --font-family-body: "Atkinson Hyperlegible", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --font-family-mono: "Atkinson Hyperlegible Mono", "Roboto Mono", monospace;
-    --font-size-page-title: 30px;
-    --font-size-section-header: 24px;
-    --font-size-body: 18px;
-    --font-size-data: 20px;
-    --font-size-caption: 16px;
-    --font-size-button: 18px;
+    --font-size-page-title: 34px;
+    --font-size-section-header: 28px;
+    --font-size-body: 20px;
+    --font-size-data: 22px;
+    --font-size-caption: 17px;
+    --font-size-button: 20px;
     --font-weight-body: 500;
     --font-weight-data: 500;
-    --line-height-body: 1.6;
-    --letter-spacing-body: 0.02em;
+    --line-height-body: 1.75;
+    --letter-spacing-body: 0.025em;
 
-    --tap-target-min: 60px;
-    --card-padding: 28px;
-    --gap: 20px;
+    --tap-target-min: 64px;
+    --card-padding: 36px;
+    --gap: 28px;
     --grid-cols-desktop: 2;
     --grid-cols-tablet: 1;
     --grid-cols-mobile: 1;
-    --paragraph-spacing: 20px;
+    --paragraph-spacing: 28px;
 
-    --table-row-height: 60px;
-    --table-cell-padding-x: 16px;
-    --table-cell-padding-y: 12px;
+    --table-row-height: 68px;
+    --table-cell-padding-x: 20px;
+    --table-cell-padding-y: 16px;
 
-    --button-height: 60px;
+    --button-height: 68px;
     --focus-ring-width: 3px;
-    --decision-button-gap: 24px;
+    --decision-button-gap: 32px;
 
     --nav-show-labels: 1;
   }
@@ -385,4 +385,99 @@ html[data-density="comfort"] .density-table tbody tr:nth-child(even) {
 .asset-card-stroke-default:hover {
   --stroke-color: rgba(156, 163, 175, 0.9);
   animation: asset-stroke-glow 1.4s ease-in-out infinite;
+}
+
+/* ================================================================
+   LIGHT THEME — Calendar & Bills pastel overrides
+   ================================================================ */
+[data-theme="light"] .bg-amber-500\/10 {
+  background-color: rgba(180, 160, 120, 0.08) !important;
+}
+[data-theme="light"] .bg-orange-500\/15 {
+  background-color: rgba(176, 125, 58, 0.10) !important;
+}
+[data-theme="light"] .bg-red-500\/15 {
+  background-color: rgba(158, 74, 74, 0.10) !important;
+}
+[data-theme="light"] .bg-red-500\/25 {
+  background-color: rgba(158, 74, 74, 0.15) !important;
+}
+[data-theme="light"] .ring-red-500\/50 {
+  --tw-ring-color: rgba(158, 74, 74, 0.35) !important;
+}
+[data-theme="light"] .text-amber-500\/70 {
+  color: #b07d3a !important;
+}
+[data-theme="light"] .text-red-500\/70 {
+  color: #9e4a4a !important;
+}
+[data-theme="light"] .bg-amber-500\/20 {
+  background-color: rgba(180, 160, 120, 0.12) !important;
+}
+[data-theme="light"] .bg-orange-500\/25 {
+  background-color: rgba(176, 125, 58, 0.14) !important;
+}
+[data-theme="light"] .bg-red-500\/30 {
+  background-color: rgba(158, 74, 74, 0.18) !important;
+}
+
+[data-theme="light"] .bg-emerald-500\/20 {
+  background-color: rgba(46, 125, 91, 0.12) !important;
+}
+[data-theme="light"] .text-emerald-400 {
+  color: #2e7d5b !important;
+}
+[data-theme="light"] .border-emerald-500\/30 {
+  border-color: rgba(46, 125, 91, 0.25) !important;
+}
+[data-theme="light"] .bg-amber-500\/20 {
+  background-color: rgba(176, 125, 58, 0.12) !important;
+}
+[data-theme="light"] .text-amber-400 {
+  color: #b07d3a !important;
+}
+[data-theme="light"] .border-amber-500\/30 {
+  border-color: rgba(176, 125, 58, 0.25) !important;
+}
+[data-theme="light"] .bg-orange-500\/20 {
+  background-color: rgba(176, 125, 58, 0.10) !important;
+}
+[data-theme="light"] .text-orange-400 {
+  color: #a06830 !important;
+}
+[data-theme="light"] .border-orange-500\/30 {
+  border-color: rgba(176, 125, 58, 0.20) !important;
+}
+[data-theme="light"] .bg-red-500\/20 {
+  background-color: rgba(158, 74, 74, 0.12) !important;
+}
+[data-theme="light"] .text-red-400 {
+  color: #9e4a4a !important;
+}
+[data-theme="light"] .border-red-500\/50 {
+  border-color: rgba(158, 74, 74, 0.35) !important;
+}
+[data-theme="light"] .border-red-500\/30 {
+  border-color: rgba(158, 74, 74, 0.22) !important;
+}
+[data-theme="light"] .bg-yellow-500\/20 {
+  background-color: rgba(180, 160, 120, 0.12) !important;
+}
+[data-theme="light"] .text-yellow-400 {
+  color: #a09040 !important;
+}
+[data-theme="light"] .border-yellow-500\/30 {
+  border-color: rgba(180, 160, 120, 0.25) !important;
+}
+[data-theme="light"] .bg-pink-500\/20 {
+  background-color: rgba(158, 74, 100, 0.10) !important;
+}
+[data-theme="light"] .text-pink-400 {
+  color: #9e4a64 !important;
+}
+[data-theme="light"] .border-pink-500\/30 {
+  border-color: rgba(158, 74, 100, 0.22) !important;
+}
+[data-theme="light"] .hover\:text-emerald-300:hover {
+  color: #2e7d5b !important;
 }
