@@ -153,7 +153,7 @@ export default function DashboardPage() {
                   <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2 text-base">
                       <TrendingUp className="h-4 w-4 text-primary" />
-                      Portfolio
+                      Total Projects
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
