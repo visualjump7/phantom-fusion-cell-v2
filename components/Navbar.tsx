@@ -37,6 +37,7 @@ interface NavItem {
 const mainNavItems: NavItem[] = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Directory", href: "/assets", icon: Building2 },
+  { name: "Cash Flow", href: "/cash-flow", icon: DollarSign },
   { name: "Calendar", href: "/calendar", icon: CalendarIcon },
   { name: "Alerts", href: "/messages", icon: MessageSquare },
 ];
@@ -44,7 +45,6 @@ const mainNavItems: NavItem[] = [
 const adminNavItems: NavItem[] = [
   { name: "Budget Upload", href: "/upload", icon: TrendingUp },
   { name: "Bills", href: "/admin/bills", icon: Receipt },
-  { name: "Cash Flow", href: "/calendar", icon: DollarSign },
   { name: "Send Alerts", href: "/admin/messages", icon: SendHorizontal },
 ];
 

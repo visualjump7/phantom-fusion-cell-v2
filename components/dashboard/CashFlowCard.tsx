@@ -31,10 +31,10 @@ export function CashFlowCard({ summary, upcomingBills }: CashFlowCardProps) {
             Cash Flow
           </CardTitle>
           <Link
-            href="/calendar"
+            href="/cash-flow?view=chart"
             className="flex items-center gap-1 text-[length:var(--font-size-caption)] text-primary hover:underline"
           >
-            Calendar
+            Cash Flow
             <ChevronRight className="h-3 w-3" />
           </Link>
         </div>
@@ -109,7 +109,7 @@ export function CashFlowCard({ summary, upcomingBills }: CashFlowCardProps) {
 
               {upcomingBills.length > 4 && (
                 <Link
-                  href="/calendar"
+                  href="/cash-flow"
                   className="block pt-1 text-center text-[length:var(--font-size-caption)] text-primary hover:underline"
                 >
                   +{upcomingBills.length - 4} more →
