@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
-  Settings, User, Lock, Sun, Moon, Loader2, CheckCircle,
+  Settings, User, Lock, Sun, Moon, Loader2, CheckCircle, MonitorSmartphone,
   AlertCircle,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
@@ -13,14 +13,14 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
 import { useRole } from "@/lib/use-role";
-import { useTheme } from "@/components/ThemeProvider";
+import { useThemePreferences } from "@/components/ThemeProvider";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
 
 export default function SettingsPage() {
   const { role, userName, userEmail, userId } = useRole();
-  const { theme, setTheme } = useTheme();
+  const { theme, density, setTheme, setDensity } = useThemePreferences();
 
   // Profile
   const [fullName, setFullName] = useState("");
@@ -198,52 +198,84 @@ export default function SettingsPage() {
                 <CardTitle className="text-base">Appearance</CardTitle>
               </div>
             </CardHeader>
-            <CardContent>
-              <p className="mb-4 text-sm text-muted-foreground">Choose your preferred color theme</p>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setTheme("dark")}
-                  className={`relative flex flex-col items-center gap-3 rounded-xl border-2 p-4 transition-all ${
-                    theme === "dark" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
-                  }`}
-                >
-                  <div className="flex h-20 w-full items-end gap-1.5 rounded-lg bg-black p-3 border border-[hsl(0,0%,14%)]">
-                    <div className="h-3 w-8 rounded bg-[hsl(95,55%,50%)]" />
-                    <div className="h-2 w-6 rounded bg-[hsl(0,0%,18%)]" />
-                    <div className="h-4 w-4 rounded bg-[hsl(0,0%,3%)]" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Moon className="h-4 w-4" />
-                    <span className="text-sm font-medium">Dark</span>
-                  </div>
-                  {theme === "dark" && (
-                    <div className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
-                      <CheckCircle className="h-3 w-3 text-primary-foreground" />
-                    </div>
-                  )}
-                </button>
+            <CardContent className="space-y-6">
+              <div>
+                <div className="mb-2 flex items-center gap-2">
+                  <Sun className="h-4 w-4 text-primary" />
+                  <p className="text-sm font-medium text-foreground">Color Theme</p>
+                </div>
+                <p className="mb-3 text-xs text-muted-foreground">Choose your preferred color palette.</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setTheme("dark")}
+                    className={`relative flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all ${
+                      theme === "dark" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                    }`}
+                  >
+                    <Moon className="h-5 w-5" />
+                    <span className="text-sm font-semibold">Dark</span>
+                    {theme === "dark" && (
+                      <div className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
+                        <CheckCircle className="h-3 w-3 text-primary-foreground" />
+                      </div>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setTheme("light")}
+                    className={`relative flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all ${
+                      theme === "light" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                    }`}
+                  >
+                    <Sun className="h-5 w-5" />
+                    <span className="text-sm font-semibold">Light</span>
+                    {theme === "light" && (
+                      <div className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
+                        <CheckCircle className="h-3 w-3 text-primary-foreground" />
+                      </div>
+                    )}
+                  </button>
+                </div>
+              </div>
 
-                <button
-                  onClick={() => setTheme("light")}
-                  className={`relative flex flex-col items-center gap-3 rounded-xl border-2 p-4 transition-all ${
-                    theme === "light" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
-                  }`}
-                >
-                  <div className="flex h-20 w-full items-end gap-1.5 rounded-lg bg-[#D3D5D8] p-3 border border-[#ACB1B6]">
-                    <div className="h-3 w-8 rounded bg-[hsl(95,55%,38%)]" />
-                    <div className="h-2 w-6 rounded bg-[#ACB1B6]" />
-                    <div className="h-4 w-4 rounded bg-[#E2E3E6]" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Sun className="h-4 w-4" />
-                    <span className="text-sm font-medium">Light</span>
-                  </div>
-                  {theme === "light" && (
-                    <div className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
-                      <CheckCircle className="h-3 w-3 text-primary-foreground" />
-                    </div>
-                  )}
-                </button>
+              <div>
+                <div className="mb-2 flex items-center gap-2">
+                  <MonitorSmartphone className="h-4 w-4 text-primary" />
+                  <p className="text-sm font-medium text-foreground">Display Density</p>
+                </div>
+                <p className="mb-3 text-xs text-muted-foreground">
+                  Select between Compact and Comfort without changing colors.
+                </p>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <button
+                    onClick={() => setDensity("compact")}
+                    className={`relative rounded-xl border-2 p-4 text-left transition-all ${
+                      density === "compact" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                    }`}
+                  >
+                    <p className="text-sm font-semibold text-foreground">Compact</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Standard information density</p>
+                    {density === "compact" && (
+                      <div className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
+                        <CheckCircle className="h-3 w-3 text-primary-foreground" />
+                      </div>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => setDensity("comfort")}
+                    className={`relative rounded-xl border-2 p-4 text-left transition-all ${
+                      density === "comfort" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                    }`}
+                  >
+                    <p className="text-sm font-semibold text-foreground">Comfort</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Larger text, cleaner layout, optimized for readability</p>
+                    {density === "comfort" && (
+                      <div className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
+                        <CheckCircle className="h-3 w-3 text-primary-foreground" />
+                      </div>
+                    )}
+                  </button>
+                </div>
               </div>
             </CardContent>
           </Card>

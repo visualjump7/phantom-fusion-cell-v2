@@ -9,6 +9,8 @@ import {
   Filter,
   X,
   Loader2,
+  AlertTriangle,
+  CheckCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -189,17 +191,17 @@ export function FiscalCalendar({
         className="mb-6 flex items-center justify-between rounded-xl border border-border bg-card/60 backdrop-blur-sm p-4"
       >
         <div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-[length:var(--font-size-body)] text-muted-foreground">
             {MONTH_NAMES[currentDate.getMonth()]} Cash Outflow
           </p>
-          <p className="text-2xl font-bold text-foreground">
+          <p className="data-value text-[length:var(--font-size-section-header)] font-bold text-foreground">
             {formatCentsToDisplay(monthlyTotal)}
           </p>
         </div>
         <div className="flex items-center gap-4">
           <div className="text-right">
-            <p className="text-sm text-muted-foreground">Pending Bills</p>
-            <p className="text-lg font-semibold text-foreground">
+            <p className="text-[length:var(--font-size-body)] text-muted-foreground">Pending Bills</p>
+            <p className="data-value font-semibold text-foreground">
               {pendingCount}
             </p>
           </div>
@@ -256,7 +258,7 @@ export function FiscalCalendar({
           <select
             value={selectedCategory || ""}
             onChange={(e) => setSelectedCategory(e.target.value || null)}
-            className="rounded-lg border border-border bg-card px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            className="min-h-[var(--tap-target-min)] rounded-lg border border-border bg-card px-3 py-1.5 text-[length:var(--font-size-body)] text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
           >
             <option value="">All Categories</option>
             {categories.map((cat) => (
@@ -314,8 +316,9 @@ export function FiscalCalendar({
                     dayBills.length > 0 && setSelectedDate(dateKey)
                   }
                   disabled={dayBills.length === 0}
+                  style={{ minHeight: "max(100px, var(--tap-target-min))" }}
                   className={`
-                    relative min-h-[100px] border-b border-r border-border/50 p-2
+                    relative border-b border-r border-border/50 p-2
                     text-left transition-colors
                     ${!isCurrentMonth ? "opacity-30" : ""}
                     ${dayBills.length > 0 ? "cursor-pointer hover:bg-muted/30" : "cursor-default"}
@@ -345,17 +348,22 @@ export function FiscalCalendar({
                       ${overdue ? "ring-2 ring-red-500/50" : ""}
                     `}
                     >
-                      <div
-                        className={`
-                        text-xs font-bold
-                        ${intensity <= 2 ? "text-amber-400" : "text-red-400"}
-                      `}
-                      >
-                        {formatCentsToDisplay(dayTotal)}
+                      <div className="mb-1 flex items-center gap-1">
+                        {dayBills.some((b) => b.status === "pending") ? (
+                          <AlertTriangle className="h-3 w-3" style={{ color: "var(--color-warning)" }} />
+                        ) : (
+                          <CheckCircle className="h-3 w-3" style={{ color: "var(--color-success)" }} />
+                        )}
+                        <div
+                          className="text-[length:var(--font-size-caption)] font-bold"
+                          style={{ color: dayBills.some((b) => b.status === "pending") ? "var(--color-warning)" : "var(--color-success)" }}
+                        >
+                          {formatCentsToDisplay(dayTotal)}
+                        </div>
                       </div>
                       <div
                         className={`
-                        text-[10px]
+                        text-[length:var(--font-size-caption)]
                         ${intensity <= 2 ? "text-amber-500/70" : "text-red-500/70"}
                       `}
                       >
@@ -371,7 +379,7 @@ export function FiscalCalendar({
       )}
 
       {/* Legend */}
-      <div className="mt-4 flex items-center justify-end gap-4 text-xs text-muted-foreground">
+      <div className="mt-4 flex items-center justify-end gap-4 text-[length:var(--font-size-caption)] text-muted-foreground">
         <span>Cash Outflow:</span>
         <div className="flex items-center gap-1">
           <div className="h-3 w-3 rounded bg-amber-500/20" />
@@ -384,6 +392,14 @@ export function FiscalCalendar({
         <div className="flex items-center gap-1">
           <div className="h-3 w-3 rounded bg-red-500/30" />
           <span>High</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <AlertTriangle className="h-3 w-3" style={{ color: "var(--color-warning)" }} />
+          <span>Pending</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <CheckCircle className="h-3 w-3" style={{ color: "var(--color-success)" }} />
+          <span>Paid</span>
         </div>
       </div>
 

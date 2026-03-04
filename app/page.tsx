@@ -17,6 +17,7 @@ import { CashFlowCard } from "@/components/dashboard/CashFlowCard";
 import { supabase } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/utils";
 import { useRole } from "@/lib/use-role";
+import { useThemePreferences } from "@/components/ThemeProvider";
 import {
   fetchBillSummary,
   fetchUpcomingBills,
@@ -50,6 +51,7 @@ export default function DashboardPage() {
   const [billSummary, setBillSummary] = useState<BillSummary | null>(null);
   const [upcomingBills, setUpcomingBills] = useState<Bill[]>([]);
   const { userName, isAdmin, isExecutive } = useRole();
+  const { density } = useThemePreferences();
 
   useEffect(() => {
     async function loadData() {
@@ -117,14 +119,14 @@ export default function DashboardPage() {
       <motion.main
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8"
+        className="mx-auto max-w-7xl px-4 py-[var(--gap)] sm:px-6 lg:px-8"
       >
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="page-title font-bold text-foreground">
             {greeting}, {displayName}
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="caption-text">
             {isExecutive
               ? "Here\u2019s your financial overview"
               : "Fusion Cell command center"}
@@ -136,9 +138,15 @@ export default function DashboardPage() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+          <div
+            className={
+              density === "comfort"
+                ? "grid grid-cols-1 gap-[var(--gap)] xl:grid-cols-2"
+                : "grid grid-cols-1 gap-6 lg:grid-cols-12"
+            }
+          >
             {/* Left Column */}
-            <div className="space-y-6 lg:col-span-4">
+            <div className={density === "comfort" ? "space-y-[var(--gap)]" : "space-y-6 lg:col-span-4"}>
               {/* Portfolio Value */}
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
                 <Card className="border-border bg-card/60 backdrop-blur-sm">
@@ -149,9 +157,9 @@ export default function DashboardPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-3xl font-bold text-foreground">{formatCurrency(totalValue)}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">{assets.length} projects</p>
-                    <div className="mt-4 space-y-2">
+                    <p className="data-value text-[length:var(--font-size-page-title)] font-bold text-foreground">{formatCurrency(totalValue)}</p>
+                    <p className="mt-1 text-[length:var(--font-size-caption)] text-muted-foreground">{assets.length} projects</p>
+                    <div className="mt-4 space-y-[calc(var(--gap)/2)]">
                       {Object.entries(categoryTotals).map(([cat, val]) => (
                         <div key={cat} className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
@@ -159,11 +167,11 @@ export default function DashboardPage() {
                               {cat}
                             </div>
                           </div>
-                          <span className="text-sm font-medium text-foreground">{formatCurrency(val)}</span>
+                          <span className="data-value text-foreground">{formatCurrency(val)}</span>
                         </div>
                       ))}
                     </div>
-                    <Link href="/assets" className="mt-4 flex items-center gap-1 text-xs text-primary hover:underline">
+                    <Link href="/assets" className="mt-4 flex items-center gap-1 text-[length:var(--font-size-caption)] text-primary hover:underline">
                       View all projects <ChevronRight className="h-3 w-3" />
                     </Link>
                   </CardContent>
@@ -177,34 +185,40 @@ export default function DashboardPage() {
             </div>
 
             {/* Right Column */}
-            <div className="space-y-6 lg:col-span-8">
+            <div className={density === "comfort" ? "space-y-[var(--gap)]" : "space-y-6 lg:col-span-8"}>
               {/* Quick Stats */}
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <div
+                  className={
+                    density === "comfort"
+                      ? "grid grid-cols-1 gap-[var(--gap)] md:grid-cols-2"
+                      : "grid grid-cols-2 gap-4 sm:grid-cols-4"
+                  }
+                >
                   <Card className="border-border bg-card/60 backdrop-blur-sm">
-                    <CardContent className="p-4">
-                      <p className="text-xs text-muted-foreground">Total Projects</p>
-                      <p className="text-2xl font-bold text-foreground">{assets.length}</p>
+                    <CardContent>
+                      <p className="text-[length:var(--font-size-caption)] text-muted-foreground">Total Projects</p>
+                      <p className="data-value text-[length:var(--font-size-section-header)] font-bold text-foreground">{assets.length}</p>
                     </CardContent>
                   </Card>
                   <Card className="border-border bg-card/60 backdrop-blur-sm">
-                    <CardContent className="p-4">
-                      <p className="text-xs text-muted-foreground">Due This Month</p>
-                      <p className="text-2xl font-bold text-foreground">
+                    <CardContent>
+                      <p className="text-[length:var(--font-size-caption)] text-muted-foreground">Due This Month</p>
+                      <p className="data-value text-[length:var(--font-size-section-header)] font-bold text-foreground">
                         {billSummary ? `$${Math.round(billSummary.totalDueThisMonth / 100).toLocaleString()}` : "\u2014"}
                       </p>
                     </CardContent>
                   </Card>
                   <Card className="border-border bg-card/60 backdrop-blur-sm">
-                    <CardContent className="p-4">
-                      <p className="text-xs text-muted-foreground">Pending Bills</p>
-                      <p className="text-2xl font-bold text-foreground">{billSummary?.upcomingCount || 0}</p>
+                    <CardContent>
+                      <p className="text-[length:var(--font-size-caption)] text-muted-foreground">Pending Bills</p>
+                      <p className="data-value text-[length:var(--font-size-section-header)] font-bold text-foreground">{billSummary?.upcomingCount || 0}</p>
                     </CardContent>
                   </Card>
                   <Card className="border-border bg-card/60 backdrop-blur-sm">
-                    <CardContent className="p-4">
-                      <p className="text-xs text-muted-foreground">Alerts</p>
-                      <p className="text-2xl font-bold text-foreground">{messages.length}</p>
+                    <CardContent>
+                      <p className="text-[length:var(--font-size-caption)] text-muted-foreground">Alerts</p>
+                      <p className="data-value text-[length:var(--font-size-section-header)] font-bold text-foreground">{messages.length}</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -219,7 +233,7 @@ export default function DashboardPage() {
                         <Building2 className="h-4 w-4 text-primary" />
                         Projects
                       </CardTitle>
-                      <Link href="/assets" className="text-xs text-primary hover:underline">
+                      <Link href="/assets" className="text-[length:var(--font-size-caption)] text-primary hover:underline">
                         View all \u2192
                       </Link>
                     </div>
@@ -230,15 +244,15 @@ export default function DashboardPage() {
                         <Link
                           key={asset.id}
                           href={`/assets/${asset.id}`}
-                          className="flex items-center justify-between rounded-lg p-2.5 transition-colors hover:bg-muted/30"
+                          className="flex min-h-[var(--table-row-height)] items-center justify-between rounded-lg px-[var(--table-cell-padding-x)] py-[var(--table-cell-padding-y)] transition-colors hover:bg-muted/30"
                         >
                           <div className="flex items-center gap-3">
                             <div className={`rounded-md px-2 py-0.5 text-[10px] font-medium capitalize ${categoryColors[asset.category] || ""}`}>
                               {asset.category}
                             </div>
-                            <span className="text-sm font-medium text-foreground">{asset.name}</span>
+                            <span className="text-[length:var(--font-size-body)] font-medium text-foreground">{asset.name}</span>
                           </div>
-                          <span className="text-sm text-muted-foreground">{formatCurrency(asset.estimated_value)}</span>
+                          <span className="data-value text-muted-foreground">{formatCurrency(asset.estimated_value)}</span>
                         </Link>
                       ))}
                     </div>
@@ -255,30 +269,30 @@ export default function DashboardPage() {
                         <MessageSquare className="h-4 w-4 text-primary" />
                         Recent Alerts
                       </CardTitle>
-                      <Link href="/messages" className="text-xs text-primary hover:underline">
+                      <Link href="/messages" className="text-[length:var(--font-size-caption)] text-primary hover:underline">
                         View all \u2192
                       </Link>
                     </div>
                   </CardHeader>
                   <CardContent>
                     {messages.length === 0 ? (
-                      <p className="text-sm text-muted-foreground italic">No alerts yet</p>
+                      <p className="text-[length:var(--font-size-body)] text-muted-foreground italic">No alerts yet</p>
                     ) : (
                       <div className="divide-y divide-border">
                         {messages.map((msg) => (
                           <Link
                             key={msg.id}
                             href="/messages"
-                            className="flex items-stretch gap-3 rounded-lg p-2.5 transition-colors hover:bg-muted/30"
+                            className="flex min-h-[var(--table-row-height)] items-stretch gap-3 rounded-lg px-[var(--table-cell-padding-x)] py-[var(--table-cell-padding-y)] transition-colors hover:bg-muted/30"
                           >
                             <div className={`w-0.5 shrink-0 rounded-full ${priorityBarColors[msg.priority] || "bg-white/20"}`} />
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-foreground truncate">{msg.title}</p>
+                              <p className="text-[length:var(--font-size-body)] font-medium text-foreground truncate">{msg.title}</p>
                               <div className="mt-1 flex items-center gap-2">
                                 <Badge variant="outline" className={`text-[10px] ${priorityColors[msg.priority]}`}>
                                   {msg.priority}
                                 </Badge>
-                                <span className="text-[10px] text-muted-foreground capitalize">{msg.type.replace("_", " ")}</span>
+                                <span className="text-[length:var(--font-size-caption)] text-muted-foreground capitalize">{msg.type.replace("_", " ")}</span>
                               </div>
                             </div>
                           </Link>

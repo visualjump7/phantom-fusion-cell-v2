@@ -62,10 +62,8 @@ export default function CalendarPage() {
               <Calendar className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">
-                Fiscal Calendar
-              </h1>
-              <p className="text-sm text-muted-foreground">
+              <h1 className="page-title font-bold text-foreground">Fiscal Calendar</h1>
+              <p className="text-[length:var(--font-size-body)] text-muted-foreground">
                 Upcoming payments and cash flow overview
               </p>
             </div>
