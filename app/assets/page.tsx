@@ -249,7 +249,7 @@ export default function AssetsPage() {
                 <div className="relative group">
                   <Link href={`/assets/${asset.id}`}>
                     <Card className={cn(getStrokeClass(asset.category), "bg-card/60 backdrop-blur-sm transition-all hover:bg-card/80")}>
-                      <CardContent>
+                      <CardContent className="pt-4">
                         <div className="flex items-start justify-between">
                           <Badge variant="outline" className={`text-xs capitalize ${categoryColors[asset.category] || ""}`}>
                             {asset.category}
