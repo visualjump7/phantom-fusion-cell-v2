@@ -56,15 +56,15 @@
   }
 
   [data-theme="light"] {
-    --bg-page: #f5f7fa;
-    --bg-card: #ffffff;
-    --bg-card-alt: #f0f2f5;
-    --bg-zebra-stripe: #f5f7fa;
+    --bg-page: #f0f1f3;
+    --bg-card: #fafafa;
+    --bg-card-alt: #f4f4f5;
+    --bg-zebra-stripe: #f2f2f4;
     --text-primary: #1a1a1a;
     --text-secondary: #4a4a4a;
     --accent-primary: #004a99;
     --accent-navy: #0a2647;
-    --border-color: #d0d5dd;
+    --border-color: #dcdee3;
 
     --color-success: #2e7d5b;
     --color-warning: #b07d3a;
@@ -78,27 +78,27 @@
     --chart-5: #b07d3a;
     --chart-neutral: #b0bec5;
 
-    --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow: 0 1px 4px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.03);
     --focus-ring-color: #004a99;
 
-    --background: 214 33% 97%;
+    --background: 220 10% 95%;
     --foreground: 0 0% 10%;
-    --card: 0 0% 100%;
+    --card: 0 0% 98%;
     --card-foreground: 0 0% 10%;
-    --popover: 0 0% 100%;
+    --popover: 0 0% 98%;
     --popover-foreground: 0 0% 10%;
     --primary: 211 100% 30%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 214 20% 95%;
+    --secondary: 220 8% 94%;
     --secondary-foreground: 0 0% 10%;
-    --muted: 214 20% 95%;
+    --muted: 220 8% 94%;
     --muted-foreground: 0 0% 29%;
-    --accent: 214 20% 95%;
+    --accent: 220 8% 94%;
     --accent-foreground: 0 0% 10%;
     --destructive: 356 73% 42%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 16% 84%;
-    --input: 214 16% 84%;
+    --border: 220 8% 87%;
+    --input: 220 8% 87%;
     --ring: 211 100% 30%;
     --radius: 0.75rem;
   }
@@ -480,4 +480,78 @@ html[data-density="comfort"] .density-table tbody tr:nth-child(even) {
 }
 [data-theme="light"] .hover\:text-emerald-300:hover {
   color: #2e7d5b !important;
+}
+
+/* ================================================================
+   LIGHT THEME — Dark navbar (matches dark theme nav)
+   ================================================================ */
+[data-theme="light"] nav.sticky {
+  background-color: #0a0a0a !important;
+  border-bottom-color: #222 !important;
+  color: #e0e0e0 !important;
+}
+[data-theme="light"] nav.sticky a,
+[data-theme="light"] nav.sticky button {
+  color: #c0c0c0 !important;
+}
+[data-theme="light"] nav.sticky a:hover,
+[data-theme="light"] nav.sticky button:hover {
+  color: #ffffff !important;
+  background-color: transparent !important;
+}
+[data-theme="light"] nav.sticky [class*="bg-primary\/10"] {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+}
+[data-theme="light"] nav.sticky [class*="text-primary"] {
+  color: #ffffff !important;
+}
+[data-theme="light"] nav.sticky a[class*="border-primary"] {
+  border-color: #ffffff !important;
+}
+[data-theme="light"] nav.sticky [class*="bg-card"] {
+  background-color: #1a1a1a !important;
+  border-color: #333 !important;
+}
+[data-theme="light"] nav.sticky [class*="bg-card"] a,
+[data-theme="light"] nav.sticky [class*="bg-card"] button {
+  color: #c0c0c0 !important;
+}
+[data-theme="light"] nav.sticky [class*="bg-card"] a:hover,
+[data-theme="light"] nav.sticky [class*="bg-card"] button:hover {
+  color: #ffffff !important;
+  background-color: rgba(255,255,255,0.08) !important;
+}
+[data-theme="light"] nav.sticky [class*="bg-background"] {
+  background-color: #0a0a0a !important;
+}
+[data-theme="light"] nav.sticky a[class*="bg-primary"],
+[data-theme="light"] nav.sticky button[class*="bg-primary"] {
+  background-color: transparent !important;
+}
+
+/* ================================================================
+   LIGHT THEME — Card & section differentiation
+   ================================================================ */
+[data-theme="light"] .bg-card\/60 {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+}
+[data-theme="light"] .bg-muted\/30 {
+  background-color: rgba(0, 0, 0, 0.025) !important;
+}
+
+/* Dashboard section tints (light theme only) */
+[data-theme="light"] [data-section="portfolio"] .bg-card\/60 {
+  background-color: rgba(0, 74, 153, 0.045) !important;
+}
+[data-theme="light"] [data-section="cashflow"] .bg-card\/60 {
+  background-color: rgba(46, 125, 91, 0.045) !important;
+}
+[data-theme="light"] [data-section="stats"] .bg-card\/60 {
+  background-color: rgba(90, 111, 122, 0.035) !important;
+}
+[data-theme="light"] [data-section="projects"] .bg-card\/60 {
+  background-color: rgba(69, 39, 160, 0.035) !important;
+}
+[data-theme="light"] [data-section="alerts"] .bg-card\/60 {
+  background-color: rgba(176, 125, 58, 0.04) !important;
 }

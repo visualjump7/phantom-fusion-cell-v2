@@ -148,7 +148,7 @@ export default function DashboardPage() {
             {/* Left Column */}
             <div className={density === "comfort" ? "space-y-[var(--gap)]" : "space-y-6 lg:col-span-4"}>
               {/* Portfolio Value */}
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} data-section="portfolio">
                 <Card className="border-border bg-card/60 backdrop-blur-sm">
                   <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2 text-base">
@@ -179,7 +179,7 @@ export default function DashboardPage() {
               </motion.div>
 
               {/* Cash Flow */}
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} data-section="cashflow">
                 <CashFlowCard summary={billSummary} upcomingBills={upcomingBills} />
               </motion.div>
             </div>
@@ -187,7 +187,7 @@ export default function DashboardPage() {
             {/* Right Column */}
             <div className={density === "comfort" ? "space-y-[var(--gap)]" : "space-y-6 lg:col-span-8"}>
               {/* Quick Stats */}
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} data-section="stats">
                 <div
                   className={
                     density === "comfort"
@@ -225,7 +225,7 @@ export default function DashboardPage() {
               </motion.div>
 
               {/* Project List */}
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} data-section="projects">
                 <Card className="border-border bg-card/60 backdrop-blur-sm">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
@@ -234,7 +234,7 @@ export default function DashboardPage() {
                         Projects
                       </CardTitle>
                       <Link href="/assets" className="text-[length:var(--font-size-caption)] text-primary hover:underline">
-                        View all \u2192
+                        View all {"\u2192"}
                       </Link>
                     </div>
                   </CardHeader>
@@ -244,15 +244,15 @@ export default function DashboardPage() {
                         <Link
                           key={asset.id}
                           href={`/assets/${asset.id}`}
-                          className="flex min-h-[var(--table-row-height)] items-center justify-between rounded-lg px-[var(--table-cell-padding-x)] py-[var(--table-cell-padding-y)] transition-colors hover:bg-muted/30"
+                          className="flex min-h-[var(--table-row-height)] items-center justify-between gap-4 rounded-lg px-[var(--table-cell-padding-x)] py-[var(--table-cell-padding-y)] transition-colors hover:bg-muted/30"
                         >
-                          <div className="flex items-center gap-3">
-                            <div className={`rounded-md px-2 py-0.5 text-[10px] font-medium capitalize ${categoryColors[asset.category] || ""}`}>
+                          <div className="flex min-w-0 items-center gap-3">
+                            <div className={`shrink-0 rounded-md px-2 py-0.5 text-[10px] font-medium capitalize ${categoryColors[asset.category] || ""}`}>
                               {asset.category}
                             </div>
-                            <span className="text-[length:var(--font-size-body)] font-medium text-foreground">{asset.name}</span>
+                            <span className="truncate text-[length:var(--font-size-body)] font-medium text-foreground">{asset.name}</span>
                           </div>
-                          <span className="data-value text-muted-foreground">{formatCurrency(asset.estimated_value)}</span>
+                          <span className="shrink-0 whitespace-nowrap data-value text-muted-foreground">{formatCurrency(asset.estimated_value)}</span>
                         </Link>
                       ))}
                     </div>
@@ -261,7 +261,7 @@ export default function DashboardPage() {
               </motion.div>
 
               {/* Alerts */}
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} data-section="alerts">
                 <Card className="border-border bg-card/60 backdrop-blur-sm">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
@@ -270,7 +270,7 @@ export default function DashboardPage() {
                         Recent Alerts
                       </CardTitle>
                       <Link href="/messages" className="text-[length:var(--font-size-caption)] text-primary hover:underline">
-                        View all \u2192
+                        View all {"\u2192"}
                       </Link>
                     </div>
                   </CardHeader>
