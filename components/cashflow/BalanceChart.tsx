@@ -66,16 +66,18 @@ export function BalanceChart({ entries, defaultRange = "90D" }: BalanceChartProp
       case "90D": start = addDays(now, -45); break;
       case "6M": start = addDays(now, -90); break;
       case "1Y": start = addDays(now, -180); break;
+      case "All":
       default: return entries;
     }
 
-    const end = range === "All" ? undefined : addDays(now, range === "30D" ? 15 : range === "90D" ? 45 : range === "6M" ? 90 : 180);
+    const endDays = range === "30D" ? 15 : range === "90D" ? 45 : range === "6M" ? 90 : 180;
+    const end = addDays(now, endDays);
     const startStr = start.toISOString().split("T")[0];
-    const endStr = end?.toISOString().split("T")[0];
+    const endStr = end.toISOString().split("T")[0];
 
-    let filtered = entries.filter((e) => e.date >= startStr && (!endStr || e.date <= endStr));
+    let filtered = entries.filter((e) => e.date >= startStr && e.date <= endStr);
 
-    if (range === "1Y" || range === "All") {
+    if (range === "1Y") {
       filtered = filtered.filter((_, i) => i % 2 === 0 || filtered[i]?.date === today);
     }
 
