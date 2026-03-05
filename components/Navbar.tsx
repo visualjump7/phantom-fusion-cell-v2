@@ -7,7 +7,6 @@ import { motion } from "framer-motion";
 import {
   LayoutDashboard,
   Building2,
-  Calendar as CalendarIcon,
   MessageSquare,
   TrendingUp,
   Receipt,
@@ -38,7 +37,6 @@ const mainNavItems: NavItem[] = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Directory", href: "/assets", icon: Building2 },
   { name: "Cash Flow", href: "/cash-flow", icon: DollarSign },
-  { name: "Calendar", href: "/calendar", icon: CalendarIcon },
   { name: "Alerts", href: "/messages", icon: MessageSquare },
 ];
 

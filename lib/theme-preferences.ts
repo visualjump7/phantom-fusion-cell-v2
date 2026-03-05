@@ -1,4 +1,4 @@
-export type ThemeColor = "dark" | "light";
+export type ThemeColor = "dark" | "light" | "hybrid";
 export type ThemeDensity = "compact" | "comfort";
 
 export interface ThemePreferences {
@@ -16,7 +16,7 @@ export const DEFAULT_THEME: ThemeColor = "dark";
 export const DEFAULT_DENSITY: ThemeDensity = "compact";
 
 export function isThemeColor(value: unknown): value is ThemeColor {
-  return value === "dark" || value === "light";
+  return value === "dark" || value === "light" || value === "hybrid";
 }
 
 export function isThemeDensity(value: unknown): value is ThemeDensity {

@@ -246,7 +246,7 @@ Include these as markdown links when relevant:
 - Dashboard: [Dashboard](/)
 - All Assets: [Assets](/assets)
 ${data.portfolio.assets.map((a: any) => `- ${a.name}: [View ${a.name}](/assets/${a.id})`).join("\n")}
-- Fiscal Calendar: [Calendar](/calendar)
+- Cash Flow: [Cash Flow](/cash-flow)
 - Messages: [Messages](/messages)
 - Settings: [Settings](/settings)
 

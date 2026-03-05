@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
-  Settings, User, Lock, Sun, Moon, Loader2, CheckCircle, MonitorSmartphone,
+  Settings, User, Lock, Sun, Moon, Contrast, Loader2, CheckCircle, MonitorSmartphone,
   AlertCircle,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
@@ -199,7 +199,7 @@ export default function SettingsPage() {
           <Card className="border-border bg-card/60">
             <CardHeader className="pb-4">
               <div className="flex items-center gap-2">
-                {theme === "dark" ? <Moon className="h-4 w-4 text-primary" /> : <Sun className="h-4 w-4 text-primary" />}
+                {theme === "dark" ? <Moon className="h-4 w-4 text-primary" /> : theme === "hybrid" ? <Contrast className="h-4 w-4 text-primary" /> : <Sun className="h-4 w-4 text-primary" />}
                 <CardTitle className="text-base">Appearance</CardTitle>
               </div>
             </CardHeader>
@@ -210,7 +210,7 @@ export default function SettingsPage() {
                   <p className="text-sm font-medium text-foreground">Color Theme</p>
                 </div>
                 <p className="mb-3 text-xs text-muted-foreground">Choose your preferred color palette.</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <button
                     onClick={() => setTheme("dark")}
                     className={`relative flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all ${
@@ -234,6 +234,21 @@ export default function SettingsPage() {
                     <Sun className="h-5 w-5" />
                     <span className="text-sm font-semibold">Light</span>
                     {theme === "light" && (
+                      <div className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
+                        <CheckCircle className="h-3 w-3 text-primary-foreground" />
+                      </div>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setTheme("hybrid")}
+                    className={`relative flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all ${
+                      theme === "hybrid" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                    }`}
+                  >
+                    <Contrast className="h-5 w-5" />
+                    <span className="text-sm font-semibold">Hybrid</span>
+                    <span className="text-[10px] text-muted-foreground text-center">Dark nav, light content</span>
+                    {theme === "hybrid" && (
                       <div className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
                         <CheckCircle className="h-3 w-3 text-primary-foreground" />
                       </div>

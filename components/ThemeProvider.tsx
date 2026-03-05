@@ -129,7 +129,8 @@ export function ThemeProvider({
   );
 
   const toggleTheme = useCallback(() => {
-    const nextTheme: ThemeColor = theme === "dark" ? "light" : "dark";
+    const nextTheme: ThemeColor =
+      theme === "dark" ? "light" : theme === "light" ? "hybrid" : "dark";
     setTheme(nextTheme);
   }, [setTheme, theme]);
 

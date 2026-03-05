@@ -15,14 +15,14 @@ import { useThemePreferences } from "@/components/ThemeProvider";
 type ViewTab = "calendar" | "chart" | "monthly" | "transactions";
 
 const VIEW_TABS: { value: ViewTab; label: string }[] = [
+  { value: "monthly", label: "Monthly" },
   { value: "calendar", label: "Calendar" },
   { value: "chart", label: "Chart" },
-  { value: "monthly", label: "Monthly" },
   { value: "transactions", label: "Transactions" },
 ];
 
 export default function CashFlowPage() {
-  const [activeView, setActiveView] = useState<ViewTab>("calendar");
+  const [activeView, setActiveView] = useState<ViewTab>("monthly");
   const [data, setData] = useState<CashFlowData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +67,7 @@ export default function CashFlowPage() {
 
       <Navbar />
 
-      <div className={theme === "light" ? "section-dark" : ""}>
+      <div className={(theme === "light" || theme === "hybrid") ? "section-dark" : ""}>
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}

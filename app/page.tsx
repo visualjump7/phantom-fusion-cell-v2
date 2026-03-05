@@ -130,7 +130,7 @@ export default function DashboardPage() {
       <Navbar />
 
       {/* Hero Header — dark on light theme */}
-      <div className={theme === "light" ? "section-dark" : ""}>
+      <div className={(theme === "light" || theme === "hybrid") ? "section-dark" : ""}>
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
