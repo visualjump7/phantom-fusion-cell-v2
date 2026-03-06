@@ -80,7 +80,7 @@ export function CalendarView({ cashFlowData }: CalendarViewProps) {
       <div className="overflow-hidden rounded-xl border border-border bg-card/60">
         <div className="grid grid-cols-7 border-b border-border">
           {DAYS_OF_WEEK.map((day) => (
-            <div key={day} className="px-2 py-3 text-center text-sm font-medium text-muted-foreground">
+            <div key={day} className="px-2 py-3 text-center text-[length:var(--cal-header-size)] font-medium text-muted-foreground">
               {day}
             </div>
           ))}
@@ -91,50 +91,51 @@ export function CalendarView({ cashFlowData }: CalendarViewProps) {
             const dateKey = formatDateKey(date);
             const entry = entryMap[dateKey];
             const today = isToday(date);
-            const hasIn = entry && entry.cashIn > 0;
-            const hasOut = entry && entry.cashOut > 0;
+            const billCount = entry ? entry.transactions.filter(t => t.type === "out").length : 0;
 
             return (
               <button
                 key={index}
                 onClick={() => entry && setSelectedDate(dateKey)}
                 disabled={!entry}
-                style={{ minHeight: "max(100px, var(--tap-target-min))" }}
+                style={{ minHeight: "var(--cal-cell-min-h)" }}
                 className={`
-                  relative border-b border-r border-border/50 p-2 text-left transition-colors
+                  relative flex flex-col border-b border-r border-border/50 p-[--cal-cell-padding] text-left transition-colors
                   ${!isCurrentMonth ? "opacity-30" : ""}
                   ${entry ? "cursor-pointer hover:bg-muted/30" : "cursor-default"}
                   ${selectedDate === dateKey ? "ring-2 ring-inset ring-primary" : ""}
                 `}
               >
-                <div className="flex items-start justify-between">
-                  <div
-                    className={`
-                      mb-1 text-sm font-medium
-                      ${!isCurrentMonth ? "text-muted-foreground/50" : "text-muted-foreground"}
-                      ${today ? "flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground" : ""}
-                    `}
-                  >
-                    {date.getDate()}
-                  </div>
-                  {isCurrentMonth && (hasIn || hasOut) && (
-                    <div className="flex gap-0.5">
-                      {hasIn && <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}
-                      {hasOut && <div className="h-1.5 w-1.5 rounded-full bg-red-500" />}
-                    </div>
-                  )}
+                <div
+                  className={`
+                    mb-1 text-[length:var(--cal-date-size)] font-medium
+                    ${!isCurrentMonth ? "text-muted-foreground/50" : "text-muted-foreground"}
+                    ${today ? "flex items-center justify-center rounded-full bg-primary text-primary-foreground" : ""}
+                  `}
+                  style={today ? { width: "var(--cal-today-size)", height: "var(--cal-today-size)" } : undefined}
+                >
+                  {date.getDate()}
                 </div>
 
                 {entry && isCurrentMonth && (
-                  <div className="mt-auto">
+                  <div className="mt-auto flex flex-col gap-[--cal-cell-gap]">
                     <div
-                      className={`
-                        mt-1 inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-semibold
-                        ${entry.endBalance >= 0 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-red-500/10 text-red-600 dark:text-red-400"}
-                      `}
+                      className={`text-[length:var(--cal-balance-size)] font-bold ${
+                        entry.endBalance >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
+                      }`}
                     >
                       {formatCompactCurrency(entry.endBalance)}
                     </div>
+                    {billCount > 0 && (
+                      <div className="text-[length:var(--cal-detail-size)] text-muted-foreground">
+                        {billCount} {billCount === 1 ? "bill" : "bills"}
+                      </div>
+                    )}
+                    {entry.cashOut > 0 && (
+                      <div className="text-[length:var(--cal-detail-size)] font-medium text-red-600 dark:text-red-400">
+                        -{formatCompactCurrency(entry.cashOut)} out
+                      </div>
+                    )}
                   </div>
                 )}
               </button>
@@ -144,15 +145,14 @@ export function CalendarView({ cashFlowData }: CalendarViewProps) {
       </div>
 
       <div className="mt-4 flex items-center justify-end gap-4 text-[length:var(--font-size-caption)] text-muted-foreground">
-        <div className="flex items-center gap-1"><div className="h-2 w-2 rounded-full bg-emerald-500" /> Cash In</div>
-        <div className="flex items-center gap-1"><div className="h-2 w-2 rounded-full bg-red-500" /> Cash Out</div>
-        <div className="flex items-center gap-1">
-          <div className="rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[9px] text-emerald-500">+</div>
-          Positive
+        <div className="flex items-center gap-1.5">
+          <span className="text-[length:var(--cal-detail-size)] font-bold text-emerald-500">$</span> Cash Remaining
         </div>
-        <div className="flex items-center gap-1">
-          <div className="rounded-full bg-red-500/10 px-1.5 py-0.5 text-[9px] text-red-500">-</div>
-          Negative
+        <div className="flex items-center gap-1.5">
+          <span className="text-[length:var(--cal-detail-size)] text-muted-foreground">#</span> Bill Count
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[length:var(--cal-detail-size)] font-medium text-red-500">-$</span> Outgoing Total
         </div>
       </div>
 

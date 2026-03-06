@@ -186,6 +186,15 @@
     --decision-button-gap: 12px;
 
     --nav-show-labels: 0;
+
+    --cal-cell-min-h: 100px;
+    --cal-date-size: 14px;
+    --cal-today-size: 28px;
+    --cal-balance-size: 10px;
+    --cal-detail-size: 9px;
+    --cal-header-size: 13px;
+    --cal-cell-padding: 8px;
+    --cal-cell-gap: 2px;
   }
 
   [data-density="comfort"] {
@@ -219,6 +228,15 @@
     --decision-button-gap: 32px;
 
     --nav-show-labels: 1;
+
+    --cal-cell-min-h: 140px;
+    --cal-date-size: 20px;
+    --cal-today-size: 36px;
+    --cal-balance-size: 16px;
+    --cal-detail-size: 13px;
+    --cal-header-size: 18px;
+    --cal-cell-padding: 12px;
+    --cal-cell-gap: 4px;
   }
 
   * {
