@@ -126,6 +126,11 @@ export function CalendarView({ cashFlowData }: CalendarViewProps) {
                     >
                       {formatCompactCurrency(entry.endBalance)}
                     </div>
+                    {entry.cashIn > 0 && (
+                      <div className="text-[length:var(--cal-detail-size)] font-medium text-emerald-600 dark:text-emerald-400">
+                        +{formatCompactCurrency(entry.cashIn)} in
+                      </div>
+                    )}
                     {billCount > 0 && (
                       <div className="text-[length:var(--cal-detail-size)] text-muted-foreground">
                         {billCount} {billCount === 1 ? "bill" : "bills"}
@@ -147,6 +152,9 @@ export function CalendarView({ cashFlowData }: CalendarViewProps) {
       <div className="mt-4 flex items-center justify-end gap-4 text-[length:var(--font-size-caption)] text-muted-foreground">
         <div className="flex items-center gap-1.5">
           <span className="text-[length:var(--cal-detail-size)] font-bold text-emerald-500">$</span> Cash Remaining
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[length:var(--cal-detail-size)] font-medium text-emerald-500">+$</span> Incoming Total
         </div>
         <div className="flex items-center gap-1.5">
           <span className="text-[length:var(--cal-detail-size)] text-muted-foreground">#</span> Bill Count
