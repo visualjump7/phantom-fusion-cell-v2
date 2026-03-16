@@ -15,7 +15,6 @@ import {
   LogOut,
   Menu,
   X,
-  Star,
   ChevronDown,
   ShieldCheck,
   DollarSign,
@@ -84,9 +83,11 @@ export function Navbar() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-              <Star className="h-4 w-4 text-primary" />
-            </div>
+            <img
+              src="https://phantom-presenter-assets.s3.us-east-1.amazonaws.com/logo_icon.svg"
+              alt="Phantom logo"
+              className="h-8 w-auto"
+            />
             <span className="text-lg font-bold text-foreground">Fusion <span className="text-primary">Cell</span></span>
           </Link>
 
