@@ -77,8 +77,8 @@ export default function WorkspaceUploadPage() {
 
   const handleFileUpload = useCallback(async (file: File) => {
     setError(null);
-    const validationError = validateBudgetFile(file);
-    if (validationError) { setError(validationError); return; }
+    const validation = validateBudgetFile(file);
+    if (!validation.valid) { setError(validation.error || "Invalid file."); return; }
     setFileName(file.name); setIsProcessing(true);
     try {
       const buffer = await file.arrayBuffer();
@@ -136,41 +136,38 @@ export default function WorkspaceUploadPage() {
 
       // Create categories
       const categoryMap = new Map<string, string>();
-      for (let i = 0; i < parseResult.categories.length; i++) {
-        const cat = parseResult.categories[i];
-        const color = CATEGORY_COLORS[i % CATEGORY_COLORS.length];
-        const { data: existing } = await db.from("expense_categories").select("id").eq("name", cat.name).single();
-        if (existing) {
-          categoryMap.set(cat.name, existing.id);
+      for (const catName of parseResult.categories) {
+        const { data: existing } = await db.from("expense_categories").select("id").eq("name", catName).limit(1);
+        if (existing && existing.length > 0) {
+          categoryMap.set(catName, existing[0].id);
         } else {
-          const { data: newCat } = await db.from("expense_categories").insert({ name: cat.name, color }).select("id").single();
-          if (newCat) categoryMap.set(cat.name, newCat.id);
+          const color = CATEGORY_COLORS[categoryMap.size % CATEGORY_COLORS.length];
+          const { data: created } = await db.from("expense_categories").insert({ name: catName, color }).select("id").single();
+          if (created) categoryMap.set(catName, created.id);
         }
-        setImportProgress(40 + Math.round((i / parseResult.categories.length) * 30));
       }
+      setImportProgress(60);
 
       // Create line items
-      const lineItems = parseResult.categories.flatMap((cat) =>
-        cat.items.map((item) => ({
+      const batchSize = 20;
+      let imported = 0;
+      for (let i = 0; i < parseResult.lineItems.length; i += batchSize) {
+        const batch = parseResult.lineItems.slice(i, i + batchSize).map((item) => ({
           budget_id: budget.id,
-          expense_category_id: categoryMap.get(cat.name) || null,
-          description: item.description,
-          jan: item.months[0] || 0, feb: item.months[1] || 0, mar: item.months[2] || 0,
-          apr: item.months[3] || 0, may: item.months[4] || 0, jun: item.months[5] || 0,
-          jul: item.months[6] || 0, aug: item.months[7] || 0, sep: item.months[8] || 0,
-          oct: item.months[9] || 0, nov: item.months[10] || 0, dec: item.months[11] || 0,
-          annual_total: item.months.reduce((s, v) => s + v, 0),
-        }))
-      );
-
-      const batchSize = 50;
-      for (let i = 0; i < lineItems.length; i += batchSize) {
-        await db.from("budget_line_items").insert(lineItems.slice(i, i + batchSize));
-        setImportProgress(70 + Math.round((i / lineItems.length) * 30));
+          expense_category_id: categoryMap.get(item.category) || null,
+          description: item.name,
+          jan: item.jan, feb: item.feb, mar: item.mar, apr: item.apr,
+          may: item.may, jun: item.jun, jul: item.jul, aug: item.aug,
+          sep: item.sep, oct: item.oct, nov: item.nov, dec: item.dec,
+          annual_total: item.annual_total,
+        }));
+        await db.from("budget_line_items").insert(batch);
+        imported += batch.length;
+        setImportProgress(60 + Math.round((imported / parseResult.lineItems.length) * 40));
       }
 
       setImportProgress(100);
-      setImportResult({ categories: parseResult.categories.length, lineItems: lineItems.length });
+      setImportResult({ categories: parseResult.categories.length, lineItems: parseResult.lineItems.length });
       setStep("done");
     } catch (err: any) {
       setError(err.message || "Import failed.");
@@ -241,7 +238,8 @@ export default function WorkspaceUploadPage() {
           )}
           <div className="flex justify-between">
             <Button variant="outline" onClick={() => {
-              const blob = generateBudgetTemplate();
+              const buffer = generateBudgetTemplate();
+              const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
               const url = URL.createObjectURL(blob);
               const a = document.createElement("a"); a.href = url; a.download = "budget_template.xlsx"; a.click();
               URL.revokeObjectURL(url);
@@ -291,7 +289,7 @@ export default function WorkspaceUploadPage() {
               <button key={s.name} onClick={() => handleSheetSelect(s.name)}
                 className="w-full rounded-lg border border-border p-3 text-left text-sm hover:bg-muted/30 transition-colors">
                 <span className="font-medium">{s.name}</span>
-                <span className="text-muted-foreground ml-2">({s.rowCount} rows)</span>
+                {s.year && <span className="text-muted-foreground ml-2">({s.year})</span>}
               </button>
             ))}
           </div>
@@ -308,25 +306,28 @@ export default function WorkspaceUploadPage() {
             {selectedSheet && <Badge variant="outline">{selectedSheet}</Badge>}
           </div>
           <p className="text-sm text-muted-foreground">
-            Found {parseResult.categories.length} categories with {parseResult.categories.reduce((s, c) => s + c.items.length, 0)} line items.
+            Found {parseResult.categories.length} categories with {parseResult.lineItems.length} line items.
           </p>
-          {parseResult.warnings.length > 0 && (
+          {parseResult.errors.length > 0 && (
             <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
-              {parseResult.warnings.map((w, i) => <p key={i} className="text-xs text-amber-400">{w}</p>)}
+              {parseResult.errors.map((e, i) => <p key={i} className="text-xs text-amber-400">Row {e.row}: {e.message}</p>)}
             </div>
           )}
           <div className="max-h-64 overflow-y-auto space-y-3">
-            {parseResult.categories.map((cat, ci) => (
-              <div key={ci}>
-                <p className="text-sm font-medium text-foreground">{cat.name} ({cat.items.length} items)</p>
-                <div className="ml-4 space-y-0.5">
-                  {cat.items.slice(0, 3).map((item, ii) => (
-                    <p key={ii} className="text-xs text-muted-foreground">{item.description} — ${item.months.reduce((s, v) => s + v, 0).toLocaleString()}/yr</p>
-                  ))}
-                  {cat.items.length > 3 && <p className="text-xs text-muted-foreground">...and {cat.items.length - 3} more</p>}
+            {parseResult.categories.map((catName, ci) => {
+              const items = parseResult.lineItems.filter((l) => l.category === catName);
+              return (
+                <div key={ci}>
+                  <p className="text-sm font-medium text-foreground">{catName} ({items.length} items)</p>
+                  <div className="ml-4 space-y-0.5">
+                    {items.slice(0, 3).map((item, ii) => (
+                      <p key={ii} className="text-xs text-muted-foreground">{item.name} — ${item.annual_total.toLocaleString()}/yr</p>
+                    ))}
+                    {items.length > 3 && <p className="text-xs text-muted-foreground">...and {items.length - 3} more</p>}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <div className="flex justify-between">
             <Button variant="outline" onClick={() => setStep("upload")}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>

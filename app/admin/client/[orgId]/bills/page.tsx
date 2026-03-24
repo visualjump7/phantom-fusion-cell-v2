@@ -183,8 +183,8 @@ export default function WorkspaceBillsPage() {
   // Excel upload handlers
   const handleFile = useCallback(async (file: File) => {
     setUploadError(null); setParseResult(null); setFileName(file.name);
-    const validationError = validateBillFile(file);
-    if (validationError) { setUploadError(validationError); return; }
+    const validation = validateBillFile(file);
+    if (!validation.valid) { setUploadError(validation.error || "Invalid file."); return; }
     setIsProcessing(true);
     try {
       const buffer = await file.arrayBuffer();
@@ -445,10 +445,10 @@ export default function WorkspaceBillsPage() {
                       {assets.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
                     </select>
                   </div>
-                  {parseResult.warnings.length > 0 && (
+                  {parseResult.errors.length > 0 && (
                     <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
                       <p className="text-xs font-medium text-amber-400">Warnings:</p>
-                      {parseResult.warnings.map((w, i) => <p key={i} className="text-xs text-amber-400/80">{w}</p>)}
+                      {parseResult.errors.map((w, i) => <p key={i} className="text-xs text-amber-400/80">Row {w.row}: {w.message}</p>)}
                     </div>
                   )}
                   <div className="flex justify-end gap-3">
