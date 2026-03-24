@@ -69,6 +69,7 @@ export interface FetchMessagesOptions {
   includeDeleted?: boolean;
   search?: string;
   asset_id?: string;
+  organization_id?: string;
 }
 
 // ─── FETCH ───
@@ -84,6 +85,7 @@ export async function fetchMessages(options?: FetchMessagesOptions): Promise<Mes
   if (options?.type && options.type !== "all") query = query.eq("type", options.type);
   if (options?.priority && options.priority !== "all") query = query.eq("priority", options.priority);
   if (options?.asset_id) query = query.eq("asset_id", options.asset_id);
+  if (options?.organization_id) query = query.eq("organization_id", options.organization_id);
 
   const { data: messages, error } = await query;
   if (error || !messages) return [];

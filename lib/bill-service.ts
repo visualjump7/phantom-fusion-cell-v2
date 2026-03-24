@@ -56,7 +56,8 @@ export interface BillImport {
 export async function fetchBillsForRange(
   startDate: string,
   endDate: string,
-  status?: string
+  status?: string,
+  organizationId?: string
 ): Promise<Bill[]> {
   let query = db
     .from("bills")
@@ -72,6 +73,9 @@ export async function fetchBillsForRange(
 
   if (status) {
     query = query.eq("status", status);
+  }
+  if (organizationId) {
+    query = query.eq("organization_id", organizationId);
   }
 
   const { data, error } = await query;
@@ -92,7 +96,8 @@ export async function fetchBillsForRange(
  */
 export async function fetchBillsForMonth(
   year: number,
-  month: number
+  month: number,
+  organizationId?: string
 ): Promise<Bill[]> {
   // Extend range to cover partial weeks on edges
   const firstDay = new Date(year, month - 1, 1);
@@ -108,7 +113,7 @@ export async function fetchBillsForMonth(
   const startDate = startPad.toISOString().split("T")[0];
   const endDate = endPad.toISOString().split("T")[0];
 
-  return fetchBillsForRange(startDate, endDate);
+  return fetchBillsForRange(startDate, endDate, undefined, organizationId);
 }
 
 /**
@@ -132,19 +137,19 @@ export async function fetchBillsForAsset(assetId: string): Promise<Bill[]> {
 /**
  * Fetch upcoming bills (next N days)
  */
-export async function fetchUpcomingBills(days: number = 7): Promise<Bill[]> {
+export async function fetchUpcomingBills(days: number = 7, organizationId?: string): Promise<Bill[]> {
   const today = new Date().toISOString().split("T")[0];
   const futureDate = new Date();
   futureDate.setDate(futureDate.getDate() + days);
   const endDate = futureDate.toISOString().split("T")[0];
 
-  return fetchBillsForRange(today, endDate, "pending");
+  return fetchBillsForRange(today, endDate, "pending", organizationId);
 }
 
 /**
  * Get bill summary stats for dashboard
  */
-export async function fetchBillSummary(): Promise<BillSummary> {
+export async function fetchBillSummary(organizationId?: string): Promise<BillSummary> {
   const now = new Date();
   const today = now.toISOString().split("T")[0];
   const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
@@ -157,26 +162,32 @@ export async function fetchBillSummary(): Promise<BillSummary> {
   const next7 = future7.toISOString().split("T")[0];
 
   // All bills this month
-  const { data: monthBills } = await db
+  let monthQuery = db
     .from("bills")
     .select("amount_cents, status")
     .gte("due_date", monthStart)
     .lte("due_date", monthEnd);
+  if (organizationId) monthQuery = monthQuery.eq("organization_id", organizationId);
+  const { data: monthBills } = await monthQuery;
 
   // Upcoming 7 days (pending only)
-  const { data: upcoming7 } = await db
+  let upcomingQuery = db
     .from("bills")
     .select("amount_cents")
     .gte("due_date", today)
     .lte("due_date", next7)
     .eq("status", "pending");
+  if (organizationId) upcomingQuery = upcomingQuery.eq("organization_id", organizationId);
+  const { data: upcoming7 } = await upcomingQuery;
 
   // Overdue bills
-  const { data: overdue } = await db
+  let overdueQuery = db
     .from("bills")
     .select("amount_cents")
     .lt("due_date", today)
     .eq("status", "pending");
+  if (organizationId) overdueQuery = overdueQuery.eq("organization_id", organizationId);
+  const { data: overdue } = await overdueQuery;
 
   const allMonth = monthBills || [];
   const pending = allMonth.filter(
@@ -210,12 +221,14 @@ export async function fetchBillSummary(): Promise<BillSummary> {
 /**
  * Get all unique bill categories
  */
-export async function fetchBillCategories(): Promise<string[]> {
-  const { data, error } = await db
+export async function fetchBillCategories(organizationId?: string): Promise<string[]> {
+  let query = db
     .from("bills")
     .select("category")
     .not("category", "is", null)
     .order("category");
+  if (organizationId) query = query.eq("organization_id", organizationId);
+  const { data, error } = await query;
 
   if (error) return [];
 
@@ -333,12 +346,14 @@ export async function importBills(
 /**
  * Fetch import history
  */
-export async function fetchBillImports(): Promise<BillImport[]> {
-  const { data, error } = await db
+export async function fetchBillImports(organizationId?: string): Promise<BillImport[]> {
+  let query = db
     .from("bill_imports")
     .select("*")
     .order("created_at", { ascending: false })
     .limit(20);
+  if (organizationId) query = query.eq("organization_id", organizationId);
+  const { data, error } = await query;
 
   if (error) {
     console.error("Error fetching imports:", error);

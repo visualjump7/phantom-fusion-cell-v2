@@ -40,9 +40,7 @@ const mainNavItems: NavItem[] = [
 ];
 
 const adminNavItems: NavItem[] = [
-  { name: "Budget Upload", href: "/upload", icon: TrendingUp },
-  { name: "Bills", href: "/admin/bills", icon: Receipt },
-  { name: "Send Alerts", href: "/admin/messages", icon: SendHorizontal },
+  { name: "Command Center", href: "/admin", icon: ShieldCheck },
 ];
 
 export function Navbar() {

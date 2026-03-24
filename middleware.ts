@@ -55,21 +55,32 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/admin") || pathname === "/upload";
 
   if (user && isAdminRoute) {
-    // Query the user's role
-    const { data: membership } = await supabase
+    // Query all the user's memberships (supports multi-org)
+    const { data: memberships } = await supabase
       .from("organization_members")
-      .select("role")
+      .select("role, organization_id")
       .eq("user_id", user.id)
-      .eq("status", "active")
-      .single();
+      .eq("status", "active");
 
-    const role = membership?.role;
-    const hasAdminAccess =
-      role === "owner" || role === "admin" || role === "accountant";
+    const hasAdminAccess = (memberships || []).some(
+      (m: { role: string }) => m.role === "owner" || m.role === "admin" || m.role === "accountant"
+    );
 
     if (!hasAdminAccess) {
       // Executive or unknown role — redirect to dashboard
       return NextResponse.redirect(new URL("/", request.url));
+    }
+
+    // For workspace routes, verify user has membership in the target org
+    const workspaceMatch = pathname.match(/^\/admin\/client\/([^/]+)/);
+    if (workspaceMatch) {
+      const targetOrgId = workspaceMatch[1];
+      const hasMembership = (memberships || []).some(
+        (m: { organization_id: string }) => m.organization_id === targetOrgId
+      );
+      if (!hasMembership) {
+        return NextResponse.redirect(new URL("/admin", request.url));
+      }
     }
   }
 
