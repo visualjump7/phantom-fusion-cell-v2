@@ -3,13 +3,17 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
-export type UserRole = "owner" | "admin" | "accountant" | "executive" | null;
+export type UserRole = "admin" | "manager" | "viewer" | "executive" | null;
 
 interface UseRoleResult {
   role: UserRole;
   isLoading: boolean;
   isAdmin: boolean;
+  isManager: boolean;
+  isViewer: boolean;
   isExecutive: boolean;
+  isStaff: boolean;
+  isTeam: boolean;
   userId: string | null;
   userEmail: string | null;
   userName: string | null;
@@ -68,7 +72,12 @@ export function useRole(): UseRoleResult {
           return;
         }
 
-        const userRole = (members && members.length > 0 ? members[0].role : null) as UserRole;
+        // Normalize legacy roles
+        let rawRole = members && members.length > 0 ? members[0].role : null;
+        if (rawRole === "owner") rawRole = "admin";
+        if (rawRole === "accountant") rawRole = "manager";
+
+        const userRole = rawRole as UserRole;
 
         cachedResult = { role: userRole, userId: user.id, email, name };
         setRole(userRole);
@@ -85,11 +94,22 @@ export function useRole(): UseRoleResult {
     fetchRole();
   }, []);
 
+  const isAdmin = role === "admin";
+  const isManager = role === "manager";
+  const isViewer = role === "viewer";
+  const isExecutive = role === "executive";
+  const isStaff = isAdmin || isManager;
+  const isTeam = isAdmin || isManager || isViewer;
+
   return {
     role,
     isLoading,
-    isAdmin: role === "owner" || role === "admin" || role === "accountant",
-    isExecutive: role === "executive",
+    isAdmin,
+    isManager,
+    isViewer,
+    isExecutive,
+    isStaff,
+    isTeam,
     userId,
     userEmail,
     userName,

@@ -21,6 +21,8 @@ import {
 import { supabase } from "@/lib/supabase";
 import { useClientContext } from "@/lib/use-client-context";
 import { ConfirmDialog } from "@/components/admin/shared/ConfirmDialog";
+import { useRole } from "@/lib/use-role";
+import { hasPermission } from "@/lib/permissions";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
@@ -32,6 +34,8 @@ type DateFilter = "all" | "this_month" | "next_30" | "overdue";
 
 export default function WorkspaceBillsPage() {
   const { orgId, clientName } = useClientContext();
+  const { role } = useRole();
+  const canManageBills = hasPermission(role, "manageBills");
 
   // Data
   const [bills, setBills] = useState<Bill[]>([]);
@@ -259,10 +263,12 @@ export default function WorkspaceBillsPage() {
           <h1 className="text-xl font-bold text-foreground">Bills</h1>
           <p className="text-sm text-muted-foreground">Manage bills for {clientName}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => setShowUpload(true)}><Upload className="mr-2 h-4 w-4" />Import</Button>
-          <Button onClick={openAdd}><Plus className="mr-2 h-4 w-4" />Add Bill</Button>
-        </div>
+        {canManageBills && (
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setShowUpload(true)}><Upload className="mr-2 h-4 w-4" />Import</Button>
+            <Button onClick={openAdd}><Plus className="mr-2 h-4 w-4" />Add Bill</Button>
+          </div>
+        )}
       </div>
 
       {/* Summary cards */}
@@ -346,15 +352,17 @@ export default function WorkspaceBillsPage() {
                   </div>
                   <div className="flex items-center gap-3 pl-4">
                     <p className="text-lg font-bold text-foreground">${(bill.amount_cents / 100).toLocaleString()}</p>
-                    <div className="flex items-center gap-1">
-                      {bill.status === "pending" && (
-                        <Button variant="ghost" size="sm" onClick={() => handleStatusChange(bill.id, "paid")} title="Mark paid">
-                          <CheckCircle className="h-4 w-4 text-emerald-500" />
-                        </Button>
-                      )}
-                      <Button variant="ghost" size="sm" onClick={() => openEdit(bill)}><Pencil className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(bill)}><Trash2 className="h-4 w-4 text-red-400" /></Button>
-                    </div>
+                    {canManageBills && (
+                      <div className="flex items-center gap-1">
+                        {bill.status === "pending" && (
+                          <Button variant="ghost" size="sm" onClick={() => handleStatusChange(bill.id, "paid")} title="Mark paid">
+                            <CheckCircle className="h-4 w-4 text-emerald-500" />
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="sm" onClick={() => openEdit(bill)}><Pencil className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(bill)}><Trash2 className="h-4 w-4 text-red-400" /></Button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

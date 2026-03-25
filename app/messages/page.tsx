@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRole } from "@/lib/use-role";
 import { useThemePreferences } from "@/components/ThemeProvider";
+import { useEffectiveOrgId, useScopedOrgId } from "@/lib/use-active-principal";
 import {
   fetchMessages,
   respondToMessage,
@@ -24,14 +25,14 @@ import {
 } from "@/lib/message-service";
 import { formatTimeAgo } from "@/lib/utils";
 
-const ORG_ID = "00000000-0000-0000-0000-000000000001";
-
 export default function MessagesPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
   const { isAdmin, isExecutive } = useRole();
   const { density } = useThemePreferences();
+  const { scopedOrgId } = useScopedOrgId();
+  const { orgId: effectiveOrgId } = useEffectiveOrgId();
 
   // Response modal
   const [respondingTo, setRespondingTo] = useState<Message | null>(null);
@@ -45,7 +46,10 @@ export default function MessagesPage() {
   const [isSendingReply, setIsSendingReply] = useState(false);
 
   const loadMessages = async () => {
-    const data = await fetchMessages({ type: filter !== "all" ? filter : undefined });
+    const data = await fetchMessages({
+      type: filter !== "all" ? filter : undefined,
+      organization_id: scopedOrgId || undefined,
+    });
     setMessages(data);
     setIsLoading(false);
   };
@@ -53,7 +57,7 @@ export default function MessagesPage() {
   useEffect(() => {
     setIsLoading(true);
     loadMessages();
-  }, [filter]);
+  }, [filter, scopedOrgId]);
 
   // ─── APPROVE / REJECT ───
   const openResponseModal = (msg: Message, action: "approved" | "rejected") => {
@@ -90,7 +94,7 @@ export default function MessagesPage() {
       title: replyText.trim(),
       type: "comment",
       priority: "medium",
-      organization_id: ORG_ID,
+      organization_id: effectiveOrgId || "",
     });
     setReplyText("");
     setShowReply(false);

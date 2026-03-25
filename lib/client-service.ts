@@ -147,7 +147,7 @@ export async function createClientProfile(data: {
     await db.from("organization_members").insert({
       organization_id: org.id,
       user_id: user.id,
-      role: "owner",
+      role: "admin",
       status: "active",
     });
   }
@@ -166,4 +166,97 @@ export async function updateClientProfile(
 
   if (error) return { success: false, error: error.message };
   return { success: true };
+}
+
+// ============================================
+// Deletion
+// ============================================
+
+export interface DeletionCounts {
+  holdings: number;
+  budgets: number;
+  bills: number;
+  messages: number;
+  members: number;
+}
+
+export async function fetchDeletionCounts(orgId: string): Promise<DeletionCounts> {
+  const [assetsRes, budgetsRes, billsRes, messagesRes, membersRes] = await Promise.all([
+    db.from("assets").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+    db.from("budgets").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+    db.from("bills").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+    db.from("messages").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+    db.from("organization_members").select("id", { count: "exact", head: true }).eq("organization_id", orgId),
+  ]);
+
+  return {
+    holdings: assetsRes.count ?? 0,
+    budgets: budgetsRes.count ?? 0,
+    bills: billsRes.count ?? 0,
+    messages: messagesRes.count ?? 0,
+    members: membersRes.count ?? 0,
+  };
+}
+
+export async function deletePrincipal(orgId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    // 1. Delete message_responses for messages in this org
+    const { data: orgMessages } = await db
+      .from("messages")
+      .select("id")
+      .eq("organization_id", orgId);
+    const msgIds = (orgMessages || []).map((m: { id: string }) => m.id);
+
+    if (msgIds.length > 0) {
+      await db.from("message_responses").delete().in("message_id", msgIds);
+    }
+
+    // 2. Delete messages
+    const { error: msgErr } = await db.from("messages").delete().eq("organization_id", orgId);
+    if (msgErr) throw new Error(`Failed to delete messages: ${msgErr.message}`);
+
+    // 3. Delete bill_imports
+    await db.from("bill_imports").delete().eq("organization_id", orgId);
+
+    // 4. Delete bills
+    const { error: billErr } = await db.from("bills").delete().eq("organization_id", orgId);
+    if (billErr) throw new Error(`Failed to delete bills: ${billErr.message}`);
+
+    // 5. Delete budget_line_items via budgets
+    const { data: orgBudgets } = await db
+      .from("budgets")
+      .select("id")
+      .eq("organization_id", orgId);
+    const budgetIds = (orgBudgets || []).map((b: { id: string }) => b.id);
+
+    if (budgetIds.length > 0) {
+      await db.from("budget_line_items").delete().in("budget_id", budgetIds);
+    }
+
+    // 6. Delete budgets
+    const { error: budgetErr } = await db.from("budgets").delete().eq("organization_id", orgId);
+    if (budgetErr) throw new Error(`Failed to delete budgets: ${budgetErr.message}`);
+
+    // 7. Delete assets
+    const { error: assetErr } = await db.from("assets").delete().eq("organization_id", orgId);
+    if (assetErr) throw new Error(`Failed to delete assets: ${assetErr.message}`);
+
+    // 8. Delete client_profile
+    const { error: profileErr } = await db.from("client_profiles").delete().eq("organization_id", orgId);
+    if (profileErr) throw new Error(`Failed to delete client profile: ${profileErr.message}`);
+
+    // 9. Delete organization_members
+    const { error: memberErr } = await db.from("organization_members").delete().eq("organization_id", orgId);
+    if (memberErr) throw new Error(`Failed to delete organization members: ${memberErr.message}`);
+
+    // 10. Delete the organization
+    const { error: orgErr } = await db.from("organizations").delete().eq("id", orgId);
+    if (orgErr) throw new Error(`Failed to delete organization: ${orgErr.message}`);
+
+    return { success: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error during deletion";
+    console.error("[deletePrincipal]", message);
+    return { success: false, error: message };
+  }
 }

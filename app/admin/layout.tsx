@@ -3,18 +3,19 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
 import {
-  LayoutDashboard, Users, Plus, ChevronRight, Loader2,
+  LayoutDashboard, Users, Plus, ChevronRight, Loader2, UserCog,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { fetchClientProfiles, ClientProfile } from "@/lib/client-service";
+import { useRole } from "@/lib/use-role";
 import { cn } from "@/lib/utils";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [clients, setClients] = useState<ClientProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { isAdmin } = useRole();
 
   useEffect(() => {
     fetchClientProfiles().then((data) => {
@@ -25,6 +26,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const isCommandCenter = pathname === "/admin";
   const isOnboard = pathname === "/admin/onboard";
+  const isUsers = pathname === "/admin/users";
 
   // Inside a workspace — don't render sidebar
   const isWorkspace = pathname.startsWith("/admin/client/");
@@ -51,6 +53,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <LayoutDashboard className="h-4 w-4" />
                 Command Center
               </Link>
+
+              {/* Team nav — admin only */}
+              {isAdmin && (
+                <Link
+                  href="/admin/users"
+                  className={cn(
+                    "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    isUsers
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <UserCog className="h-4 w-4" />
+                  Team
+                </Link>
+              )}
 
               <div className="pt-4">
                 <p className="px-3 pb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -86,20 +104,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 )}
               </div>
 
-              <div className="pt-2">
-                <Link
-                  href="/admin/onboard"
-                  className={cn(
-                    "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                    isOnboard
-                      ? "bg-primary/10 text-primary"
-                      : "text-primary/60 hover:bg-primary/10 hover:text-primary"
-                  )}
-                >
-                  <Plus className="h-4 w-4" />
-                  Onboard Principal
-                </Link>
-              </div>
+              {/* Onboard — admin only */}
+              {isAdmin && (
+                <div className="pt-2">
+                  <Link
+                    href="/admin/onboard"
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                      isOnboard
+                        ? "bg-primary/10 text-primary"
+                        : "text-primary/60 hover:bg-primary/10 hover:text-primary"
+                    )}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Onboard Principal
+                  </Link>
+                </div>
+              )}
             </nav>
           </aside>
 

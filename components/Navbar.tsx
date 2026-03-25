@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { useRole, clearRoleCache } from "@/lib/use-role";
 import { useThemePreferences } from "@/components/ThemeProvider";
+import { GlobalClientBanner } from "@/components/admin/shared/GlobalClientBanner";
 
 interface NavItem {
   name: string;
@@ -51,7 +52,7 @@ export function Navbar() {
   const [settingsDropdownOpen, setSettingsDropdownOpen] = useState(false);
   const adminDropdownRef = useRef<HTMLDivElement>(null);
   const settingsDropdownRef = useRef<HTMLDivElement>(null);
-  const { isAdmin } = useRole();
+  const { isAdmin, isTeam } = useRole();
   const { density } = useThemePreferences();
 
   useEffect(() => {
@@ -76,6 +77,7 @@ export function Navbar() {
   };
 
   return (
+    <>
     <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md text-foreground">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
@@ -113,7 +115,7 @@ export function Navbar() {
 
           {/* Right side */}
           <div className="flex items-center gap-2">
-            {isAdmin && (
+            {isTeam && (
               <div className="relative hidden md:block" ref={adminDropdownRef}>
                 <button
                   type="button"
@@ -229,7 +231,7 @@ export function Navbar() {
                 </Link>
               );
             })}
-            {isAdmin && (
+            {isTeam && (
               <>
                 <div className="px-3 py-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Admin
@@ -265,5 +267,7 @@ export function Navbar() {
         </motion.div>
       )}
     </nav>
+    <GlobalClientBanner />
+    </>
   );
 }

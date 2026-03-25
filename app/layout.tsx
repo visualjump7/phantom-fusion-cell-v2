@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { ActivePrincipalProvider } from "@/lib/use-active-principal";
 import { getServerThemePreferences } from "@/lib/theme-preferences-server";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -31,7 +32,9 @@ export default async function RootLayout({
       </head>
       <body className={inter.className}>
         <ThemeProvider initialTheme={theme} initialDensity={density}>
-          {children}
+          <ActivePrincipalProvider>
+            {children}
+          </ActivePrincipalProvider>
         </ThemeProvider>
       </body>
     </html>

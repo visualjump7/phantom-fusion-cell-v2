@@ -30,6 +30,8 @@ import {
 import { formatTimeAgo } from "@/lib/utils";
 import { useClientContext } from "@/lib/use-client-context";
 import { ConfirmDialog } from "@/components/admin/shared/ConfirmDialog";
+import { useRole } from "@/lib/use-role";
+import { hasPermission } from "@/lib/permissions";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
@@ -57,6 +59,8 @@ const PRIORITY_OPTIONS = [
 
 export default function WorkspaceMessagesPage() {
   const { orgId, clientName } = useClientContext();
+  const { role } = useRole();
+  const canCompose = hasPermission(role, "composeMessages");
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [assets, setAssets] = useState<AssetOption[]>([]);
@@ -193,7 +197,7 @@ export default function WorkspaceMessagesPage() {
           <h1 className="text-xl font-bold text-foreground">Alerts & Messages</h1>
           <p className="text-sm text-muted-foreground">Manage communications for {clientName}</p>
         </div>
-        <Button onClick={() => openCompose()}><Plus className="mr-2 h-4 w-4" />New Message</Button>
+        {canCompose && <Button onClick={() => openCompose()}><Plus className="mr-2 h-4 w-4" />New Message</Button>}
       </div>
 
       {/* Filters */}
@@ -269,13 +273,15 @@ export default function WorkspaceMessagesPage() {
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => openCompose(msg)}><Pencil className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleArchive(msg)}>
-                        {msg.is_archived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(msg)}><Trash2 className="h-4 w-4 text-red-400" /></Button>
-                    </div>
+                    {canCompose && (
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => openCompose(msg)}><Pencil className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleArchive(msg)}>
+                          {msg.is_archived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(msg)}><Trash2 className="h-4 w-4 text-red-400" /></Button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

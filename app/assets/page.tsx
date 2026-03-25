@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
 import { formatCurrency, getCategoryColor, cn } from "@/lib/utils";
 import { useRole } from "@/lib/use-role";
+import { useEffectiveOrgId, useScopedOrgId } from "@/lib/use-active-principal";
 
 interface Asset {
   id: string;
@@ -28,8 +29,6 @@ interface Asset {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
 
-const ORG_ID = "00000000-0000-0000-0000-000000000001";
-
 const CATEGORY_OPTIONS = [
   { value: "family", label: "Family", color: "bg-emerald-600 text-white border-emerald-600" },
   { value: "business", label: "Business", color: "bg-blue-600 text-white border-blue-600" },
@@ -38,6 +37,8 @@ const CATEGORY_OPTIONS = [
 
 export default function AssetsPage() {
   const { isAdmin } = useRole();
+  const { scopedOrgId } = useScopedOrgId();
+  const { orgId: effectiveOrgId } = useEffectiveOrgId();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
@@ -59,16 +60,18 @@ export default function AssetsPage() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   async function loadAssets() {
-    const { data } = await db
+    let query = db
       .from("assets")
       .select("id, name, category, estimated_value, description, identifier")
       .eq("is_deleted", false)
       .order("estimated_value", { ascending: false });
+    if (scopedOrgId) query = query.eq("organization_id", scopedOrgId);
+    const { data } = await query;
     setAssets(data || []);
     setIsLoading(false);
   }
 
-  useEffect(() => { loadAssets(); }, []);
+  useEffect(() => { loadAssets(); }, [scopedOrgId]);
 
   useEffect(() => {
     if (!openMenuId) return;
@@ -141,7 +144,7 @@ export default function AssetsPage() {
         estimated_value: parseFloat(formValue) || 0,
         identifier: formIdentifier.trim() || null,
         description: formDescription.trim() || null,
-        organization_id: ORG_ID,
+        organization_id: effectiveOrgId,
       };
 
       if (editingAsset) {

@@ -18,6 +18,7 @@ import { supabase } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/utils";
 import { useRole } from "@/lib/use-role";
 import { useThemePreferences } from "@/components/ThemeProvider";
+import { useScopedOrgId } from "@/lib/use-active-principal";
 import {
   fetchBillSummary,
   fetchUpcomingBills,
@@ -52,15 +53,22 @@ export default function DashboardPage() {
   const [upcomingBills, setUpcomingBills] = useState<Bill[]>([]);
   const { userName, isAdmin, isExecutive } = useRole();
   const { density, theme } = useThemePreferences();
+  const { scopedOrgId } = useScopedOrgId();
 
   useEffect(() => {
     async function loadData() {
       try {
+        let assetQuery = db.from("assets").select("id, name, category, estimated_value").eq("is_deleted", false).order("estimated_value", { ascending: false });
+        if (scopedOrgId) assetQuery = assetQuery.eq("organization_id", scopedOrgId);
+
+        let msgQuery = db.from("messages").select("id, title, type, priority, asset_id, created_at").eq("is_deleted", false).eq("is_archived", false).order("created_at", { ascending: false }).limit(5);
+        if (scopedOrgId) msgQuery = msgQuery.eq("organization_id", scopedOrgId);
+
         const [assetRes, msgRes, summary, upcoming] = await Promise.all([
-          db.from("assets").select("id, name, category, estimated_value").eq("is_deleted", false).order("estimated_value", { ascending: false }),
-          db.from("messages").select("id, title, type, priority, asset_id, created_at").eq("is_deleted", false).eq("is_archived", false).order("created_at", { ascending: false }).limit(5),
-          fetchBillSummary(),
-          fetchUpcomingBills(7),
+          assetQuery,
+          msgQuery,
+          fetchBillSummary(scopedOrgId || undefined),
+          fetchUpcomingBills(7, scopedOrgId || undefined),
         ]);
 
         setAssets(assetRes.data || []);
@@ -73,8 +81,9 @@ export default function DashboardPage() {
         setIsLoading(false);
       }
     }
+    setIsLoading(true);
     loadData();
-  }, []);
+  }, [scopedOrgId]);
 
   const totalValue = assets.reduce((sum, a) => sum + (a.estimated_value || 0), 0);
   const categoryTotals = assets.reduce((acc, a) => {

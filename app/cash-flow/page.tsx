@@ -11,6 +11,7 @@ import { MonthlyTable } from "@/components/cashflow/MonthlyTable";
 import { TransactionFeed } from "@/components/cashflow/TransactionFeed";
 import { CashFlowData, generateDemoCashFlowData } from "@/lib/cashflow";
 import { useThemePreferences } from "@/components/ThemeProvider";
+import { useScopedOrgId } from "@/lib/use-active-principal";
 
 type ViewTab = "calendar" | "chart" | "monthly" | "transactions";
 
@@ -27,11 +28,13 @@ export default function CashFlowPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { theme } = useThemePreferences();
+  const { scopedOrgId } = useScopedOrgId();
 
   useEffect(() => {
     async function loadData() {
       try {
-        const res = await fetch("/api/cashflow");
+        const url = scopedOrgId ? `/api/cashflow?orgId=${scopedOrgId}` : "/api/cashflow";
+        const res = await fetch(url);
         if (!res.ok) throw new Error("Failed to fetch");
         const json = await res.json();
         setData(json);
@@ -41,8 +44,9 @@ export default function CashFlowPage() {
         setIsLoading(false);
       }
     }
+    setIsLoading(true);
     loadData();
-  }, []);
+  }, [scopedOrgId]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

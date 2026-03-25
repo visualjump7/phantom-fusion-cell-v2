@@ -88,7 +88,7 @@ export default function SettingsPage() {
     }
   };
 
-  const roleLabel = role === "owner" ? "Owner" : role === "admin" ? "Admin" : role === "accountant" ? "Accountant" : role === "executive" ? "Executive" : "User";
+  const roleLabel = role === "admin" ? "Admin" : role === "manager" ? "Manager" : role === "viewer" ? "Viewer" : role === "executive" ? "Executive" : "User";
 
   return (
     <div className="min-h-screen bg-background">

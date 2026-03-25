@@ -21,6 +21,7 @@ import { formatCentsToDisplay } from "@/lib/bill-parser";
 import { BudgetView } from "@/components/budget/BudgetView";
 import { useRole } from "@/lib/use-role";
 import { useThemePreferences } from "@/components/ThemeProvider";
+import { useScopedOrgId } from "@/lib/use-active-principal";
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 import {
   fetchMessages, respondToMessage, getMessageStatus,
@@ -43,6 +44,7 @@ export default function AssetDetailPage() {
   const params = useParams();
   const { isAdmin } = useRole();
   const { density } = useThemePreferences();
+  const { scopedOrgId } = useScopedOrgId();
   const [asset, setAsset] = useState<Asset | null>(null);
 
   // #region agent log
@@ -91,7 +93,9 @@ export default function AssetDetailPage() {
       }
       try {
       const [assetRes, billsData, assetMessages, budgetRes] = await Promise.all([
-        db.from("assets").select("*").eq("id", id).single(),
+        scopedOrgId
+          ? db.from("assets").select("*").eq("id", id).eq("organization_id", scopedOrgId).single()
+          : db.from("assets").select("*").eq("id", id).single(),
         fetchBillsForAsset(id),
         fetchMessages({ asset_id: id }),
         db.from("budgets").select("id").eq("asset_id", id).limit(1),
@@ -144,7 +148,7 @@ export default function AssetDetailPage() {
       }
     }
     loadData();
-  }, [params.id]);
+  }, [params.id, scopedOrgId]);
 
   const openResponseModal = (msg: Message, action: "approved" | "rejected") => {
     setRespondingTo(msg);

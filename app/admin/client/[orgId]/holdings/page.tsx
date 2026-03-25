@@ -15,6 +15,8 @@ import { supabase } from "@/lib/supabase";
 import { formatCurrency, getCategoryColor, cn } from "@/lib/utils";
 import { useClientContext } from "@/lib/use-client-context";
 import { ConfirmDialog } from "@/components/admin/shared/ConfirmDialog";
+import { useRole } from "@/lib/use-role";
+import { hasPermission } from "@/lib/permissions";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
@@ -36,6 +38,8 @@ const CATEGORY_OPTIONS = [
 
 export default function WorkspaceHoldingsPage() {
   const { orgId, clientName } = useClientContext();
+  const { role } = useRole();
+  const canManage = hasPermission(role, "manageHoldings");
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
@@ -136,7 +140,7 @@ export default function WorkspaceHoldingsPage() {
           <h1 className="text-xl font-bold text-foreground">Holdings</h1>
           <p className="text-sm text-muted-foreground">{assets.length} holdings for {clientName} &middot; {formatCurrency(totalValue)} total value</p>
         </div>
-        <Button onClick={openAdd}><Plus className="mr-2 h-4 w-4" />Add Holding</Button>
+        {canManage && <Button onClick={openAdd}><Plus className="mr-2 h-4 w-4" />Add Holding</Button>}
       </div>
 
       {/* Filters */}
@@ -177,13 +181,15 @@ export default function WorkspaceHoldingsPage() {
                     {asset.description && <span className="truncate max-w-[200px]">{asset.description}</span>}
                   </div>
                 </div>
-                <div className="flex items-center gap-1 pl-4">
-                  <Link href={`/admin/client/${orgId}/upload?asset=${asset.id}`}>
-                    <Button variant="ghost" size="sm" title="Upload budget"><Upload className="h-4 w-4" /></Button>
-                  </Link>
-                  <Button variant="ghost" size="sm" onClick={() => openEdit(asset)}><Pencil className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(asset)}><Trash2 className="h-4 w-4 text-red-400" /></Button>
-                </div>
+                {canManage && (
+                  <div className="flex items-center gap-1 pl-4">
+                    <Link href={`/admin/client/${orgId}/upload?asset=${asset.id}`}>
+                      <Button variant="ghost" size="sm" title="Upload budget"><Upload className="h-4 w-4" /></Button>
+                    </Link>
+                    <Button variant="ghost" size="sm" onClick={() => openEdit(asset)}><Pencil className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(asset)}><Trash2 className="h-4 w-4 text-red-400" /></Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))
