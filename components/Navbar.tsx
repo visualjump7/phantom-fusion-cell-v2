@@ -18,6 +18,7 @@ import {
   ChevronDown,
   ShieldCheck,
   DollarSign,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -31,10 +32,12 @@ interface NavItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   adminOnly?: boolean;
+  executiveOnly?: boolean;
 }
 
 const mainNavItems: NavItem[] = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
+  { name: "Daily Brief", href: "/brief", icon: FileText, executiveOnly: true },
   { name: "Directory", href: "/assets", icon: Building2 },
   { name: "Cash Flow", href: "/cash-flow", icon: DollarSign },
   { name: "Alerts", href: "/messages", icon: MessageSquare },
@@ -52,7 +55,7 @@ export function Navbar() {
   const [settingsDropdownOpen, setSettingsDropdownOpen] = useState(false);
   const adminDropdownRef = useRef<HTMLDivElement>(null);
   const settingsDropdownRef = useRef<HTMLDivElement>(null);
-  const { isAdmin, isTeam } = useRole();
+  const { isAdmin, isTeam, isExecutive } = useRole();
   const { density } = useThemePreferences();
 
   useEffect(() => {
@@ -93,7 +96,7 @@ export function Navbar() {
 
           {/* Desktop Nav */}
           <div className="hidden items-center gap-1 md:flex">
-            {mainNavItems.map((item) => {
+            {mainNavItems.filter(item => !item.executiveOnly || isExecutive).map((item) => {
               const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
               return (
                 <Link
@@ -214,7 +217,7 @@ export function Navbar() {
           className="border-t border-border bg-background px-4 py-4 md:hidden"
         >
           <div className="space-y-1">
-            {mainNavItems.map((item) => {
+            {mainNavItems.filter(item => !item.executiveOnly || isExecutive).map((item) => {
               const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
               return (
                 <Link

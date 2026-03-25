@@ -9,6 +9,7 @@ import {
   TrendingUp,
   MessageSquare,
   ChevronRight,
+  FileText,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,6 +26,7 @@ import {
   BillSummary,
   Bill,
 } from "@/lib/bill-service";
+import { fetchLatestPublishedBrief, Brief } from "@/lib/brief-service";
 
 interface Asset {
   id: string;
@@ -51,6 +53,7 @@ export default function DashboardPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [billSummary, setBillSummary] = useState<BillSummary | null>(null);
   const [upcomingBills, setUpcomingBills] = useState<Bill[]>([]);
+  const [latestBrief, setLatestBrief] = useState<Brief | null>(null);
   const { userName, isAdmin, isExecutive } = useRole();
   const { density, theme } = useThemePreferences();
   const { scopedOrgId } = useScopedOrgId();
@@ -64,17 +67,19 @@ export default function DashboardPage() {
         let msgQuery = db.from("messages").select("id, title, type, priority, asset_id, created_at").eq("is_deleted", false).eq("is_archived", false).order("created_at", { ascending: false }).limit(5);
         if (scopedOrgId) msgQuery = msgQuery.eq("organization_id", scopedOrgId);
 
-        const [assetRes, msgRes, summary, upcoming] = await Promise.all([
+        const [assetRes, msgRes, summary, upcoming, briefRes] = await Promise.all([
           assetQuery,
           msgQuery,
           fetchBillSummary(scopedOrgId || undefined),
           fetchUpcomingBills(7, scopedOrgId || undefined),
+          scopedOrgId ? fetchLatestPublishedBrief(scopedOrgId) : Promise.resolve(null),
         ]);
 
         setAssets(assetRes.data || []);
         setMessages(msgRes.data || []);
         setBillSummary(summary);
         setUpcomingBills(upcoming);
+        setLatestBrief(briefRes);
       } catch (error) {
         console.error("Error loading dashboard:", error);
       } finally {
@@ -217,6 +222,49 @@ export default function DashboardPage() {
 
             {/* Right Column */}
             <div className={density === "comfort" ? "space-y-[var(--gap)]" : "space-y-6 lg:col-span-8"}>
+              {/* Daily Brief */}
+              <motion.div variants={itemVariants} data-section="brief">
+                <Card className="border-border bg-card/60 backdrop-blur-sm">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <FileText className="h-4 w-4 text-primary" />
+                        Daily Brief
+                      </CardTitle>
+                      {latestBrief && (
+                        <Link href="/brief" className="text-[length:var(--font-size-caption)] text-primary hover:underline">
+                          Read Brief {"\u2192"}
+                        </Link>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {latestBrief ? (
+                      <Link href="/brief" className="block group">
+                        <p className="font-medium text-foreground group-hover:text-primary transition-colors">
+                          {latestBrief.title}
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {new Date(latestBrief.brief_date + "T00:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                          {" · Prepared by your Fusion Cell team"}
+                        </p>
+                        {latestBrief.blocks && latestBrief.blocks.length > 0 && (
+                          <p className="mt-2 text-[length:var(--font-size-body)] text-muted-foreground line-clamp-2">
+                            {latestBrief.blocks.find(b => b.type === "text" || b.type === "document")?.content_html
+                              ? latestBrief.blocks.find(b => b.type === "text" || b.type === "document")!.content_html!.replace(/<[^>]+>/g, "").slice(0, 150)
+                              : `${latestBrief.blocks.length} sections`}
+                          </p>
+                        )}
+                      </Link>
+                    ) : (
+                      <p className="text-[length:var(--font-size-body)] text-muted-foreground">
+                        No brief available
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+
               {/* Quick Stats */}
               <motion.div variants={itemVariants} data-section="stats">
                 <div
