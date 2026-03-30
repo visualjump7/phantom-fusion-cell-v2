@@ -27,6 +27,7 @@ import {
   Bill,
 } from "@/lib/bill-service";
 import { fetchLatestPublishedBrief, Brief } from "@/lib/brief-service";
+import { useRouter } from "next/navigation";
 
 interface Asset {
   id: string;
@@ -54,9 +55,17 @@ export default function DashboardPage() {
   const [billSummary, setBillSummary] = useState<BillSummary | null>(null);
   const [upcomingBills, setUpcomingBills] = useState<Bill[]>([]);
   const [latestBrief, setLatestBrief] = useState<Brief | null>(null);
-  const { userName, isAdmin, isExecutive } = useRole();
+  const { userName, isAdmin, isExecutive, isDelegate, role } = useRole();
   const { density, theme } = useThemePreferences();
   const { scopedOrgId } = useScopedOrgId();
+  const dashRouter = useRouter();
+
+  // Delegates should never see the Dashboard — redirect to /assets
+  useEffect(() => {
+    if (isDelegate) {
+      dashRouter.replace("/assets");
+    }
+  }, [isDelegate, dashRouter]);
 
   useEffect(() => {
     async function loadData() {

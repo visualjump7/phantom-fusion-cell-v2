@@ -6,22 +6,30 @@ export const PERMISSIONS = {
 
   // Holdings
   viewHoldings: ["admin", "manager", "viewer", "executive"],
+  viewAssignedProjects: ["executive", "delegate"],
+  viewAllProjects: ["admin", "manager", "viewer", "executive"],
   manageHoldings: ["admin", "manager"],
 
   // Budgets & Bills
-  viewBudgets: ["admin", "manager", "viewer", "executive"],
+  viewBudgets: ["admin", "manager", "viewer", "executive", "delegate"],
   uploadBudgets: ["admin", "manager"],
   manageBills: ["admin", "manager"],
 
   // Messages
-  viewMessages: ["admin", "manager", "viewer", "executive"],
+  viewMessages: ["admin", "manager", "viewer", "executive", "delegate"],
   composeMessages: ["admin", "manager"],
   sendSimpleMessage: ["executive"],
   approveDecisions: ["executive"],
 
+  // Navigation / Views
+  viewCashFlow: ["admin", "manager", "viewer", "executive"],
+  viewDailyBrief: ["admin", "manager", "viewer", "executive"],
+  viewDashboard: ["admin", "manager", "viewer", "executive"],
+
   // Users
   viewTeam: ["admin", "manager", "viewer"],
   manageUsers: ["admin"],
+  manageDelegates: ["admin"],
   assignRoles: ["admin"],
   resetPasswords: ["admin"],
 

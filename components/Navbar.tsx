@@ -33,14 +33,16 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   adminOnly?: boolean;
   executiveOnly?: boolean;
+  delegateVisible?: boolean;
+  delegateName?: string;
 }
 
 const mainNavItems: NavItem[] = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Daily Brief", href: "/brief", icon: FileText, executiveOnly: true },
-  { name: "Directory", href: "/assets", icon: Building2 },
+  { name: "Directory", href: "/assets", icon: Building2, delegateVisible: true, delegateName: "My Projects" },
   { name: "Cash Flow", href: "/cash-flow", icon: DollarSign },
-  { name: "Alerts", href: "/messages", icon: MessageSquare },
+  { name: "Alerts", href: "/messages", icon: MessageSquare, delegateVisible: true },
 ];
 
 const adminNavItems: NavItem[] = [
@@ -55,7 +57,7 @@ export function Navbar() {
   const [settingsDropdownOpen, setSettingsDropdownOpen] = useState(false);
   const adminDropdownRef = useRef<HTMLDivElement>(null);
   const settingsDropdownRef = useRef<HTMLDivElement>(null);
-  const { isAdmin, isTeam, isExecutive } = useRole();
+  const { isAdmin, isTeam, isExecutive, isDelegate, role } = useRole();
   const { density } = useThemePreferences();
 
   useEffect(() => {
@@ -96,7 +98,11 @@ export function Navbar() {
 
           {/* Desktop Nav */}
           <div className="hidden items-center gap-1 md:flex">
-            {mainNavItems.filter(item => !item.executiveOnly || isExecutive).map((item) => {
+            {mainNavItems.filter(item => {
+              if (isDelegate) return item.delegateVisible;
+              if (item.executiveOnly) return isExecutive;
+              return true;
+            }).map((item) => {
               const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
               return (
                 <Link
@@ -110,10 +116,15 @@ export function Navbar() {
                   )}
                 >
                   <item.icon className="h-4 w-4" />
-                  <span className="nav-label">{item.name}</span>
+                  <span className="nav-label">{isDelegate && item.delegateName ? item.delegateName : item.name}</span>
                 </Link>
               );
             })}
+            {isDelegate && (
+              <span className="ml-1 rounded-md bg-amber-600/20 px-2 py-0.5 text-[10px] font-medium text-amber-400">
+                Delegate
+              </span>
+            )}
           </div>
 
           {/* Right side */}
@@ -217,7 +228,11 @@ export function Navbar() {
           className="border-t border-border bg-background px-4 py-4 md:hidden"
         >
           <div className="space-y-1">
-            {mainNavItems.filter(item => !item.executiveOnly || isExecutive).map((item) => {
+            {mainNavItems.filter(item => {
+              if (isDelegate) return item.delegateVisible;
+              if (item.executiveOnly) return isExecutive;
+              return true;
+            }).map((item) => {
               const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
               return (
                 <Link
@@ -230,7 +245,7 @@ export function Navbar() {
                   )}
                 >
                   <item.icon className="h-5 w-5" />
-                  <span className="nav-label">{item.name}</span>
+                  <span className="nav-label">{isDelegate && item.delegateName ? item.delegateName : item.name}</span>
                 </Link>
               );
             })}

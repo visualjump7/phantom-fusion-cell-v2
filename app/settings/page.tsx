@@ -88,7 +88,8 @@ export default function SettingsPage() {
     }
   };
 
-  const roleLabel = role === "admin" ? "Admin" : role === "manager" ? "Manager" : role === "viewer" ? "Viewer" : role === "executive" ? "Executive" : "User";
+  const roleLabel = role === "admin" ? "Admin" : role === "manager" ? "Manager" : role === "viewer" ? "Viewer" : role === "executive" ? "Executive" : role === "delegate" ? "Delegate" : "User";
+  const isDelegate = role === "delegate";
 
   return (
     <div className="min-h-screen bg-background">
@@ -195,6 +196,7 @@ export default function SettingsPage() {
           </motion.div>
 
           {/* ═══ APPEARANCE ═══ */}
+          {!isDelegate && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
           <Card className="border-border bg-card/60">
             <CardHeader className="pb-4">
@@ -300,6 +302,7 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
           </motion.div>
+          )}
         </div>
       </motion.main>
     </div>

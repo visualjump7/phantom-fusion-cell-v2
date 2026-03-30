@@ -16,6 +16,7 @@ import { supabase } from "@/lib/supabase";
 import { formatCurrency, getCategoryColor, cn } from "@/lib/utils";
 import { useRole } from "@/lib/use-role";
 import { useEffectiveOrgId, useScopedOrgId } from "@/lib/use-active-principal";
+import { useDelegateAccess } from "@/lib/use-delegate-access";
 
 interface Asset {
   id: string;
@@ -36,8 +37,9 @@ const CATEGORY_OPTIONS = [
 ];
 
 export default function AssetsPage() {
-  const { isAdmin } = useRole();
+  const { isAdmin, isDelegate } = useRole();
   const { scopedOrgId } = useScopedOrgId();
+  const { assetIds: delegateAssetIds, isLoading: delegateLoading } = useDelegateAccess();
   const { orgId: effectiveOrgId } = useEffectiveOrgId();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,12 +68,22 @@ export default function AssetsPage() {
       .eq("is_deleted", false)
       .order("estimated_value", { ascending: false });
     if (scopedOrgId) query = query.eq("organization_id", scopedOrgId);
+    if (isDelegate && delegateAssetIds.length > 0) {
+      query = query.in("id", delegateAssetIds);
+    } else if (isDelegate && delegateAssetIds.length === 0 && !delegateLoading) {
+      setAssets([]);
+      setIsLoading(false);
+      return;
+    }
     const { data } = await query;
     setAssets(data || []);
     setIsLoading(false);
   }
 
-  useEffect(() => { loadAssets(); }, [scopedOrgId]);
+  useEffect(() => {
+    if (delegateLoading) return;
+    loadAssets();
+  }, [scopedOrgId, delegateAssetIds, delegateLoading]);
 
   useEffect(() => {
     if (!openMenuId) return;
@@ -199,7 +211,12 @@ export default function AssetsPage() {
               <Building2 className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="page-title font-bold text-foreground">Projects</h1>
+              <h1 className="page-title font-bold text-foreground">{isDelegate ? "My Projects" : "Projects"}</h1>
+              {isDelegate && delegateAssetIds.length > 0 && (
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  You have access to {delegateAssetIds.length} project{delegateAssetIds.length !== 1 ? "s" : ""}
+                </p>
+              )}
             </div>
           </div>
           {isAdmin && (

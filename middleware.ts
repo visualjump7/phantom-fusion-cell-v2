@@ -50,8 +50,8 @@ export async function middleware(request: NextRequest) {
   // ========================================
   // ROLE-BASED ROUTE PROTECTION
   // ========================================
-  if (user && (pathname.startsWith("/admin") || pathname === "/upload")) {
-    // Query all the user's memberships (supports multi-org)
+  if (user) {
+    // Query all the user's memberships
     const { data: memberships } = await supabase
       .from("organization_members")
       .select("role, organization_id")
@@ -68,57 +68,77 @@ export async function middleware(request: NextRequest) {
     const isAdmin = userRole === "admin";
     const isStaff = isAdmin || userRole === "manager";
     const isTeam = isStaff || userRole === "viewer";
+    const isDelegate = userRole === "delegate";
 
-    // /admin/* routes: accessible by isTeam (admin, manager, viewer)
-    if (pathname.startsWith("/admin") && !isTeam) {
-      return NextResponse.redirect(new URL("/", request.url));
+    // ── DELEGATE ROUTE RESTRICTIONS ──
+    if (isDelegate) {
+      // Delegates can ONLY access: /assets, /assets/[id], /messages, /settings, /login, /auth
+      const delegateAllowed =
+        pathname.startsWith("/assets") ||
+        pathname.startsWith("/messages") ||
+        pathname.startsWith("/settings") ||
+        pathname === "/login" ||
+        pathname.startsWith("/auth") ||
+        pathname.startsWith("/api") ||
+        pathname.startsWith("/_next");
+
+      if (!delegateAllowed) {
+        return NextResponse.redirect(new URL("/assets", request.url));
+      }
     }
 
-    // /upload: accessible by isStaff (admin, manager)
-    if (pathname === "/upload" && !isStaff) {
-      return NextResponse.redirect(new URL("/", request.url));
-    }
-
-    // /admin/onboard: admin only
-    if (pathname === "/admin/onboard" && !isAdmin) {
-      return NextResponse.redirect(new URL("/admin", request.url));
-    }
-
-    // /admin/users: admin only
-    if (pathname === "/admin/users" && !isAdmin) {
-      return NextResponse.redirect(new URL("/admin", request.url));
-    }
-
-    // /admin/bills: staff only (admin, manager)
-    if (pathname === "/admin/bills" && !isStaff) {
-      return NextResponse.redirect(new URL("/admin", request.url));
-    }
-
-    // For workspace routes, check access
-    const workspaceMatch = pathname.match(/^\/admin\/client\/([^/]+)/);
-    if (workspaceMatch) {
-      const targetOrgId = workspaceMatch[1];
-
-      if (isAdmin) {
-        // Admins can access any workspace — verify org exists via membership
-        // (admins are members of all orgs they manage)
-      } else {
-        // Manager/viewer: check principal_assignments
-        const { data: assignments } = await supabase
-          .from("principal_assignments")
-          .select("id")
-          .eq("user_id", user.id)
-          .eq("organization_id", targetOrgId)
-          .limit(1);
-
-        if (!assignments || assignments.length === 0) {
-          return NextResponse.redirect(new URL("/admin", request.url));
-        }
+    // ── ADMIN ROUTE RESTRICTIONS ──
+    if (pathname.startsWith("/admin") || pathname === "/upload") {
+      // /admin/* routes: accessible by isTeam (admin, manager, viewer)
+      if (pathname.startsWith("/admin") && !isTeam) {
+        return NextResponse.redirect(new URL("/", request.url));
       }
 
-      // Check upload sub-route for viewer restriction
-      if (pathname.endsWith("/upload") && !isStaff) {
-        return NextResponse.redirect(new URL(`/admin/client/${targetOrgId}`, request.url));
+      // /upload: accessible by isStaff (admin, manager)
+      if (pathname === "/upload" && !isStaff) {
+        return NextResponse.redirect(new URL("/", request.url));
+      }
+
+      // /admin/onboard: admin only
+      if (pathname === "/admin/onboard" && !isAdmin) {
+        return NextResponse.redirect(new URL("/admin", request.url));
+      }
+
+      // /admin/users: admin only
+      if (pathname === "/admin/users" && !isAdmin) {
+        return NextResponse.redirect(new URL("/admin", request.url));
+      }
+
+      // /admin/bills: staff only (admin, manager)
+      if (pathname === "/admin/bills" && !isStaff) {
+        return NextResponse.redirect(new URL("/admin", request.url));
+      }
+
+      // For workspace routes, check access
+      const workspaceMatch = pathname.match(/^\/admin\/client\/([^/]+)/);
+      if (workspaceMatch) {
+        const targetOrgId = workspaceMatch[1];
+
+        if (isAdmin) {
+          // Admins can access any workspace
+        } else {
+          // Manager/viewer: check principal_assignments
+          const { data: assignments } = await supabase
+            .from("principal_assignments")
+            .select("id")
+            .eq("user_id", user.id)
+            .eq("organization_id", targetOrgId)
+            .limit(1);
+
+          if (!assignments || assignments.length === 0) {
+            return NextResponse.redirect(new URL("/admin", request.url));
+          }
+        }
+
+        // Check upload sub-route for viewer restriction
+        if (pathname.endsWith("/upload") && !isStaff) {
+          return NextResponse.redirect(new URL(`/admin/client/${targetOrgId}`, request.url));
+        }
       }
     }
   }

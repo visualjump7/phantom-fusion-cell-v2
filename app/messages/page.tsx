@@ -24,12 +24,14 @@ import {
   Message,
 } from "@/lib/message-service";
 import { formatTimeAgo } from "@/lib/utils";
+import { useDelegateAccess } from "@/lib/use-delegate-access";
 
 export default function MessagesPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
-  const { isAdmin, isExecutive } = useRole();
+  const { isAdmin, isExecutive, isDelegate } = useRole();
+  const { assetIds: delegateAssetIds, isLoading: delegateLoading } = useDelegateAccess();
   const { density } = useThemePreferences();
   const { scopedOrgId } = useScopedOrgId();
   const { orgId: effectiveOrgId } = useEffectiveOrgId();
@@ -46,18 +48,25 @@ export default function MessagesPage() {
   const [isSendingReply, setIsSendingReply] = useState(false);
 
   const loadMessages = async () => {
-    const data = await fetchMessages({
+    let data = await fetchMessages({
       type: filter !== "all" ? filter : undefined,
       organization_id: scopedOrgId || undefined,
     });
+    // Delegates only see messages tied to their assigned assets
+    if (isDelegate && delegateAssetIds.length > 0) {
+      data = data.filter((m) => m.asset_id && delegateAssetIds.includes(m.asset_id));
+    } else if (isDelegate) {
+      data = [];
+    }
     setMessages(data);
     setIsLoading(false);
   };
 
   useEffect(() => {
+    if (delegateLoading) return;
     setIsLoading(true);
     loadMessages();
-  }, [filter, scopedOrgId]);
+  }, [filter, scopedOrgId, delegateAssetIds, delegateLoading]);
 
   // ─── APPROVE / REJECT ───
   const openResponseModal = (msg: Message, action: "approved" | "rejected") => {

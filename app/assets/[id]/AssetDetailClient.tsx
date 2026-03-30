@@ -27,6 +27,7 @@ import {
   fetchMessages, respondToMessage, getMessageStatus,
   Message,
 } from "@/lib/message-service";
+import { useDelegateAccess } from "@/lib/use-delegate-access";
 
 interface Asset {
   id: string;
@@ -42,10 +43,12 @@ const db = supabase as any;
 
 export default function AssetDetailPage() {
   const params = useParams();
-  const { isAdmin } = useRole();
+  const { isAdmin, isDelegate } = useRole();
   const { density } = useThemePreferences();
   const { scopedOrgId } = useScopedOrgId();
+  const { hasAccess, isLoading: delegateAccessLoading } = useDelegateAccess();
   const [asset, setAsset] = useState<Asset | null>(null);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   // #region agent log
   if (typeof window !== "undefined") {
@@ -84,11 +87,19 @@ export default function AssetDetailPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    if (delegateAccessLoading) return;
     async function loadData() {
       const id = params.id as string;
       if (!id) {
         setIsLoading(false);
         setAsset(null);
+        return;
+      }
+
+      // Delegate access check
+      if (isDelegate && !hasAccess(id)) {
+        setAccessDenied(true);
+        setIsLoading(false);
         return;
       }
       try {
@@ -148,7 +159,7 @@ export default function AssetDetailPage() {
       }
     }
     loadData();
-  }, [params.id, scopedOrgId]);
+  }, [params.id, scopedOrgId, delegateAccessLoading, isDelegate]);
 
   const openResponseModal = (msg: Message, action: "approved" | "rejected") => {
     setRespondingTo(msg);
@@ -232,6 +243,20 @@ export default function AssetDetailPage() {
         <Navbar />
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
+
+  if (accessDenied) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="mx-auto max-w-7xl px-4 py-20 text-center">
+          <p className="text-muted-foreground">You do not have access to this project</p>
+          <Button asChild variant="outline" className="mt-4">
+            <Link href="/assets">Back to My Projects</Link>
+          </Button>
         </div>
       </div>
     );

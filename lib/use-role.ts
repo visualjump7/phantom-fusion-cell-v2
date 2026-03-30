@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
-export type UserRole = "admin" | "manager" | "viewer" | "executive" | null;
+export type UserRole = "admin" | "manager" | "viewer" | "executive" | "delegate" | null;
 
 interface UseRoleResult {
   role: UserRole;
@@ -12,8 +12,10 @@ interface UseRoleResult {
   isManager: boolean;
   isViewer: boolean;
   isExecutive: boolean;
+  isDelegate: boolean;
   isStaff: boolean;
   isTeam: boolean;
+  isPrincipalSide: boolean;
   userId: string | null;
   userEmail: string | null;
   userName: string | null;
@@ -98,8 +100,10 @@ export function useRole(): UseRoleResult {
   const isManager = role === "manager";
   const isViewer = role === "viewer";
   const isExecutive = role === "executive";
+  const isDelegate = role === "delegate";
   const isStaff = isAdmin || isManager;
   const isTeam = isAdmin || isManager || isViewer;
+  const isPrincipalSide = isExecutive || isDelegate;
 
   return {
     role,
@@ -108,8 +112,10 @@ export function useRole(): UseRoleResult {
     isManager,
     isViewer,
     isExecutive,
+    isDelegate,
     isStaff,
     isTeam,
+    isPrincipalSide,
     userId,
     userEmail,
     userName,
