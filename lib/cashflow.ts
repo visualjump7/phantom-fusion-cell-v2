@@ -270,6 +270,64 @@ function emptyData(): CashFlowData {
   };
 }
 
+export interface BillRow {
+  id: string;
+  title: string;
+  amount_cents: number;
+  due_date: string;
+  status: string;
+  payee?: string;
+  category?: string;
+}
+
+export function buildCashFlowFromBills(bills: BillRow[]): CashFlowData {
+  if (!bills.length) return emptyData();
+
+  const byDate = new Map<string, BillRow[]>();
+  let totalExpenses = 0;
+  for (const bill of bills) {
+    const d = bill.due_date.split("T")[0];
+    if (!byDate.has(d)) byDate.set(d, []);
+    byDate.get(d)!.push(bill);
+    totalExpenses += Math.abs(bill.amount_cents) / 100;
+  }
+
+  // Start with a healthy opening balance so the demo cash flow stays positive
+  const openingBalance = Math.round(totalExpenses * 1.5);
+
+  const sortedDates = [...byDate.keys()].sort();
+  let balance = openingBalance;
+  const entries: DailyEntry[] = [];
+
+  for (const dateStr of sortedDates) {
+    const dayBills = byDate.get(dateStr)!;
+    const begBalance = balance;
+    let cashIn = 0;
+    let cashOut = 0;
+    const transactions: Transaction[] = [];
+
+    for (const bill of dayBills) {
+      const amount = Math.abs(bill.amount_cents) / 100;
+      const label = bill.payee
+        ? `${bill.title} — ${bill.payee}`
+        : bill.title;
+
+      if (bill.status === "paid") {
+        transactions.push({ label, amount, type: "out" });
+        cashOut += amount;
+      } else {
+        transactions.push({ label, amount, type: "out" });
+        cashOut += amount;
+      }
+    }
+
+    balance = begBalance - cashOut + cashIn;
+    entries.push({ date: dateStr, endBalance: balance, cashIn, cashOut, begBalance, transactions });
+  }
+
+  return buildCashFlowData(entries);
+}
+
 export function formatCompactCurrency(value: number): string {
   const abs = Math.abs(value);
   const sign = value < 0 ? "-" : "";

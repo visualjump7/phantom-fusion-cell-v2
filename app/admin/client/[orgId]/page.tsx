@@ -4,15 +4,15 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Building2, Receipt, MessageSquare, Upload, ChevronRight, Loader2, Trash2, FileText, Users,
+  Building2, Receipt, MessageSquare, Upload, ChevronRight, Loader2, Trash2, FileText, Users, Tag,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useClientContext } from "@/lib/use-client-context";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { fetchBillSummary, BillSummary } from "@/lib/bill-service";
-import { deletePrincipal } from "@/lib/client-service";
+import { deletePrincipal, updateClientProfile } from "@/lib/client-service";
 import { useActivePrincipal } from "@/lib/use-active-principal";
 import { DeletePrincipalModal } from "@/components/admin/shared/DeletePrincipalModal";
 import { useRole } from "@/lib/use-role";
@@ -35,13 +35,21 @@ export default function WorkspaceDashboard() {
   const [alertsCount, setAlertsCount] = useState(0);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteToast, setDeleteToast] = useState<string | null>(null);
+  const [allowedCategories, setAllowedCategories] = useState<string[]>(["business", "personal", "family"]);
+  const [savingCategories, setSavingCategories] = useState(false);
+  const ALL_CATS = [
+    { value: "business", label: "Business" },
+    { value: "personal", label: "Personal" },
+    { value: "family", label: "Family" },
+  ];
 
   useEffect(() => {
     async function loadData() {
-      const [assetsRes, billsRes, messagesRes] = await Promise.all([
+      const [assetsRes, billsRes, messagesRes, profileRes] = await Promise.all([
         db.from("assets").select("id, estimated_value").eq("organization_id", orgId).eq("is_deleted", false),
         fetchBillSummary(orgId),
         db.from("messages").select("id").eq("organization_id", orgId).eq("is_deleted", false).eq("is_archived", false),
+        db.from("client_profiles").select("allowed_categories").eq("organization_id", orgId).single(),
       ]);
 
       const assets = assetsRes.data || [];
@@ -49,6 +57,9 @@ export default function WorkspaceDashboard() {
       setHoldingsValue(assets.reduce((sum: number, a: { estimated_value: number }) => sum + (a.estimated_value || 0), 0));
       setBillSummary(billsRes);
       setAlertsCount((messagesRes.data || []).length);
+      if (profileRes.data?.allowed_categories) {
+        setAllowedCategories(profileRes.data.allowed_categories);
+      }
       setIsLoading(false);
     }
     loadData();
@@ -139,6 +150,49 @@ export default function WorkspaceDashboard() {
           ))}
         </div>
       </div>
+
+      {/* Allowed Categories — admin editable */}
+      {isAdmin && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <Tag className="h-4 w-4 text-primary" />
+            <h2 className="text-lg font-semibold text-foreground">Asset Categories</h2>
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">
+            Choose which asset categories are available for this principal. At least one is required.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            {ALL_CATS.map((cat) => {
+              const selected = allowedCategories.includes(cat.value);
+              return (
+                <button
+                  key={cat.value}
+                  disabled={savingCategories}
+                  onClick={async () => {
+                    if (selected && allowedCategories.length <= 1) return;
+                    const next = selected
+                      ? allowedCategories.filter((c) => c !== cat.value)
+                      : [...allowedCategories, cat.value];
+                    setAllowedCategories(next);
+                    setSavingCategories(true);
+                    await updateClientProfile(orgId, { allowed_categories: next });
+                    setSavingCategories(false);
+                  }}
+                  className={cn(
+                    "rounded-lg border px-4 py-2 text-sm font-medium transition-colors",
+                    selected
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:bg-muted/30"
+                  )}
+                >
+                  {cat.label}
+                </button>
+              );
+            })}
+            {savingCategories && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground self-center" />}
+          </div>
+        </div>
+      )}
 
       {/* Danger Zone — admin only */}
       {canDelete && <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-5">

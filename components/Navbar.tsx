@@ -57,7 +57,7 @@ export function Navbar() {
   const [settingsDropdownOpen, setSettingsDropdownOpen] = useState(false);
   const adminDropdownRef = useRef<HTMLDivElement>(null);
   const settingsDropdownRef = useRef<HTMLDivElement>(null);
-  const { isAdmin, isTeam, isExecutive, isDelegate, role } = useRole();
+  const { isAdmin, isStaff, isExecutive, isDelegate, role } = useRole();
   const { density } = useThemePreferences();
 
   useEffect(() => {
@@ -88,11 +88,6 @@ export function Navbar() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <img
-              src="https://phantom-presenter-assets.s3.us-east-1.amazonaws.com/logo_icon.svg"
-              alt="Phantom logo"
-              className="h-8 w-auto"
-            />
             <span className="text-lg font-bold text-foreground">Fusion <span className="text-primary">Cell</span></span>
           </Link>
 
@@ -129,7 +124,7 @@ export function Navbar() {
 
           {/* Right side */}
           <div className="flex items-center gap-2">
-            {isTeam && (
+            {isStaff && (
               <div className="relative hidden md:block" ref={adminDropdownRef}>
                 <button
                   type="button"
@@ -249,7 +244,7 @@ export function Navbar() {
                 </Link>
               );
             })}
-            {isTeam && (
+            {isStaff && (
               <>
                 <div className="px-3 py-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Admin

@@ -89,8 +89,8 @@ export async function middleware(request: NextRequest) {
 
     // ── ADMIN ROUTE RESTRICTIONS ──
     if (pathname.startsWith("/admin") || pathname === "/upload") {
-      // /admin/* routes: accessible by isTeam (admin, manager, viewer)
-      if (pathname.startsWith("/admin") && !isTeam) {
+      // /admin/* routes: accessible by isStaff (admin, manager) only
+      if (pathname.startsWith("/admin") && !isStaff) {
         return NextResponse.redirect(new URL("/", request.url));
       }
 

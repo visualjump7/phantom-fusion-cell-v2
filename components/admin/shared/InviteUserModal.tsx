@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  UserPlus, ShieldCheck, Briefcase, Eye, Loader2, X, CheckCircle,
+  UserPlus, ShieldCheck, Briefcase, Eye, Loader2, X, CheckCircle, KeyRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +46,7 @@ const ROLE_CARDS = [
 export function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalProps) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [role, setRole] = useState<"admin" | "manager" | "viewer">("manager");
   const [selectedPrincipals, setSelectedPrincipals] = useState<string[]>([]);
   const [principals, setPrincipals] = useState<ClientProfile[]>([]);
@@ -58,6 +59,7 @@ export function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalPro
       fetchClientProfiles().then(setPrincipals);
       setFullName("");
       setEmail("");
+      setPassword("");
       setRole("manager");
       setSelectedPrincipals([]);
       setError(null);
@@ -72,6 +74,10 @@ export function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalPro
       setError("Name and email are required.");
       return;
     }
+    if (!password || password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
     if (needsAssignment && selectedPrincipals.length === 0) {
       setError("At least one principal must be assigned for this role.");
       return;
@@ -83,6 +89,7 @@ export function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalPro
     const result = await inviteUser({
       email: email.trim(),
       fullName: fullName.trim(),
+      password,
       role,
       principalOrgIds: needsAssignment ? selectedPrincipals : undefined,
     });
@@ -141,6 +148,16 @@ export function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalPro
             <div>
               <label className="text-sm font-medium text-foreground">Email *</label>
               <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="sarah@example.com" className="mt-1" />
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="text-sm font-medium text-foreground">Temporary Password *</label>
+              <div className="relative mt-1">
+                <KeyRound className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input type="text" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min. 6 characters" className="pl-10" />
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">Share this with the team member. They can change it in Settings.</p>
             </div>
 
             {/* Role */}
@@ -207,7 +224,7 @@ export function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalPro
             <Button onClick={handleSubmit} disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               <UserPlus className="mr-2 h-4 w-4" />
-              Send Invite
+              Create User
             </Button>
           </div>
         </motion.div>

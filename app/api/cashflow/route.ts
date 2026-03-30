@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
-import { generateDemoCashFlowData, getCashFlowForRange } from "@/lib/cashflow";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import {
+  generateDemoCashFlowData,
+  getCashFlowForRange,
+  buildCashFlowFromBills,
+  BillRow,
+} from "@/lib/cashflow";
 
 export const dynamic = "force-dynamic";
 
@@ -8,8 +15,39 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const start = searchParams.get("start");
     const end = searchParams.get("end");
+    const orgId = searchParams.get("orgId");
 
-    const data = generateDemoCashFlowData();
+    let data;
+
+    if (orgId) {
+      const cookieStore = cookies();
+      const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            getAll() {
+              return cookieStore.getAll();
+            },
+            setAll() {},
+          },
+        }
+      );
+
+      const { data: bills, error } = await supabase
+        .from("bills")
+        .select("id, title, amount_cents, due_date, status, payee, category")
+        .eq("organization_id", orgId)
+        .order("due_date", { ascending: true });
+
+      if (!error && bills && bills.length > 0) {
+        data = buildCashFlowFromBills(bills as BillRow[]);
+      } else {
+        data = generateDemoCashFlowData();
+      }
+    } else {
+      data = generateDemoCashFlowData();
+    }
 
     if (start && end) {
       const filtered = getCashFlowForRange(data.dailyEntries, start, end);

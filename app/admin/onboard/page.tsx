@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
-  Users, ArrowRight, ArrowLeft, Loader2, CheckCircle, Palette,
+  Users, ArrowRight, ArrowLeft, Loader2, CheckCircle, Palette, Tag,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,13 @@ const ACCENT_OPTIONS = [
   { value: "green", label: "Green", class: "bg-emerald-500" },
 ];
 
-type Step = "details" | "accent" | "contact" | "creating" | "done";
+const CATEGORY_OPTIONS = [
+  { value: "business", label: "Business" },
+  { value: "personal", label: "Personal" },
+  { value: "family", label: "Family" },
+];
+
+type Step = "details" | "accent" | "categories" | "contact" | "creating" | "done";
 
 export default function OnboardPage() {
   const router = useRouter();
@@ -36,6 +42,7 @@ export default function OnboardPage() {
   const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [notes, setNotes] = useState("");
+  const [allowedCategories, setAllowedCategories] = useState<string[]>(["business", "personal", "family"]);
   const [error, setError] = useState<string | null>(null);
   const [newOrgId, setNewOrgId] = useState<string | null>(null);
 
@@ -50,6 +57,7 @@ export default function OnboardPage() {
         primaryContactEmail: contactEmail.trim() || undefined,
         primaryContactPhone: contactPhone.trim() || undefined,
         notes: notes.trim() || undefined,
+        allowedCategories,
       });
       if (!result.success) throw new Error(result.error);
       setNewOrgId(result.orgId!);
@@ -69,8 +77,8 @@ export default function OnboardPage() {
 
       {/* Step indicator */}
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        {["Details", "Accent", "Contact", "Done"].map((label, i) => {
-          const stepMap = ["details", "accent", "contact", "done"];
+        {["Details", "Accent", "Categories", "Contact", "Done"].map((label, i) => {
+          const stepMap = ["details", "accent", "categories", "contact", "done"];
           const currentIndex = stepMap.indexOf(step === "creating" ? "contact" : step);
           const isActive = i <= currentIndex;
           return (
@@ -120,6 +128,45 @@ export default function OnboardPage() {
           </div>
           <div className="flex justify-between">
             <Button variant="outline" onClick={() => setStep("details")}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
+            <Button onClick={() => setStep("categories")}><ArrowRight className="mr-2 h-4 w-4" />Next</Button>
+          </div>
+        </CardContent></Card>
+      )}
+
+      {/* Categories step */}
+      {step === "categories" && (
+        <Card className="border-border"><CardContent className="p-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <Tag className="h-5 w-5 text-muted-foreground" />
+            <p className="text-sm font-medium text-foreground">Asset Categories</p>
+          </div>
+          <p className="text-xs text-muted-foreground">Select which asset categories this principal will use. At least one is required.</p>
+          <div className="flex flex-wrap gap-3">
+            {CATEGORY_OPTIONS.map((opt) => {
+              const selected = allowedCategories.includes(opt.value);
+              return (
+                <button
+                  key={opt.value}
+                  onClick={() => {
+                    if (selected && allowedCategories.length <= 1) return;
+                    setAllowedCategories((prev) =>
+                      selected ? prev.filter((c) => c !== opt.value) : [...prev, opt.value]
+                    );
+                  }}
+                  className={cn(
+                    "rounded-lg border px-4 py-2 text-sm font-medium transition-colors",
+                    selected
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:bg-muted/30"
+                  )}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex justify-between">
+            <Button variant="outline" onClick={() => setStep("accent")}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
             <Button onClick={() => setStep("contact")}><ArrowRight className="mr-2 h-4 w-4" />Next</Button>
           </div>
         </CardContent></Card>
@@ -138,7 +185,7 @@ export default function OnboardPage() {
           <div><label className="text-xs text-muted-foreground">Notes</label>
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground resize-none" /></div>
           <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setStep("accent")}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
+            <Button variant="outline" onClick={() => setStep("categories")}><ArrowLeft className="mr-2 h-4 w-4" />Back</Button>
             <Button onClick={handleCreate}><Users className="mr-2 h-4 w-4" />Create Workspace</Button>
           </div>
         </CardContent></Card>

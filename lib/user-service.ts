@@ -22,6 +22,7 @@ export interface TeamMember {
 export interface InviteUserData {
   email: string;
   fullName: string;
+  password: string;
   role: "admin" | "manager" | "viewer";
   principalOrgIds?: string[];
 }
@@ -133,6 +134,24 @@ export async function inviteUser(data: InviteUserData): Promise<{ success: boole
 // ============================================
 // Role Management
 // ============================================
+
+export async function setUserPassword(
+  userId: string,
+  password: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await fetch("/api/admin/set-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, password }),
+    });
+    const result = await res.json();
+    if (!res.ok) return { success: false, error: result.error || "Failed to set password" };
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Network error" };
+  }
+}
 
 export async function updateUserRole(
   userId: string,

@@ -28,6 +28,7 @@ import {
 } from "@/lib/bill-service";
 import { fetchLatestPublishedBrief, Brief } from "@/lib/brief-service";
 import { useRouter } from "next/navigation";
+import { useAllowedCategories } from "@/lib/use-allowed-categories";
 
 interface Asset {
   id: string;
@@ -58,6 +59,7 @@ export default function DashboardPage() {
   const { userName, isAdmin, isExecutive, isDelegate, role } = useRole();
   const { density, theme } = useThemePreferences();
   const { scopedOrgId } = useScopedOrgId();
+  const { allowedCategories } = useAllowedCategories(scopedOrgId);
   const dashRouter = useRouter();
 
   // Delegates should never see the Dashboard — redirect to /assets
@@ -101,6 +103,7 @@ export default function DashboardPage() {
 
   const totalValue = assets.reduce((sum, a) => sum + (a.estimated_value || 0), 0);
   const categoryTotals = assets.reduce((acc, a) => {
+    if (!allowedCategories.includes(a.category)) return acc;
     acc[a.category] = (acc[a.category] || 0) + (a.estimated_value || 0);
     return acc;
   }, {} as Record<string, number>);

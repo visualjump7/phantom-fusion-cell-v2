@@ -19,6 +19,7 @@ export interface ClientProfile {
   onboarded_at: string | null;
   notes: string | null;
   metadata: Record<string, unknown>;
+  allowed_categories: string[];
   created_at: string;
   updated_at: string;
 }
@@ -115,6 +116,7 @@ export async function createClientProfile(data: {
   primaryContactEmail?: string;
   primaryContactPhone?: string;
   notes?: string;
+  allowedCategories?: string[];
 }): Promise<{ success: boolean; orgId?: string; error?: string }> {
   // Create the organization first
   const { data: org, error: orgError } = await db
@@ -136,6 +138,7 @@ export async function createClientProfile(data: {
       primary_contact_email: data.primaryContactEmail || null,
       primary_contact_phone: data.primaryContactPhone || null,
       notes: data.notes || null,
+      allowed_categories: data.allowedCategories || ["business", "personal", "family"],
       status: "onboarding",
     });
 
@@ -157,7 +160,7 @@ export async function createClientProfile(data: {
 
 export async function updateClientProfile(
   orgId: string,
-  updates: Partial<Pick<ClientProfile, "display_name" | "accent_color" | "status" | "primary_contact_name" | "primary_contact_email" | "primary_contact_phone" | "notes">>
+  updates: Partial<Pick<ClientProfile, "display_name" | "accent_color" | "status" | "primary_contact_name" | "primary_contact_email" | "primary_contact_phone" | "notes" | "allowed_categories">>
 ): Promise<{ success: boolean; error?: string }> {
   const { error } = await db
     .from("client_profiles")

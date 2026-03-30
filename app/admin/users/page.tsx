@@ -18,6 +18,7 @@ import { InviteUserModal } from "@/components/admin/shared/InviteUserModal";
 import { ChangeRoleModal } from "@/components/admin/shared/ChangeRoleModal";
 import { AssignPrincipalsModal } from "@/components/admin/shared/AssignPrincipalsModal";
 import { ConfirmDialog } from "@/components/admin/shared/ConfirmDialog";
+import { SetPasswordModal } from "@/components/admin/shared/SetPasswordModal";
 
 const ROLE_BADGE_COLORS: Record<string, string> = {
   admin: "bg-red-600 text-white border-red-600",
@@ -47,6 +48,7 @@ export default function TeamManagementPage() {
   const [roleTarget, setRoleTarget] = useState<TeamMember | null>(null);
   const [assignTarget, setAssignTarget] = useState<TeamMember | null>(null);
   const [removeTarget, setRemoveTarget] = useState<TeamMember | null>(null);
+  const [passwordTarget, setPasswordTarget] = useState<TeamMember | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
   // Menu
@@ -223,6 +225,12 @@ export default function TeamManagementPage() {
                             </button>
                           )}
                           <button
+                            onClick={() => { setMenuOpenId(null); setPasswordTarget(member); }}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted"
+                          >
+                            <KeyRound className="h-3.5 w-3.5" /> Set password
+                          </button>
+                          <button
                             onClick={() => { handleToggleStatus(member); }}
                             className="flex w-full items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted"
                           >
@@ -260,7 +268,7 @@ export default function TeamManagementPage() {
       <InviteUserModal
         open={showInvite}
         onClose={() => setShowInvite(false)}
-        onSuccess={() => { loadMembers(); showToast("Invitation sent successfully"); }}
+        onSuccess={() => { loadMembers(); showToast("User created successfully"); }}
       />
 
       {roleTarget && (
@@ -293,6 +301,16 @@ export default function TeamManagementPage() {
         onConfirm={handleRemove}
         onCancel={() => setRemoveTarget(null)}
       />
+
+      {passwordTarget && (
+        <SetPasswordModal
+          open={!!passwordTarget}
+          userId={passwordTarget.id}
+          userName={passwordTarget.full_name || passwordTarget.email}
+          onClose={() => setPasswordTarget(null)}
+          onSuccess={() => { showToast("Password updated successfully"); }}
+        />
+      )}
 
       {/* Toast */}
       {toast && (

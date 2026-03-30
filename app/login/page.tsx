@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function LoginPage() {
@@ -55,10 +55,13 @@ export default function LoginPage() {
           transition={{ delay: 0.15, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="mb-8 text-center"
         >
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-            <Sparkles className="h-8 w-8 text-primary" />
+          <div className="mx-auto mb-4">
+            <img
+              src="https://phantom-presenter-assets.s3.us-east-1.amazonaws.com/Fusion+Cell+Logo.png"
+              alt="Fusion Cell"
+              className="mx-auto h-16 w-auto"
+            />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Fusion Cell</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Executive Financial Command Center
           </p>

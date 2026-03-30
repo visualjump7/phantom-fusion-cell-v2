@@ -17,6 +17,7 @@ import { formatCurrency, getCategoryColor, cn } from "@/lib/utils";
 import { useRole } from "@/lib/use-role";
 import { useEffectiveOrgId, useScopedOrgId } from "@/lib/use-active-principal";
 import { useDelegateAccess } from "@/lib/use-delegate-access";
+import { useAllowedCategories } from "@/lib/use-allowed-categories";
 
 interface Asset {
   id: string;
@@ -41,6 +42,8 @@ export default function AssetsPage() {
   const { scopedOrgId } = useScopedOrgId();
   const { assetIds: delegateAssetIds, isLoading: delegateLoading } = useDelegateAccess();
   const { orgId: effectiveOrgId } = useEffectiveOrgId();
+  const { allowedCategories } = useAllowedCategories(scopedOrgId);
+  const visibleCategoryOptions = CATEGORY_OPTIONS.filter((o) => allowedCategories.includes(o.value));
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
@@ -92,7 +95,7 @@ export default function AssetsPage() {
     return () => document.removeEventListener("click", handler);
   }, [openMenuId]);
 
-  const categories = ["all", ...new Set(assets.map((a) => a.category))];
+  const categories = ["all", ...new Set(assets.map((a) => a.category).filter((c) => allowedCategories.includes(c)))];
 
   const filtered = useMemo(() => {
     let list = filter === "all" ? assets : assets.filter((a) => a.category === filter);
@@ -124,7 +127,7 @@ export default function AssetsPage() {
   const openAddModal = () => {
     setEditingAsset(null);
     setFormName("");
-    setFormCategory("family");
+    setFormCategory(allowedCategories[0] || "business");
     setFormValue("");
     setFormIdentifier("");
     setFormDescription("");
@@ -358,7 +361,7 @@ export default function AssetsPage() {
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-foreground">Category</label>
                   <div className="flex gap-2">
-                    {CATEGORY_OPTIONS.map((opt) => (
+                    {visibleCategoryOptions.map((opt) => (
                       <button
                         key={opt.value}
                         onClick={() => setFormCategory(opt.value)}

@@ -44,10 +44,14 @@ export async function POST(request: Request) {
 
   // ── Parse + validate request ──
   const body = await request.json();
-  const { email, fullName, role: inviteRole, principalOrgIds } = body;
+  const { email, fullName, role: inviteRole, principalOrgIds, password } = body;
 
-  if (!email || !fullName || !inviteRole) {
+  if (!email || !fullName || !inviteRole || !password) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  }
+
+  if (password.length < 6) {
+    return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
   }
 
   if (!["admin", "manager", "viewer"].includes(inviteRole)) {
@@ -84,25 +88,27 @@ export async function POST(request: Request) {
   );
 
   try {
-    // 1. Invite user — Supabase creates the auth user and sends a magic-link email
-    const { data: inviteData, error: inviteError } =
-      await adminClient.auth.admin.inviteUserByEmail(email, {
-        data: { full_name: fullName },
+    // 1. Create user with password — no email invite needed
+    const { data: createData, error: createError } =
+      await adminClient.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { full_name: fullName },
       });
 
-    if (inviteError) {
-      // Common: "User already registered"
-      return NextResponse.json({ error: inviteError.message }, { status: 422 });
+    if (createError) {
+      return NextResponse.json({ error: createError.message }, { status: 422 });
     }
 
-    const newUserId = inviteData.user.id;
+    const newUserId = createData.user.id;
 
     // 2. Update the auto-created profile row
     await adminClient
       .from("profiles")
       .update({
         full_name: fullName,
-        status: "invited",
+        status: "active",
         invited_by: user.id,
       })
       .eq("id", newUserId);
