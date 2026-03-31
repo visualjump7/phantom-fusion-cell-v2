@@ -26,6 +26,8 @@ import { supabase } from "@/lib/supabase";
 import { useRole, clearRoleCache } from "@/lib/use-role";
 import { useThemePreferences } from "@/components/ThemeProvider";
 import { GlobalClientBanner } from "@/components/admin/shared/GlobalClientBanner";
+import { SearchBar, SearchTrigger } from "@/components/search/SearchBar";
+import { useEffectiveOrgId } from "@/lib/use-active-principal";
 
 interface NavItem {
   name: string;
@@ -59,6 +61,20 @@ export function Navbar() {
   const settingsDropdownRef = useRef<HTMLDivElement>(null);
   const { isAdmin, isStaff, isExecutive, isDelegate, role } = useRole();
   const { density } = useThemePreferences();
+  const { orgId: effectiveOrgId } = useEffectiveOrgId();
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  // Global Cmd+K shortcut
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setSearchOpen((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   useEffect(() => {
     if (!adminDropdownOpen && !settingsDropdownOpen) return;
@@ -124,6 +140,11 @@ export function Navbar() {
 
           {/* Right side */}
           <div className="flex items-center gap-2">
+            {effectiveOrgId && !isDelegate && (
+              <div className="hidden md:block">
+                <SearchTrigger onClick={() => setSearchOpen(true)} />
+              </div>
+            )}
             {isStaff && (
               <div className="relative hidden md:block" ref={adminDropdownRef}>
                 <button
@@ -281,6 +302,13 @@ export function Navbar() {
       )}
     </nav>
     <GlobalClientBanner />
+    {effectiveOrgId && (
+      <SearchBar
+        organizationId={effectiveOrgId}
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+      />
+    )}
     </>
   );
 }

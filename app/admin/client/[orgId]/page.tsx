@@ -74,7 +74,7 @@ export default function WorkspaceDashboard() {
   }
 
   const quickLinks = [
-    { name: "Holdings", href: `/admin/client/${orgId}/holdings`, icon: Building2, stat: `${holdingsCount} holdings` },
+    { name: "Projects", href: `/admin/client/${orgId}/holdings`, icon: Building2, stat: `${holdingsCount} projects` },
     { name: "Bills", href: `/admin/client/${orgId}/bills`, icon: Receipt, stat: `${billSummary?.upcomingCount || 0} pending` },
     { name: "Alerts", href: `/admin/client/${orgId}/messages`, icon: MessageSquare, stat: `${alertsCount} active` },
     { name: "Daily Briefs", href: `/admin/client/${orgId}/briefs`, icon: FileText, stat: "Compose briefs" },
@@ -96,7 +96,7 @@ export default function WorkspaceDashboard() {
         <Card className="border-border">
           <CardContent className="p-4">
             <p className="text-2xl font-bold text-foreground">{holdingsCount}</p>
-            <p className="text-xs text-muted-foreground">Holdings</p>
+            <p className="text-xs text-muted-foreground">Projects</p>
             {holdingsValue > 0 && (
               <p className="mt-1 text-sm text-muted-foreground">{formatCurrency(holdingsValue)}</p>
             )}

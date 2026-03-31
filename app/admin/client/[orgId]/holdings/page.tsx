@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Building2, Loader2, ChevronRight, Plus, Pencil,
-  Trash2, Search, X, Upload,
+  Trash2, Search, X, Upload, Eye,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -137,17 +137,17 @@ export default function WorkspaceHoldingsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-foreground">Holdings</h1>
-          <p className="text-sm text-muted-foreground">{assets.length} holdings for {clientName} &middot; {formatCurrency(totalValue)} total value</p>
+          <h1 className="text-xl font-bold text-foreground">Projects</h1>
+          <p className="text-sm text-muted-foreground">{assets.length} projects for {clientName} &middot; {formatCurrency(totalValue)} total value</p>
         </div>
-        {canManage && <Button onClick={openAdd}><Plus className="mr-2 h-4 w-4" />Add Holding</Button>}
+        {canManage && <Button onClick={openAdd}><Plus className="mr-2 h-4 w-4" />Add Project</Button>}
       </div>
 
       {/* Filters */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search holdings..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" />
+          <Input placeholder="Search projects..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" />
         </div>
         <div className="flex gap-1">
           {[{ value: "all", label: "All" }, ...CATEGORY_OPTIONS].map((opt) => (
@@ -164,7 +164,7 @@ export default function WorkspaceHoldingsPage() {
         {filteredAssets.length === 0 ? (
           <Card className="border-border"><CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <Building2 className="h-10 w-10 text-muted-foreground" />
-            <p className="mt-3 text-sm text-muted-foreground">No holdings match your filters.</p>
+            <p className="mt-3 text-sm text-muted-foreground">No projects match your filters.</p>
           </CardContent></Card>
         ) : (
           filteredAssets.map((asset) => (
@@ -181,15 +181,20 @@ export default function WorkspaceHoldingsPage() {
                     {asset.description && <span className="truncate max-w-[200px]">{asset.description}</span>}
                   </div>
                 </div>
-                {canManage && (
-                  <div className="flex items-center gap-1 pl-4">
-                    <Link href={`/admin/client/${orgId}/upload?asset=${asset.id}`}>
-                      <Button variant="ghost" size="sm" title="Upload budget"><Upload className="h-4 w-4" /></Button>
-                    </Link>
-                    <Button variant="ghost" size="sm" onClick={() => openEdit(asset)}><Pencil className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(asset)}><Trash2 className="h-4 w-4 text-red-400" /></Button>
-                  </div>
-                )}
+                <div className="flex items-center gap-1 pl-4">
+                  <Link href={`/admin/client/${orgId}/holdings/${asset.id}/detail`}>
+                    <Button variant="ghost" size="sm" title="Project detail"><Eye className="h-4 w-4" /></Button>
+                  </Link>
+                  {canManage && (
+                    <>
+                      <Link href={`/admin/client/${orgId}/upload?asset=${asset.id}`}>
+                        <Button variant="ghost" size="sm" title="Upload budget"><Upload className="h-4 w-4" /></Button>
+                      </Link>
+                      <Button variant="ghost" size="sm" onClick={() => openEdit(asset)}><Pencil className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(asset)}><Trash2 className="h-4 w-4 text-red-400" /></Button>
+                    </>
+                  )}
+                </div>
               </CardContent>
             </Card>
           ))
@@ -204,7 +209,7 @@ export default function WorkspaceHoldingsPage() {
             <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
               className="relative w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-xl">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">{editingAsset ? "Edit Holding" : "Add Holding"}</h2>
+                <h2 className="text-lg font-semibold">{editingAsset ? "Edit Project" : "Add Project"}</h2>
                 <button onClick={() => setShowModal(false)}><X className="h-5 w-5 text-muted-foreground" /></button>
               </div>
               {formError && <p className="mb-3 text-sm text-red-400">{formError}</p>}
@@ -227,7 +232,7 @@ export default function WorkspaceHoldingsPage() {
               </div>
               <div className="mt-6 flex justify-end gap-3">
                 <Button variant="outline" onClick={() => setShowModal(false)}>Cancel</Button>
-                <Button onClick={handleSave} disabled={isSaving}>{isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{editingAsset ? "Save" : "Add Holding"}</Button>
+                <Button onClick={handleSave} disabled={isSaving}>{isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{editingAsset ? "Save" : "Add Project"}</Button>
               </div>
             </motion.div>
           </motion.div>
@@ -237,7 +242,7 @@ export default function WorkspaceHoldingsPage() {
       {/* Delete Confirmation */}
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Delete Holding"
+        title="Delete Project"
         description={`Are you sure you want to delete "${deleteTarget?.name}"?`}
         clientName={clientName}
         confirmLabel="Delete"

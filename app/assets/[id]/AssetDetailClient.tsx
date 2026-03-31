@@ -28,6 +28,7 @@ import {
   Message,
 } from "@/lib/message-service";
 import { useDelegateAccess } from "@/lib/use-delegate-access";
+import { ProjectDetailPage } from "@/components/project-detail/ProjectDetailPage";
 
 interface Asset {
   id: string;
@@ -77,7 +78,7 @@ export default function AssetDetailPage() {
   const [budgetFixedMonthly, setBudgetFixedMonthly] = useState<number[]>(Array(12).fill(0));
   const [budgetVariableMonthly, setBudgetVariableMonthly] = useState<number[]>(Array(12).fill(0));
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"overview" | "budget" | "bills" | "messages">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "budget" | "bills" | "messages" | "detail">("overview");
   const [overviewBudgetViewMode, setOverviewBudgetViewMode] = useState<"yearly" | "monthly">("monthly");
   const [overviewSelectedMonth, setOverviewSelectedMonth] = useState(new Date().getMonth());
 
@@ -307,7 +308,7 @@ export default function AssetDetailPage() {
 
         {/* Tabs */}
         <div className="mb-6 flex flex-wrap gap-1 rounded-lg bg-muted/30 p-1">
-          {(["overview", "budget", "bills", "messages"] as const).map((tab) => (
+          {(["overview", "budget", "bills", "messages", "detail"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -315,11 +316,12 @@ export default function AssetDetailPage() {
                 activeTab === tab ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
               }`}
             >
+              {tab === "detail" && <Building2 className="h-4 w-4" />}
               {tab === "budget" && <TrendingUp className="h-4 w-4" />}
               {tab === "overview" && <DollarSign className="h-4 w-4" />}
               {tab === "bills" && <Calendar className="h-4 w-4" />}
               {tab === "messages" && <MessageSquare className="h-4 w-4" />}
-              {tab === "messages" ? "Alerts" : tab}
+              {tab === "messages" ? "Alerts" : tab === "detail" ? "Project Details" : tab}
               {tab === "bills" && pendingBills.length > 0 && (
                 <Badge variant="secondary" className="ml-1 text-[10px]">{pendingBills.length}</Badge>
               )}
@@ -329,6 +331,17 @@ export default function AssetDetailPage() {
             </button>
           ))}
         </div>
+
+        {/* ═══ DETAIL TAB ═══ */}
+        {activeTab === "detail" && asset && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <ProjectDetailPage
+              assetId={asset.id}
+              orgId={scopedOrgId || ""}
+              assetName={asset.name}
+            />
+          </motion.div>
+        )}
 
         {/* ═══ BUDGET TAB ═══ */}
         {activeTab === "budget" && (
