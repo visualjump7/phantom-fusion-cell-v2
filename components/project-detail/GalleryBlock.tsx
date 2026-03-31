@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Camera, Upload, Trash2, Pencil, Loader2, X, Check,
+  Camera, Upload, Trash2, Pencil, Loader2, X, Check, AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProjectImage } from "@/lib/project-detail-service";
@@ -31,6 +31,7 @@ export function GalleryBlock({
 }: GalleryBlockProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [editingCaption, setEditingCaption] = useState<string | null>(null);
   const [captionText, setCaptionText] = useState("");
@@ -38,13 +39,21 @@ export function GalleryBlock({
   const handleUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     setUploading(true);
+    setUploadError(null);
+    let failed = 0;
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       if (!file.type.startsWith("image/")) continue;
-      if (file.size > 10 * 1024 * 1024) continue; // 10MB max
-      await uploadImage(blockId, orgId, assetId, file);
+      if (file.size > 10 * 1024 * 1024) { failed++; continue; }
+      const result = await uploadImage(blockId, orgId, assetId, file);
+      if (!result) failed++;
     }
     setUploading(false);
+    if (failed > 0) {
+      setUploadError(
+        `Failed to upload ${failed} image${failed > 1 ? "s" : ""}. The storage bucket may not be configured — ask your admin to run the setup.`
+      );
+    }
     onUpdate();
   };
 
@@ -81,6 +90,12 @@ export function GalleryBlock({
         </p>
         {uploading && (
           <Loader2 className="mt-3 h-5 w-5 animate-spin text-primary" />
+        )}
+        {uploadError && (
+          <div className="mt-3 flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{uploadError}</span>
+          </div>
         )}
         <input
           ref={fileInputRef}
@@ -207,6 +222,16 @@ export function GalleryBlock({
         className="hidden"
         onChange={(e) => handleUpload(e.target.files)}
       />
+
+      {uploadError && (
+        <div className="mt-3 flex items-center gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span>{uploadError}</span>
+          <button onClick={() => setUploadError(null)} className="ml-auto">
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Lightbox */}
       {lightboxIndex !== null && (

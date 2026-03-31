@@ -249,7 +249,7 @@ export default function SettingsPage() {
                   >
                     <Contrast className="h-5 w-5" />
                     <span className="text-sm font-semibold">Hybrid</span>
-                    <span className="text-[10px] text-muted-foreground text-center">Dark nav, light content</span>
+                    <span className="text-[10px] text-muted-foreground text-center">QuickBooks style</span>
                     {theme === "hybrid" && (
                       <div className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
                         <CheckCircle className="h-3 w-3 text-primary-foreground" />
