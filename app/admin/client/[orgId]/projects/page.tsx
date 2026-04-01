@@ -4,8 +4,8 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Building2, Loader2, ChevronRight, Plus, Pencil,
-  Trash2, Search, X, Upload, Eye,
+  Building2, Loader2, Plus, Pencil,
+  Trash2, Search, X, Upload, Eye, MapPin,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import { useClientContext } from "@/lib/use-client-context";
 import { ConfirmDialog } from "@/components/admin/shared/ConfirmDialog";
 import { useRole } from "@/lib/use-role";
 import { hasPermission } from "@/lib/permissions";
+import { LocationEditor, LocationData } from "@/components/admin/shared/LocationEditor";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
@@ -28,6 +29,13 @@ interface Asset {
   estimated_value: number;
   description: string | null;
   identifier?: string | null;
+  address_line?: string | null;
+  city?: string | null;
+  state_province?: string | null;
+  country?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  location_type?: string | null;
 }
 
 const CATEGORY_OPTIONS = [
@@ -52,6 +60,10 @@ export default function WorkspaceProjectsPage() {
   const [formValue, setFormValue] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formIdentifier, setFormIdentifier] = useState("");
+  const [locationData, setLocationData] = useState<LocationData>({
+    latitude: null, longitude: null, address_line: "", city: "",
+    state_province: "", country: "", location_type: "unlocated",
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -60,7 +72,7 @@ export default function WorkspaceProjectsPage() {
   async function loadAssets() {
     const { data } = await db
       .from("assets")
-      .select("id, name, category, estimated_value, description, identifier")
+      .select("id, name, category, estimated_value, description, identifier, address_line, city, state_province, country, latitude, longitude, location_type")
       .eq("organization_id", orgId)
       .eq("is_deleted", false)
       .order("name");
@@ -83,13 +95,29 @@ export default function WorkspaceProjectsPage() {
 
   const totalValue = filteredAssets.reduce((sum, a) => sum + (a.estimated_value || 0), 0);
 
+  const emptyLocation: LocationData = {
+    latitude: null, longitude: null, address_line: "", city: "",
+    state_province: "", country: "", location_type: "unlocated",
+  };
+
   const openAdd = () => {
-    setEditingAsset(null); setFormName(""); setFormCategory("family"); setFormValue(""); setFormDescription(""); setFormIdentifier(""); setFormError(null);
+    setEditingAsset(null); setFormName(""); setFormCategory("family"); setFormValue(""); setFormDescription(""); setFormIdentifier("");
+    setLocationData(emptyLocation); setFormError(null);
     setShowModal(true);
   };
 
   const openEdit = (asset: Asset) => {
-    setEditingAsset(asset); setFormName(asset.name); setFormCategory(asset.category); setFormValue(String(asset.estimated_value || "")); setFormDescription(asset.description || ""); setFormIdentifier(asset.identifier || ""); setFormError(null);
+    setEditingAsset(asset); setFormName(asset.name); setFormCategory(asset.category); setFormValue(String(asset.estimated_value || "")); setFormDescription(asset.description || ""); setFormIdentifier(asset.identifier || "");
+    setLocationData({
+      latitude: asset.latitude ?? null,
+      longitude: asset.longitude ?? null,
+      address_line: asset.address_line || "",
+      city: asset.city || "",
+      state_province: asset.state_province || "",
+      country: asset.country || "",
+      location_type: asset.location_type || "unlocated",
+    });
+    setFormError(null);
     setShowModal(true);
   };
 
@@ -103,6 +131,13 @@ export default function WorkspaceProjectsPage() {
         estimated_value: formValue ? parseFloat(formValue) : 0,
         description: formDescription.trim() || null,
         identifier: formIdentifier.trim() || null,
+        address_line: locationData.address_line.trim() || null,
+        city: locationData.city.trim() || null,
+        state_province: locationData.state_province.trim() || null,
+        country: locationData.country.trim() || null,
+        latitude: locationData.latitude,
+        longitude: locationData.longitude,
+        location_type: locationData.location_type,
         updated_at: new Date().toISOString(),
       };
       if (editingAsset) {
@@ -178,6 +213,20 @@ export default function WorkspaceProjectsPage() {
                   <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                     {asset.estimated_value > 0 && <span>{formatCurrency(asset.estimated_value)}</span>}
                     {asset.identifier && <span>{asset.identifier}</span>}
+                    {(asset.city || asset.country) ? (
+                      <span className="flex items-center gap-1 text-green-400/80">
+                        <MapPin className="h-3 w-3" />
+                        {[asset.city, asset.state_province, asset.country].filter(Boolean).join(", ")}
+                      </span>
+                    ) : canManage ? (
+                      <button
+                        onClick={(e) => { e.preventDefault(); openEdit(asset); }}
+                        className="flex items-center gap-1 text-muted-foreground/60 hover:text-primary transition-colors"
+                      >
+                        <MapPin className="h-3 w-3" />
+                        Add location
+                      </button>
+                    ) : null}
                     {asset.description && <span className="truncate max-w-[200px]">{asset.description}</span>}
                   </div>
                 </div>
@@ -204,10 +253,10 @@ export default function WorkspaceProjectsPage() {
       {/* Add/Edit Modal */}
       <AnimatePresence>
         {showModal && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto py-8">
             <div className="absolute inset-0 bg-black/60" onClick={() => setShowModal(false)} />
             <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
-              className="relative w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-xl">
+              className="relative w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-xl max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">{editingAsset ? "Edit Project" : "Add Project"}</h2>
                 <button onClick={() => setShowModal(false)}><X className="h-5 w-5 text-muted-foreground" /></button>
@@ -229,6 +278,19 @@ export default function WorkspaceProjectsPage() {
                 <div><label className="text-xs text-muted-foreground">Identifier</label><Input value={formIdentifier} onChange={(e) => setFormIdentifier(e.target.value)} placeholder="e.g. tail number, hull number, address" /></div>
                 <div><label className="text-xs text-muted-foreground">Description</label><textarea value={formDescription} onChange={(e) => setFormDescription(e.target.value)} rows={2}
                   className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground resize-none" /></div>
+
+                {/* Project Location */}
+                <LocationEditor
+                  latitude={locationData.latitude}
+                  longitude={locationData.longitude}
+                  addressLine={locationData.address_line}
+                  city={locationData.city}
+                  stateProvince={locationData.state_province}
+                  country={locationData.country}
+                  locationType={locationData.location_type}
+                  onChange={setLocationData}
+                  collapsible={!!editingAsset}
+                />
               </div>
               <div className="mt-6 flex justify-end gap-3">
                 <Button variant="outline" onClick={() => setShowModal(false)}>Cancel</Button>

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Building2, Receipt, MessageSquare, Upload, ChevronRight, Loader2, Trash2, FileText, Users, Tag,
+  Building2, Receipt, MessageSquare, Upload, ChevronRight, Loader2, Trash2, FileText, Users, Tag, Globe,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,8 @@ export default function WorkspaceDashboard() {
   const [deleteToast, setDeleteToast] = useState<string | null>(null);
   const [allowedCategories, setAllowedCategories] = useState<string[]>(["business", "personal", "family"]);
   const [savingCategories, setSavingCategories] = useState(false);
+  const [showGlobeMap, setShowGlobeMap] = useState(true);
+  const [savingGlobe, setSavingGlobe] = useState(false);
   const ALL_CATS = [
     { value: "business", label: "Business" },
     { value: "personal", label: "Personal" },
@@ -45,11 +47,12 @@ export default function WorkspaceDashboard() {
 
   useEffect(() => {
     async function loadData() {
-      const [assetsRes, billsRes, messagesRes, profileRes] = await Promise.all([
+      const [assetsRes, billsRes, messagesRes, profileRes, orgRes] = await Promise.all([
         db.from("assets").select("id, estimated_value").eq("organization_id", orgId).eq("is_deleted", false),
         fetchBillSummary(orgId),
         db.from("messages").select("id").eq("organization_id", orgId).eq("is_deleted", false).eq("is_archived", false),
         db.from("client_profiles").select("allowed_categories").eq("organization_id", orgId).single(),
+        db.from("organizations").select("show_globe_map").eq("id", orgId).single(),
       ]);
 
       const assets = assetsRes.data || [];
@@ -60,6 +63,7 @@ export default function WorkspaceDashboard() {
       if (profileRes.data?.allowed_categories) {
         setAllowedCategories(profileRes.data.allowed_categories);
       }
+      setShowGlobeMap(orgRes?.data?.show_globe_map ?? true);
       setIsLoading(false);
     }
     loadData();
@@ -191,6 +195,44 @@ export default function WorkspaceDashboard() {
             })}
             {savingCategories && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground self-center" />}
           </div>
+        </div>
+      )}
+
+      {/* Globe Map Toggle — admin only */}
+      {isAdmin && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <Globe className="h-4 w-4 text-primary" />
+            <h2 className="text-lg font-semibold text-foreground">Global Holdings Map</h2>
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">
+            Show the interactive globe map on the principal&apos;s dashboard.
+          </p>
+          <button
+            disabled={savingGlobe}
+            onClick={async () => {
+              const next = !showGlobeMap;
+              setShowGlobeMap(next);
+              setSavingGlobe(true);
+              await db.from("organizations").update({ show_globe_map: next }).eq("id", orgId);
+              setSavingGlobe(false);
+            }}
+            className={cn(
+              "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
+              showGlobeMap ? "bg-primary" : "bg-muted"
+            )}
+          >
+            <span
+              className={cn(
+                "inline-block h-4 w-4 rounded-full bg-white transition-transform",
+                showGlobeMap ? "translate-x-6" : "translate-x-1"
+              )}
+            />
+          </button>
+          <span className="ml-3 text-sm text-muted-foreground">
+            {showGlobeMap ? "Enabled" : "Disabled"}
+            {savingGlobe && <Loader2 className="ml-2 inline h-3 w-3 animate-spin" />}
+          </span>
         </div>
       )}
 

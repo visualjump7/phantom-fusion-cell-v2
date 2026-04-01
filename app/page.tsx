@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import {
@@ -29,12 +30,29 @@ import {
 import { fetchLatestPublishedBrief, Brief } from "@/lib/brief-service";
 import { useRouter } from "next/navigation";
 import { useAllowedCategories } from "@/lib/use-allowed-categories";
+import { AssetPin, UnlocatedAsset } from "@/lib/map-types";
+
+// Mapbox GL is client-only — dynamic import with ssr: false
+const GlobeMap = dynamic(() => import("@/components/map/GlobeMap").then((m) => m.GlobeMap), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full flex items-center justify-center bg-black/80" style={{ height: "45vh" }}>
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  ),
+});
 
 interface Asset {
   id: string;
   name: string;
   category: string;
   estimated_value: number;
+  latitude?: number | null;
+  longitude?: number | null;
+  city?: string | null;
+  state_province?: string | null;
+  country?: string | null;
+  location_type?: string | null;
 }
 
 interface Message {
@@ -56,6 +74,7 @@ export default function DashboardPage() {
   const [billSummary, setBillSummary] = useState<BillSummary | null>(null);
   const [upcomingBills, setUpcomingBills] = useState<Bill[]>([]);
   const [latestBrief, setLatestBrief] = useState<Brief | null>(null);
+  const [showGlobeMap, setShowGlobeMap] = useState(false);
   const { userName, isAdmin, isExecutive, isDelegate, role } = useRole();
   const { density, theme } = useThemePreferences();
   const { scopedOrgId } = useScopedOrgId();
@@ -72,18 +91,24 @@ export default function DashboardPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        let assetQuery = db.from("assets").select("id, name, category, estimated_value").eq("is_deleted", false).order("estimated_value", { ascending: false });
+        let assetQuery = db.from("assets").select("id, name, category, estimated_value, latitude, longitude, city, state_province, country, location_type").eq("is_deleted", false).order("estimated_value", { ascending: false });
         if (scopedOrgId) assetQuery = assetQuery.eq("organization_id", scopedOrgId);
 
         let msgQuery = db.from("messages").select("id, title, type, priority, asset_id, created_at").eq("is_deleted", false).eq("is_archived", false).order("created_at", { ascending: false }).limit(5);
         if (scopedOrgId) msgQuery = msgQuery.eq("organization_id", scopedOrgId);
 
-        const [assetRes, msgRes, summary, upcoming, briefRes] = await Promise.all([
+        // Check globe map visibility if org is scoped
+        const orgSettingsPromise = scopedOrgId
+          ? db.from("organizations").select("show_globe_map").eq("id", scopedOrgId).single()
+          : Promise.resolve({ data: null });
+
+        const [assetRes, msgRes, summary, upcoming, briefRes, orgSettings] = await Promise.all([
           assetQuery,
           msgQuery,
           fetchBillSummary(scopedOrgId || undefined),
           fetchUpcomingBills(7, scopedOrgId || undefined),
           scopedOrgId ? fetchLatestPublishedBrief(scopedOrgId) : Promise.resolve(null),
+          orgSettingsPromise,
         ]);
 
         setAssets(assetRes.data || []);
@@ -91,6 +116,7 @@ export default function DashboardPage() {
         setBillSummary(summary);
         setUpcomingBills(upcoming);
         setLatestBrief(briefRes);
+        setShowGlobeMap(orgSettings?.data?.show_globe_map ?? true);
       } catch (error) {
         console.error("Error loading dashboard:", error);
       } finally {
@@ -102,6 +128,37 @@ export default function DashboardPage() {
   }, [scopedOrgId]);
 
   const totalValue = assets.reduce((sum, a) => sum + (a.estimated_value || 0), 0);
+
+  // Partition assets into located (with coordinates) and unlocated
+  const locatedAssets: AssetPin[] = assets
+    .filter((a) => a.latitude != null && a.longitude != null)
+    .map((a) => ({
+      id: a.id,
+      name: a.name,
+      latitude: a.latitude!,
+      longitude: a.longitude!,
+      estimatedValue: a.estimated_value,
+      category: a.category,
+      locationType: (a.location_type as AssetPin["locationType"]) || "precise",
+      city: a.city || undefined,
+      stateProvince: a.state_province || undefined,
+      country: a.country || undefined,
+    }));
+
+  const unlocatedAssets: UnlocatedAsset[] = assets
+    .filter((a) => a.latitude == null || a.longitude == null)
+    .map((a) => ({
+      id: a.id,
+      name: a.name,
+      category: a.category,
+      estimatedValue: a.estimated_value,
+    }));
+
+  const shouldShowGlobe =
+    showGlobeMap &&
+    locatedAssets.length > 0 &&
+    !!process.env.NEXT_PUBLIC_MAPBOX_TOKEN &&
+    scopedOrgId;
   const categoryTotals = assets.reduce((acc, a) => {
     if (!allowedCategories.includes(a.category)) return acc;
     acc[a.category] = (acc[a.category] || 0) + (a.estimated_value || 0);
@@ -154,6 +211,16 @@ export default function DashboardPage() {
       </div>
 
       <Navbar />
+
+      {/* Globe Map Hero */}
+      {!isLoading && shouldShowGlobe && (
+        <GlobeMap
+          locatedAssets={locatedAssets}
+          unlocatedAssets={unlocatedAssets}
+          organizationId={scopedOrgId!}
+          height="45vh"
+        />
+      )}
 
       {/* Hero Header — dark on light theme */}
       <div className={(theme === "light" || theme === "hybrid") ? "section-dark" : ""}>

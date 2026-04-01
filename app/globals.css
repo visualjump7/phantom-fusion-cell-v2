@@ -1011,6 +1011,24 @@ html[data-density="comfort"] .density-table tbody tr:nth-child(even) {
 }
 
 /* ================================================================
+   Globe Map — Pin animations
+   ================================================================ */
+@keyframes pin-pulse {
+  0% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(2.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+.map-pin-pulse {
+  animation: pin-pulse 3s ease-out infinite;
+}
+
+.map-pin-selected {
+  transform: scale(1.4);
+  filter: brightness(1.2);
+}
+
+/* ================================================================
    Smooth entrance animation utilities
    ================================================================ */
 @keyframes fadeSlideUp {
