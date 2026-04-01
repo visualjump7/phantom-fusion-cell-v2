@@ -11,8 +11,8 @@ interface OverviewStatsProps {
 
 export function OverviewStats({ summaries }: OverviewStatsProps) {
   const totalClients = summaries.length;
-  const totalHoldings = summaries.reduce((sum, s) => sum + s.holdingsCount, 0);
-  const totalHoldingsValue = summaries.reduce((sum, s) => sum + s.holdingsValue, 0);
+  const totalProjects = summaries.reduce((sum, s) => sum + s.projectsCount, 0);
+  const totalProjectsValue = summaries.reduce((sum, s) => sum + s.projectsValue, 0);
   const totalPendingBills = summaries.reduce((sum, s) => sum + s.pendingBillsCount, 0);
   const totalPendingAmount = summaries.reduce((sum, s) => sum + s.pendingBillsTotal, 0);
   const totalAlerts = summaries.reduce((sum, s) => sum + s.unresolvedAlertsCount, 0);
@@ -25,9 +25,9 @@ export function OverviewStats({ summaries }: OverviewStatsProps) {
       icon: Users,
     },
     {
-      label: "Total Holdings",
-      value: totalHoldings,
-      subtext: formatCurrency(totalHoldingsValue),
+      label: "Total Projects",
+      value: totalProjects,
+      subtext: formatCurrency(totalProjectsValue),
       icon: Building2,
     },
     {

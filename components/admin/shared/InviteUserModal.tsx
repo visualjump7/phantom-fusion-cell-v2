@@ -29,7 +29,7 @@ const ROLE_CARDS = [
     value: "manager",
     label: "Manager",
     icon: Briefcase,
-    description: "Day-to-day operations. Holdings, budgets, bills, and messages.",
+    description: "Day-to-day operations. Projects, budgets, bills, and messages.",
     color: "border-amber-500/50 bg-amber-500/5",
     iconColor: "text-amber-400",
   },

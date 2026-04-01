@@ -80,7 +80,7 @@ export function DeletePrincipalModal({
                 <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
                   This will permanently delete this principal and{" "}
                   <span className="font-semibold text-red-400">ALL</span> associated
-                  data including holdings, budgets, bills, messages, and team
+                  data including projects, budgets, bills, messages, and team
                   assignments. This action cannot be undone.
                 </p>
               </div>
@@ -97,8 +97,8 @@ export function DeletePrincipalModal({
                   Data to be deleted
                 </p>
                 <div className="grid grid-cols-2 gap-y-1.5 text-sm">
-                  <span className="text-muted-foreground">Holdings</span>
-                  <span className="font-medium text-foreground">{counts.holdings}</span>
+                  <span className="text-muted-foreground">Projects</span>
+                  <span className="font-medium text-foreground">{counts.projects}</span>
                   <span className="text-muted-foreground">Budget records</span>
                   <span className="font-medium text-foreground">{counts.budgets}</span>
                   <span className="text-muted-foreground">Bills</span>

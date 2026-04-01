@@ -38,13 +38,13 @@ import {
   reorderBlocks,
   fetchCashFlowData,
   fetchUpcomingBillsData,
-  fetchHoldingsSnapshot,
+  fetchProjectsSnapshot,
   fetchPendingDecisions,
   Brief,
   BriefBlock,
   CashFlowBlockData,
   BillBlockData,
-  HoldingsBlockData,
+  ProjectsBlockData,
   DecisionsBlockData,
 } from "@/lib/brief-service";
 import { BriefBlockEditor } from "@/components/brief/BriefBlockEditor";
@@ -72,12 +72,12 @@ export default function BriefComposerPage() {
   }, [briefId]);
 
   const loadLiveData = useCallback(async () => {
-    const [cashflow, bills7, bills14, bills30, holdings, decisions] = await Promise.all([
+    const [cashflow, bills7, bills14, bills30, projects, decisions] = await Promise.all([
       fetchCashFlowData(orgId),
       fetchUpcomingBillsData(orgId, 7),
       fetchUpcomingBillsData(orgId, 14),
       fetchUpcomingBillsData(orgId, 30),
-      fetchHoldingsSnapshot(orgId),
+      fetchProjectsSnapshot(orgId),
       fetchPendingDecisions(orgId),
     ]);
     setLiveData({
@@ -85,7 +85,7 @@ export default function BriefComposerPage() {
       bills_7: bills7,
       bills_14: bills14,
       bills_30: bills30,
-      holdings,
+      projects,
       decisions,
     });
   }, [orgId]);
@@ -112,7 +112,7 @@ export default function BriefComposerPage() {
     const position = brief.blocks?.length || 0;
     const defaultConfig: Record<string, any> = {};
     if (type === "bills") defaultConfig.days_ahead = 7;
-    if (type === "holdings") defaultConfig.category = "all";
+    if (type === "projects") defaultConfig.category = "all";
 
     const block = await addBlock(briefId, type, position, defaultConfig);
     if (block && brief.blocks) {
@@ -216,7 +216,7 @@ export default function BriefComposerPage() {
     { type: "text", label: "Text Block", icon: Type, desc: "Rich text commentary" },
     { type: "cashflow", label: "Cash Flow", icon: DollarSign, desc: "Monthly cash flow summary" },
     { type: "bills", label: "Upcoming Bills", icon: Receipt, desc: "Bills due soon" },
-    { type: "holdings", label: "Holdings", icon: Building2, desc: "Holdings snapshot" },
+    { type: "projects", label: "Projects", icon: Building2, desc: "Projects snapshot" },
     { type: "decisions", label: "Decisions", icon: AlertTriangle, desc: "Pending decisions" },
     { type: "document", label: "Document", icon: FileUp, desc: "Upload .docx file" },
   ];

@@ -10,7 +10,7 @@ import type {
   BriefBlock,
   CashFlowBlockData,
   BillBlockData,
-  HoldingsBlockData,
+  ProjectsBlockData,
   DecisionsBlockData,
 } from "@/lib/brief-service";
 
@@ -150,7 +150,7 @@ export async function POST(request: Request) {
     fetchBillsForDays(7), fetchBillsForDays(14), fetchBillsForDays(30),
   ]);
 
-  // Holdings
+  // Projects
   const { data: assetsData } = await db
     .from("assets")
     .select("id, name, category, estimated_value")
@@ -158,8 +158,8 @@ export async function POST(request: Request) {
     .eq("is_deleted", false)
     .order("estimated_value", { ascending: false });
 
-  const holdings: HoldingsBlockData = {
-    holdings: assetsData || [],
+  const projects: ProjectsBlockData = {
+    projects: assetsData || [],
     totalValue: (assetsData || []).reduce((s: number, h: any) => s + (h.estimated_value || 0), 0),
     category: null,
   };
@@ -190,7 +190,7 @@ export async function POST(request: Request) {
   const liveData: Record<string, any> = {
     cashflow,
     bills_7: bills7, bills_14: bills14, bills_30: bills30,
-    holdings, decisions,
+    projects, decisions,
   };
 
   // Render PDF

@@ -14,7 +14,7 @@ const SUGGESTIONS = [
   "Show me all pending bills over $100K",
   "Break down this month's largest expenses",
   "What's due in the next 30 days?",
-  "Total value of all business holdings",
+  "Total value of all business projects",
 ];
 
 interface SearchBarProps {
@@ -164,8 +164,8 @@ export function SearchBar({ organizationId, isOpen, onClose }: SearchBarProps) {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search across your holdings..."
-              aria-label="Search across your holdings"
+              placeholder="Search across your projects..."
+              aria-label="Search across your projects"
               className="flex-1 bg-transparent px-3 py-4 text-lg text-foreground placeholder:text-muted-foreground focus:outline-none"
             />
             {query && (

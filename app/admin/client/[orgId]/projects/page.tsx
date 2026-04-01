@@ -36,10 +36,10 @@ const CATEGORY_OPTIONS = [
   { value: "personal", label: "Personal", color: "bg-violet-600 text-white border-violet-600" },
 ];
 
-export default function WorkspaceHoldingsPage() {
+export default function WorkspaceProjectsPage() {
   const { orgId, clientName } = useClientContext();
   const { role } = useRole();
-  const canManage = hasPermission(role, "manageHoldings");
+  const canManage = hasPermission(role, "manageProjects");
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
@@ -182,7 +182,7 @@ export default function WorkspaceHoldingsPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1 pl-4">
-                  <Link href={`/admin/client/${orgId}/holdings/${asset.id}/detail`}>
+                  <Link href={`/admin/client/${orgId}/projects/${asset.id}/detail`}>
                     <Button variant="ghost" size="sm" title="Project detail"><Eye className="h-4 w-4" /></Button>
                   </Link>
                   {canManage && (

@@ -56,7 +56,7 @@ INSERT INTO expense_categories (id, name, color, icon) VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================
--- 5. ASSETS (10 Business Holdings)
+-- 5. ASSETS (10 Business Projects)
 -- ============================================
 
 INSERT INTO assets (id, organization_id, name, category, estimated_value, identifier, description) VALUES
@@ -73,7 +73,7 @@ INSERT INTO assets (id, organization_id, name, category, estimated_value, identi
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================
--- 6. BUDGETS (2026) â€” 5 key holdings
+-- 6. BUDGETS (2026) â€” 5 key projects
 -- ============================================
 
 -- 6a. Gulf Coast WtE â€” $42M annual

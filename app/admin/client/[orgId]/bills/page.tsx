@@ -317,7 +317,7 @@ export default function WorkspaceBillsPage() {
         {assets.length > 0 && (
           <select value={assetFilter} onChange={(e) => setAssetFilter(e.target.value)}
             className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground">
-            <option value="">All Holdings</option>
+            <option value="">All Projects</option>
             {assets.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
           </select>
         )}
@@ -389,7 +389,7 @@ export default function WorkspaceBillsPage() {
                   <div><label className="text-xs text-muted-foreground">Amount ($) *</label><Input type="number" step="0.01" value={formAmount} onChange={(e) => setFormAmount(e.target.value)} /></div>
                   <div><label className="text-xs text-muted-foreground">Due Date *</label><Input type="date" value={formDueDate} onChange={(e) => setFormDueDate(e.target.value)} /></div>
                 </div>
-                <div><label className="text-xs text-muted-foreground">Holding</label>
+                <div><label className="text-xs text-muted-foreground">Project</label>
                   <select value={formAssetId} onChange={(e) => setFormAssetId(e.target.value)} className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground">
                     <option value="">None</option>
                     {assets.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
@@ -447,7 +447,7 @@ export default function WorkspaceBillsPage() {
               ) : (
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 text-sm"><FileSpreadsheet className="h-4 w-4 text-primary" /><span className="font-medium">{fileName}</span><span className="text-muted-foreground">({parseResult.bills.length} bills found)</span></div>
-                  <div><label className="text-xs text-muted-foreground">Assign to Holding (optional)</label>
+                  <div><label className="text-xs text-muted-foreground">Assign to Project (optional)</label>
                     <select value={uploadAssetId} onChange={(e) => setUploadAssetId(e.target.value)} className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground">
                       <option value="">None</option>
                       {assets.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}

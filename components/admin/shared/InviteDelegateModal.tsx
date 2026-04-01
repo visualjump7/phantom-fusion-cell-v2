@@ -180,7 +180,7 @@ export function InviteDelegateModal({ orgId, grantedBy, onClose, onSuccess }: In
                         className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider"
                       >
                         <span className={categoryColors[category] || "text-muted-foreground"}>
-                          {category} Holdings
+                          {category} Projects
                         </span>
                         <span className="text-muted-foreground">
                           {allChecked ? "(deselect)" : "(select all)"}

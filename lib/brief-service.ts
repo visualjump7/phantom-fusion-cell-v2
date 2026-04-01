@@ -31,7 +31,7 @@ export interface Brief {
 export interface BriefBlock {
   id: string;
   brief_id: string;
-  type: "text" | "cashflow" | "bills" | "holdings" | "decisions" | "document";
+  type: "text" | "cashflow" | "bills" | "projects" | "decisions" | "document";
   position: number;
   content_html: string | null;
   config: Record<string, any>;
@@ -63,8 +63,8 @@ export interface BillBlockData {
   daysAhead: number;
 }
 
-export interface HoldingsBlockData {
-  holdings: {
+export interface ProjectsBlockData {
+  projects: {
     id: string;
     name: string;
     category: string;
@@ -395,10 +395,10 @@ export async function fetchUpcomingBillsData(
   return { bills, total, daysAhead };
 }
 
-export async function fetchHoldingsSnapshot(
+export async function fetchProjectsSnapshot(
   orgId: string,
   category?: string
-): Promise<HoldingsBlockData> {
+): Promise<ProjectsBlockData> {
   let query = db
     .from("assets")
     .select("id, name, category, estimated_value")
@@ -411,13 +411,13 @@ export async function fetchHoldingsSnapshot(
   }
 
   const { data } = await query;
-  const holdings = data || [];
-  const totalValue = holdings.reduce(
+  const projects = data || [];
+  const totalValue = projects.reduce(
     (s: number, h: any) => s + (h.estimated_value || 0),
     0
   );
 
-  return { holdings, totalValue, category: category || null };
+  return { projects, totalValue, category: category || null };
 }
 
 export async function fetchPendingDecisions(orgId: string): Promise<DecisionsBlockData> {

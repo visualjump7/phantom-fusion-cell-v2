@@ -326,7 +326,7 @@ export default function WorkspaceMessagesPage() {
                 <div><label className="text-xs text-muted-foreground">Title *</label><Input value={composeTitle} onChange={(e) => setComposeTitle(e.target.value)} placeholder="Message title" /></div>
                 <div><label className="text-xs text-muted-foreground">Body</label><textarea value={composeBody} onChange={(e) => setComposeBody(e.target.value)} rows={3}
                   className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground resize-none" placeholder="Optional message body..." /></div>
-                <div><label className="text-xs text-muted-foreground">Holding</label>
+                <div><label className="text-xs text-muted-foreground">Project</label>
                   <select value={composeAssetId} onChange={(e) => setComposeAssetId(e.target.value)} className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground">
                     <option value="">None</option>
                     {assets.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}

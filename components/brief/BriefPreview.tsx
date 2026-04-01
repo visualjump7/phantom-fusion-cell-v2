@@ -7,7 +7,7 @@ import {
   BriefBlock,
   CashFlowBlockData,
   BillBlockData,
-  HoldingsBlockData,
+  ProjectsBlockData,
   DecisionsBlockData,
 } from "@/lib/brief-service";
 
@@ -163,9 +163,9 @@ function BriefBlockPreview({
     );
   }
 
-  // Holdings block
-  if (block.type === "holdings") {
-    const data = liveData.holdings as HoldingsBlockData | undefined;
+  // Projects block
+  if (block.type === "projects") {
+    const data = liveData.projects as ProjectsBlockData | undefined;
     if (!data) return null;
 
     const categoryColors: Record<string, string> = {
@@ -174,12 +174,12 @@ function BriefBlockPreview({
       personal: "bg-violet-600 text-white",
     };
 
-    const filteredHoldings =
+    const filteredProjects =
       block.config?.category && block.config.category !== "all"
-        ? data.holdings.filter((h) => h.category === block.config.category)
-        : data.holdings;
+        ? data.projects.filter((h) => h.category === block.config.category)
+        : data.projects;
 
-    const filteredTotal = filteredHoldings.reduce(
+    const filteredTotal = filteredProjects.reduce(
       (s, h) => s + (h.estimated_value || 0),
       0
     );
@@ -187,13 +187,13 @@ function BriefBlockPreview({
     return (
       <div className="rounded-lg border border-border bg-card/50 p-4">
         <h3 className="text-sm font-semibold text-foreground">
-          Holdings Snapshot
+          Projects Snapshot
         </h3>
-        {filteredHoldings.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">No holdings found.</p>
+        {filteredProjects.length === 0 ? (
+          <p className="mt-2 text-sm text-muted-foreground">No projects found.</p>
         ) : (
           <div className="mt-3 space-y-2">
-            {filteredHoldings.map((h) => (
+            {filteredProjects.map((h) => (
               <div
                 key={h.id}
                 className="flex items-center justify-between text-sm"

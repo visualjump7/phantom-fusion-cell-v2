@@ -80,8 +80,8 @@ export function ClientCard({ summary, onSelect, onDelete }: ClientCardProps) {
               <div className="flex items-center gap-2">
                 <Building2 className="h-4 w-4 text-muted-foreground" />
                 <div>
-                  <p className="text-lg font-semibold text-foreground">{summary.holdingsCount}</p>
-                  <p className="text-xs text-muted-foreground">Holdings</p>
+                  <p className="text-lg font-semibold text-foreground">{summary.projectsCount}</p>
+                  <p className="text-xs text-muted-foreground">Projects</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -100,9 +100,9 @@ export function ClientCard({ summary, onSelect, onDelete }: ClientCardProps) {
               </div>
             </div>
 
-            {summary.holdingsValue > 0 && (
+            {summary.projectsValue > 0 && (
               <p className="mt-3 text-sm text-muted-foreground">
-                Total holdings value: {formatCurrency(summary.holdingsValue)}
+                Total project value: {formatCurrency(summary.projectsValue)}
               </p>
             )}
           </CardContent>

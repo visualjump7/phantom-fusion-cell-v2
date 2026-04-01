@@ -8,7 +8,7 @@ import {
   BriefBlock,
   CashFlowBlockData,
   BillBlockData,
-  HoldingsBlockData,
+  ProjectsBlockData,
   DecisionsBlockData,
 } from "@/lib/brief-service";
 
@@ -176,9 +176,9 @@ function ReaderBlock({
     );
   }
 
-  // Holdings
-  if (block.type === "holdings") {
-    const data = liveData.holdings as HoldingsBlockData | undefined;
+  // Projects
+  if (block.type === "projects") {
+    const data = liveData.projects as ProjectsBlockData | undefined;
     if (!data) return null;
 
     const categoryColors: Record<string, string> = {
@@ -187,12 +187,12 @@ function ReaderBlock({
       personal: "bg-violet-600 text-white",
     };
 
-    const filteredHoldings =
+    const filteredProjects =
       block.config?.category && block.config.category !== "all"
-        ? data.holdings.filter((h) => h.category === block.config.category)
-        : data.holdings;
+        ? data.projects.filter((h) => h.category === block.config.category)
+        : data.projects;
 
-    const filteredTotal = filteredHoldings.reduce(
+    const filteredTotal = filteredProjects.reduce(
       (s, h) => s + (h.estimated_value || 0),
       0
     );
@@ -200,16 +200,16 @@ function ReaderBlock({
     return (
       <section className="rounded-xl border border-border bg-card/40 p-6">
         <h2 className="font-serif text-lg font-semibold text-foreground">
-          Holdings Snapshot
+          Projects Snapshot
         </h2>
-        {filteredHoldings.length === 0 ? (
+        {filteredProjects.length === 0 ? (
           <p className="mt-3 text-sm text-muted-foreground">
-            No holdings to display.
+            No projects to display.
           </p>
         ) : (
           <>
             <div className="mt-4 divide-y divide-border">
-              {filteredHoldings.map((h) => (
+              {filteredProjects.map((h) => (
                 <div
                   key={h.id}
                   className="flex items-center justify-between py-3"

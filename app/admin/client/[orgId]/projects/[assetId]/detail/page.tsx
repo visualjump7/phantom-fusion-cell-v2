@@ -54,7 +54,7 @@ export default function ProjectDetailRoute() {
       <div className="py-12 text-center">
         <p className="text-muted-foreground">Asset not found.</p>
         <Link
-          href={`/admin/client/${orgId}/holdings`}
+          href={`/admin/client/${orgId}/projects`}
           className="mt-2 inline-block text-sm text-primary hover:underline"
         >
           Back to Projects
@@ -68,7 +68,7 @@ export default function ProjectDetailRoute() {
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Link
-          href={`/admin/client/${orgId}/holdings`}
+          href={`/admin/client/${orgId}/projects`}
           className="flex items-center gap-1 hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />

@@ -10,7 +10,7 @@ import {
   fetchLatestPublishedBrief,
   fetchCashFlowData,
   fetchUpcomingBillsData,
-  fetchHoldingsSnapshot,
+  fetchProjectsSnapshot,
   fetchPendingDecisions,
   Brief,
 } from "@/lib/brief-service";
@@ -30,13 +30,13 @@ export default function BriefPage() {
       setBrief(b);
 
       if (b) {
-        const [cashflow, bills7, bills14, bills30, holdings, decisions] =
+        const [cashflow, bills7, bills14, bills30, projects, decisions] =
           await Promise.all([
             fetchCashFlowData(orgId!),
             fetchUpcomingBillsData(orgId!, 7),
             fetchUpcomingBillsData(orgId!, 14),
             fetchUpcomingBillsData(orgId!, 30),
-            fetchHoldingsSnapshot(orgId!),
+            fetchProjectsSnapshot(orgId!),
             fetchPendingDecisions(orgId!),
           ]);
         setLiveData({
@@ -44,7 +44,7 @@ export default function BriefPage() {
           bills_7: bills7,
           bills_14: bills14,
           bills_30: bills30,
-          holdings,
+          projects,
           decisions,
         });
       }

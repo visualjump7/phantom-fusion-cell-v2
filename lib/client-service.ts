@@ -29,8 +29,8 @@ export interface ClientSummary {
   displayName: string;
   accentColor: string;
   status: string;
-  holdingsCount: number;
-  holdingsValue: number;
+  projectsCount: number;
+  projectsValue: number;
   pendingBillsCount: number;
   pendingBillsTotal: number;
   unresolvedAlertsCount: number;
@@ -88,8 +88,8 @@ export async function fetchClientSummary(orgId: string): Promise<ClientSummary |
     displayName: profileRes.data.display_name,
     accentColor: profileRes.data.accent_color,
     status: profileRes.data.status,
-    holdingsCount: assets.length,
-    holdingsValue: assets.reduce((sum: number, a: { estimated_value: number }) => sum + (a.estimated_value || 0), 0),
+    projectsCount: assets.length,
+    projectsValue: assets.reduce((sum: number, a: { estimated_value: number }) => sum + (a.estimated_value || 0), 0),
     pendingBillsCount: bills.length,
     pendingBillsTotal: bills.reduce((sum: number, b: { amount_cents: number }) => sum + b.amount_cents, 0),
     unresolvedAlertsCount: messages.length,
@@ -176,7 +176,7 @@ export async function updateClientProfile(
 // ============================================
 
 export interface DeletionCounts {
-  holdings: number;
+  projects: number;
   budgets: number;
   bills: number;
   messages: number;
@@ -193,7 +193,7 @@ export async function fetchDeletionCounts(orgId: string): Promise<DeletionCounts
   ]);
 
   return {
-    holdings: assetsRes.count ?? 0,
+    projects: assetsRes.count ?? 0,
     budgets: budgetsRes.count ?? 0,
     bills: billsRes.count ?? 0,
     messages: messagesRes.count ?? 0,

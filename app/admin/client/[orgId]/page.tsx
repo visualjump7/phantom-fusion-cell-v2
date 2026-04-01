@@ -29,8 +29,8 @@ export default function WorkspaceDashboard() {
   const canDelete = hasPermission(role, "deletePrincipal");
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const [holdingsCount, setHoldingsCount] = useState(0);
-  const [holdingsValue, setHoldingsValue] = useState(0);
+  const [projectsCount, setProjectsCount] = useState(0);
+  const [projectsValue, setProjectsValue] = useState(0);
   const [billSummary, setBillSummary] = useState<BillSummary | null>(null);
   const [alertsCount, setAlertsCount] = useState(0);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -53,8 +53,8 @@ export default function WorkspaceDashboard() {
       ]);
 
       const assets = assetsRes.data || [];
-      setHoldingsCount(assets.length);
-      setHoldingsValue(assets.reduce((sum: number, a: { estimated_value: number }) => sum + (a.estimated_value || 0), 0));
+      setProjectsCount(assets.length);
+      setProjectsValue(assets.reduce((sum: number, a: { estimated_value: number }) => sum + (a.estimated_value || 0), 0));
       setBillSummary(billsRes);
       setAlertsCount((messagesRes.data || []).length);
       if (profileRes.data?.allowed_categories) {
@@ -74,7 +74,7 @@ export default function WorkspaceDashboard() {
   }
 
   const quickLinks = [
-    { name: "Projects", href: `/admin/client/${orgId}/holdings`, icon: Building2, stat: `${holdingsCount} projects` },
+    { name: "Projects", href: `/admin/client/${orgId}/projects`, icon: Building2, stat: `${projectsCount} projects` },
     { name: "Bills", href: `/admin/client/${orgId}/bills`, icon: Receipt, stat: `${billSummary?.upcomingCount || 0} pending` },
     { name: "Alerts", href: `/admin/client/${orgId}/messages`, icon: MessageSquare, stat: `${alertsCount} active` },
     { name: "Daily Briefs", href: `/admin/client/${orgId}/briefs`, icon: FileText, stat: "Compose briefs" },
@@ -87,7 +87,7 @@ export default function WorkspaceDashboard() {
       <div>
         <h1 className="text-2xl font-bold text-foreground">{clientName}&apos;s Workspace</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Manage holdings, bills, alerts, and budgets for this principal.
+          Manage projects, bills, alerts, and budgets for this principal.
         </p>
       </div>
 
@@ -95,10 +95,10 @@ export default function WorkspaceDashboard() {
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Card className="border-border">
           <CardContent className="p-4">
-            <p className="text-2xl font-bold text-foreground">{holdingsCount}</p>
+            <p className="text-2xl font-bold text-foreground">{projectsCount}</p>
             <p className="text-xs text-muted-foreground">Projects</p>
-            {holdingsValue > 0 && (
-              <p className="mt-1 text-sm text-muted-foreground">{formatCurrency(holdingsValue)}</p>
+            {projectsValue > 0 && (
+              <p className="mt-1 text-sm text-muted-foreground">{formatCurrency(projectsValue)}</p>
             )}
           </CardContent>
         </Card>

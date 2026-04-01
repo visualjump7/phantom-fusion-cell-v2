@@ -195,7 +195,7 @@ export default function WorkspaceUploadPage() {
 
       {/* Step indicator */}
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        {["Select Holding", "Upload File", "Preview", "Done"].map((label, i) => {
+        {["Select Project", "Upload File", "Preview", "Done"].map((label, i) => {
           const stepMap = ["select", "upload", "preview", "done"];
           const stepIndex = stepMap.indexOf(step);
           const isActive = i <= stepIndex || (step === "sheet" && i <= 1) || (step === "importing" && i <= 2);
@@ -218,10 +218,10 @@ export default function WorkspaceUploadPage() {
       {/* Select step */}
       {step === "select" && (
         <Card className="border-border"><CardContent className="p-6 space-y-4">
-          <div><label className="text-sm font-medium text-foreground">Holding *</label>
+          <div><label className="text-sm font-medium text-foreground">Project *</label>
             <select value={selectedAssetId} onChange={(e) => setSelectedAssetId(e.target.value)}
               className="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground">
-              <option value="">Select a holding...</option>
+              <option value="">Select a project...</option>
               {assets.map((a) => <option key={a.id} value={a.id}>{a.name} ({a.category})</option>)}
             </select>
           </div>
@@ -358,7 +358,7 @@ export default function WorkspaceUploadPage() {
           </p>
           <div className="mt-6 flex gap-3">
             <Button variant="outline" onClick={resetWizard}>Import Another</Button>
-            <Link href={`/admin/client/${orgId}/holdings`}><Button>View Holdings</Button></Link>
+            <Link href={`/admin/client/${orgId}/projects`}><Button>View Projects</Button></Link>
           </div>
         </CardContent></Card>
       )}

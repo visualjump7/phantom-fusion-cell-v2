@@ -103,7 +103,7 @@ async function assembleAccountContext(
   // === ASSETS ===
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const totalValue = assets.reduce((s: number, a: any) => s + (a.estimated_value || 0), 0);
-  context += `=== HOLDINGS (${assets.length} total, combined value: ${fmtVal(totalValue)}) ===\n\n`;
+  context += `=== PROJECTS (${assets.length} total, combined value: ${fmtVal(totalValue)}) ===\n\n`;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const a of assets as any[]) {
     context += `${a.name}\n`;
@@ -225,11 +225,11 @@ async function assembleAccountContext(
 }
 
 function buildSearchSystemPrompt(context: string): string {
-  return `You are an advanced search system for a holdings management platform. You have complete access to the account data below. Answer the user's question using ONLY the data provided.
+  return `You are an advanced search system for a project management platform. You have complete access to the account data below. Answer the user's question using ONLY the data provided.
 
 RULES:
 1. Always calculate precise totals. Sum actual values from the data.
-2. When referencing a project/holding, include its ID for linking.
+2. When referencing a project, include its ID for linking.
 3. If the data does not contain what is needed, say so clearly.
 4. Never guess, estimate, or extrapolate beyond the provided data.
 5. Format currency as USD with commas ($1,234,567).
@@ -256,7 +256,7 @@ RESPONSE FORMAT (MUST be valid JSON, no markdown fences):
   "followUp": "Suggested follow-up question or null"
 }
 
-Keep breakdown to 1-10 items. Each should reference the specific project/holding when applicable. Sort by value descending when showing financial data.
+Keep breakdown to 1-10 items. Each should reference the specific project when applicable. Sort by value descending when showing financial data.
 
 ACCOUNT DATA:
 ${context}`;

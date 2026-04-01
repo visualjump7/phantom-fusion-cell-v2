@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { FileUp, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TipTapEditor } from "./TipTapEditor";
-import { BriefBlock, CashFlowBlockData, BillBlockData, HoldingsBlockData, DecisionsBlockData } from "@/lib/brief-service";
+import { BriefBlock, CashFlowBlockData, BillBlockData, ProjectsBlockData, DecisionsBlockData } from "@/lib/brief-service";
 import { formatCurrency } from "@/lib/utils";
 
 interface BriefBlockEditorProps {
@@ -180,10 +180,10 @@ export function BriefBlockEditor({ block, liveData, orgId, onUpdate }: BriefBloc
     );
   }
 
-  // Holdings block
-  if (block.type === "holdings") {
+  // Projects block
+  if (block.type === "projects") {
     const category = block.config?.category || "all";
-    const data = liveData.holdings as HoldingsBlockData | undefined;
+    const data = liveData.projects as ProjectsBlockData | undefined;
 
     return (
       <div className="space-y-3">
@@ -203,11 +203,11 @@ export function BriefBlockEditor({ block, liveData, orgId, onUpdate }: BriefBloc
         {data ? (
           <div className="rounded-lg bg-muted/30 p-3">
             <p className="text-sm font-medium text-foreground">
-              {data.holdings.length} holding{data.holdings.length !== 1 ? "s" : ""} — {formatCurrency(data.totalValue)}
+              {data.projects.length} project{data.projects.length !== 1 ? "s" : ""} — {formatCurrency(data.totalValue)}
             </p>
-            {data.holdings.length > 0 && (
+            {data.projects.length > 0 && (
               <div className="mt-2 space-y-1">
-                {data.holdings.slice(0, 5).map((h) => (
+                {data.projects.slice(0, 5).map((h) => (
                   <div key={h.id} className="flex justify-between text-xs text-muted-foreground">
                     <span>{h.name}</span>
                     <span>{formatCurrency(h.estimated_value)}</span>

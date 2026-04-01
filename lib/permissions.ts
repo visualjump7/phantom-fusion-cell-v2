@@ -4,11 +4,11 @@ export const PERMISSIONS = {
   deletePrincipal: ["admin"],
   viewCommandCenter: ["admin", "manager", "viewer"],
 
-  // Holdings
-  viewHoldings: ["admin", "manager", "viewer", "executive"],
+  // Projects
+  viewProjects: ["admin", "manager", "viewer", "executive"],
   viewAssignedProjects: ["executive", "delegate"],
   viewAllProjects: ["admin", "manager", "viewer", "executive"],
-  manageHoldings: ["admin", "manager"],
+  manageProjects: ["admin", "manager"],
 
   // Budgets & Bills
   viewBudgets: ["admin", "manager", "viewer", "executive", "delegate"],

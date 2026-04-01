@@ -13,7 +13,7 @@ import type {
   BriefBlock,
   CashFlowBlockData,
   BillBlockData,
-  HoldingsBlockData,
+  ProjectsBlockData,
   DecisionsBlockData,
 } from "@/lib/brief-service";
 
@@ -213,7 +213,7 @@ function ContentBlock({ block, liveData }: { block: BriefBlock; liveData: Record
               <Text style={[contentStyles.tableCellBold, { width: "25%" }]}>Due Date</Text>
               <Text style={[contentStyles.tableCellBold, { width: "35%" }]}>Description</Text>
               <Text style={[contentStyles.tableCellBold, { width: "20%", textAlign: "right" as any }]}>Amount</Text>
-              <Text style={[contentStyles.tableCellBold, { width: "20%", textAlign: "right" as any }]}>Holding</Text>
+              <Text style={[contentStyles.tableCellBold, { width: "20%", textAlign: "right" as any }]}>Project</Text>
             </View>
             {data.bills.map((bill) => (
               <View key={bill.id} style={contentStyles.tableRow}>
@@ -235,28 +235,28 @@ function ContentBlock({ block, liveData }: { block: BriefBlock; liveData: Record
     );
   }
 
-  // Holdings
-  if (block.type === "holdings") {
-    const data = liveData.holdings as HoldingsBlockData | undefined;
+  // Projects
+  if (block.type === "projects") {
+    const data = liveData.projects as ProjectsBlockData | undefined;
     if (!data) return null;
-    const filteredHoldings = block.config?.category && block.config.category !== "all"
-      ? data.holdings.filter((h) => h.category === block.config.category)
-      : data.holdings;
-    const filteredTotal = filteredHoldings.reduce((s, h) => s + (h.estimated_value || 0), 0);
+    const filteredProjects = block.config?.category && block.config.category !== "all"
+      ? data.projects.filter((h) => h.category === block.config.category)
+      : data.projects;
+    const filteredTotal = filteredProjects.reduce((s, h) => s + (h.estimated_value || 0), 0);
 
     return (
       <View style={contentStyles.blockCard} wrap={false}>
-        <Text style={contentStyles.blockTitle}>Holdings Snapshot</Text>
-        {filteredHoldings.length === 0 ? (
-          <Text style={{ fontSize: 9, color: "#888888" }}>No holdings to display.</Text>
+        <Text style={contentStyles.blockTitle}>Projects Snapshot</Text>
+        {filteredProjects.length === 0 ? (
+          <Text style={{ fontSize: 9, color: "#888888" }}>No projects to display.</Text>
         ) : (
           <>
             <View style={contentStyles.tableHeader}>
-              <Text style={[contentStyles.tableCellBold, { width: "45%" }]}>Holding</Text>
+              <Text style={[contentStyles.tableCellBold, { width: "45%" }]}>Project</Text>
               <Text style={[contentStyles.tableCellBold, { width: "25%" }]}>Category</Text>
               <Text style={[contentStyles.tableCellBold, { width: "30%", textAlign: "right" as any }]}>Est. Value</Text>
             </View>
-            {filteredHoldings.map((h) => (
+            {filteredProjects.map((h) => (
               <View key={h.id} style={contentStyles.tableRow}>
                 <Text style={[contentStyles.tableCell, { width: "45%" }]}>{h.name}</Text>
                 <Text style={[contentStyles.tableCell, { width: "25%", textTransform: "capitalize" as any }]}>{h.category}</Text>
