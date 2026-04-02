@@ -8,9 +8,16 @@ interface GlobeStatsBarProps {
   locatedAssets: AssetPin[];
   unlocatedAssets: UnlocatedAsset[];
   onShowUnlocated?: () => void;
+  /** Compact single-line mode for mobile */
+  compact?: boolean;
 }
 
-export function GlobeStatsBar({ locatedAssets, unlocatedAssets, onShowUnlocated }: GlobeStatsBarProps) {
+export function GlobeStatsBar({
+  locatedAssets,
+  unlocatedAssets,
+  onShowUnlocated,
+  compact = false,
+}: GlobeStatsBarProps) {
   const totalValue = [...locatedAssets, ...unlocatedAssets].reduce(
     (sum, a) => sum + (a.estimatedValue || 0),
     0
@@ -18,6 +25,31 @@ export function GlobeStatsBar({ locatedAssets, unlocatedAssets, onShowUnlocated 
 
   // Count unique countries
   const countries = new Set(locatedAssets.map((a) => a.country).filter(Boolean));
+
+  // Compact mobile mode — single glass strip
+  if (compact) {
+    return (
+      <div className="flex items-center justify-center px-4 py-2 bg-black/50 backdrop-blur-md text-white">
+        <p className="text-xs text-white/70 text-center">
+          {locatedAssets.length} holding{locatedAssets.length !== 1 ? "s" : ""}
+          {countries.size > 0 && (
+            <>
+              {" \u2022 "}
+              {countries.size} countr{countries.size !== 1 ? "ies" : "y"}
+            </>
+          )}
+          {totalValue > 0 && (
+            <>
+              {" \u2022 "}
+              <span className="font-medium text-white">
+                {formatCurrency(totalValue)}
+              </span>
+            </>
+          )}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-between px-6 py-3 bg-black/60 backdrop-blur-md text-white">

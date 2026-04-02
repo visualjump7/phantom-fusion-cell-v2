@@ -11,6 +11,7 @@ import {
   MessageSquare,
   ChevronRight,
   FileText,
+  Maximize2,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +32,7 @@ import { fetchLatestPublishedBrief, Brief } from "@/lib/brief-service";
 import { useRouter } from "next/navigation";
 import { useAllowedCategories } from "@/lib/use-allowed-categories";
 import { AssetPin, UnlocatedAsset } from "@/lib/map-types";
+import { useBreakpoint } from "@/lib/use-breakpoint";
 
 // Mapbox GL is client-only — dynamic import with ssr: false
 const GlobeMap = dynamic(() => import("@/components/map/GlobeMap").then((m) => m.GlobeMap), {
@@ -80,6 +82,7 @@ export default function DashboardPage() {
   const { scopedOrgId } = useScopedOrgId();
   const { allowedCategories } = useAllowedCategories(scopedOrgId);
   const dashRouter = useRouter();
+  const { isMobile, isTablet } = useBreakpoint();
 
   // Delegates should never see the Dashboard — redirect to /assets
   useEffect(() => {
@@ -214,12 +217,23 @@ export default function DashboardPage() {
 
       {/* Globe Map Hero */}
       {!isLoading && shouldShowGlobe && (
-        <GlobeMap
-          locatedAssets={locatedAssets}
-          unlocatedAssets={unlocatedAssets}
-          organizationId={scopedOrgId!}
-          height="45vh"
-        />
+        <div className="relative">
+          <GlobeMap
+            locatedAssets={locatedAssets}
+            unlocatedAssets={unlocatedAssets}
+            organizationId={scopedOrgId!}
+            height={isMobile ? "35vh" : isTablet ? "38vh" : "45vh"}
+            mobileMode={isMobile}
+          />
+          {/* Immersive view button */}
+          <Link
+            href="/globe"
+            className="absolute bottom-3 right-3 sm:top-3 sm:bottom-auto z-20 flex items-center gap-1.5 rounded-full bg-black/50 backdrop-blur-md border border-white/15 px-3 py-1.5 text-[11px] text-white/70 hover:text-white hover:bg-white/10 transition-colors min-h-[44px] sm:min-h-0"
+          >
+            <Maximize2 className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
+            <span>{isMobile ? "Explore" : "Immersive View"}</span>
+          </Link>
+        </div>
       )}
 
       {/* Hero Header — dark on light theme */}
