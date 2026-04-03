@@ -76,6 +76,7 @@ export function Navbar() {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
+
   useEffect(() => {
     if (!adminDropdownOpen && !settingsDropdownOpen) return;
     const handler = (e: MouseEvent) => {

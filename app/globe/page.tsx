@@ -23,6 +23,8 @@ import { supabase } from "@/lib/supabase";
 import { useRole } from "@/lib/use-role";
 import { useScopedOrgId } from "@/lib/use-active-principal";
 import { useBreakpoint } from "@/lib/use-breakpoint";
+import { DecisionModal } from "@/components/dashboard/DecisionModal";
+import { DashboardSearchBar } from "@/components/dashboard/DashboardSearchBar";
 import { AssetPin, UnlocatedAsset } from "@/lib/map-types";
 
 // Mapbox GL is client-only
@@ -107,6 +109,8 @@ export default function ImmersiveGlobePage() {
   // Interactive card state
   const [expandedCard, setExpandedCard] = useState<ExpandedCard>(null);
   const [alertFilter, setAlertFilter] = useState<AlertFilter>(null);
+  const [selectedDecision, setSelectedDecision] = useState<PanelMessage | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const useDrawerLayout = isMobile || isTablet;
 
@@ -170,7 +174,7 @@ export default function ImmersiveGlobePage() {
 
     setIsLoading(true);
     loadData();
-  }, [scopedOrgId]);
+  }, [scopedOrgId, refreshKey]);
 
   // ─── Derived data ───
 
@@ -443,9 +447,18 @@ export default function ImmersiveGlobePage() {
               expandedCard={expandedCard}
               onExpandCard={setExpandedCard}
               onAssetClick={handlePanelAssetClick}
+              onMessageClick={setSelectedDecision}
             />
           )}
         </BottomDrawer>
+
+        <DashboardSearchBar organizationId={scopedOrgId} />
+
+        <DecisionModal
+          message={selectedDecision}
+          onClose={() => setSelectedDecision(null)}
+          onActionComplete={() => setRefreshKey((k) => k + 1)}
+        />
       </div>
     );
   }
@@ -491,6 +504,7 @@ export default function ImmersiveGlobePage() {
           alertFilter={alertFilter}
           onAlertFilter={handleAlertFilterChange}
           onAssetClick={handlePanelAssetClick}
+          onMessageClick={setSelectedDecision}
         />
 
         <RightStatPanel
@@ -512,7 +526,15 @@ export default function ImmersiveGlobePage() {
           nextDueDate={nextDueBill?.due_date || null}
           nextDueAmount={nextDueBill?.amount_cents || 0}
         />
+
+        <DashboardSearchBar organizationId={scopedOrgId} />
       </div>
+
+      <DecisionModal
+        message={selectedDecision}
+        onClose={() => setSelectedDecision(null)}
+        onActionComplete={() => setRefreshKey((k) => k + 1)}
+      />
     </div>
   );
 }

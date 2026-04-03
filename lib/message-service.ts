@@ -236,6 +236,26 @@ export async function unarchiveMessage(messageId: string): Promise<boolean> {
   return !error;
 }
 
+// ─── FETCH SINGLE MESSAGE ───
+
+export async function fetchMessageById(
+  messageId: string
+): Promise<Message | null> {
+  const { data, error } = await db
+    .from("messages")
+    .select(
+      "id, organization_id, asset_id, sender_id, sender_email, type, priority, title, body, action_url, due_date, is_archived, is_deleted, created_at, asset:assets(name)"
+    )
+    .eq("id", messageId)
+    .single();
+  if (error || !data) return null;
+  return {
+    ...data,
+    asset_name: data.asset?.name ?? null,
+    response: null,
+  } as Message;
+}
+
 // ─── RESPOND (executive) ───
 
 export async function respondToMessage(

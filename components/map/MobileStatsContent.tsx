@@ -70,6 +70,7 @@ interface MobileStatsContentProps {
   expandedCard: ExpandedCard;
   onExpandCard: (card: ExpandedCard) => void;
   onAssetClick: (assetId: string) => void;
+  onMessageClick?: (msg: PanelMessage) => void;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -186,6 +187,7 @@ export function MobileStatsContent({
   expandedCard,
   onExpandCard,
   onAssetClick,
+  onMessageClick,
 }: MobileStatsContentProps) {
   const totalCatValue = categories.reduce((s, c) => s + c.value, 0);
 
@@ -406,10 +408,16 @@ export function MobileStatsContent({
                       <motion.button
                         key={msg.id}
                         variants={rowVariants}
-                        onClick={() =>
-                          msg.asset_id && onAssetClick(msg.asset_id)
+                        onClick={() => {
+                          if (msg.type === "decision" && onMessageClick) {
+                            onMessageClick(msg);
+                          } else if (msg.asset_id) {
+                            onAssetClick(msg.asset_id);
+                          }
+                        }}
+                        disabled={
+                          msg.type !== "decision" && !msg.asset_id
                         }
-                        disabled={!msg.asset_id}
                         className="flex items-start gap-2 w-full text-left rounded-md px-2 py-2 active:bg-white/10 transition-colors disabled:opacity-40"
                       >
                         <div className="min-w-0 flex-1">

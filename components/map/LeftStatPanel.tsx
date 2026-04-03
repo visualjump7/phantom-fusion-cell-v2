@@ -76,6 +76,8 @@ interface LeftStatPanelProps {
   onAlertFilter: (filter: AlertFilter) => void;
   /** Click a specific asset (fly + drill-down) */
   onAssetClick: (assetId: string) => void;
+  /** Click a message to open decision modal */
+  onMessageClick?: (msg: PanelMessage) => void;
 }
 
 /* ────────────────── Constants ────────────────── */
@@ -177,6 +179,7 @@ export function LeftStatPanel({
   alertFilter,
   onAlertFilter,
   onAssetClick,
+  onMessageClick,
 }: LeftStatPanelProps) {
   const isExpanded = (card: ExpandedCard) => expandedCard === card;
 
@@ -388,10 +391,16 @@ export function LeftStatPanel({
                       <motion.button
                         key={msg.id}
                         variants={rowVariants}
-                        onClick={() =>
-                          msg.asset_id && onAssetClick(msg.asset_id)
+                        onClick={() => {
+                          if (msg.type === "decision" && onMessageClick) {
+                            onMessageClick(msg);
+                          } else if (msg.asset_id) {
+                            onAssetClick(msg.asset_id);
+                          }
+                        }}
+                        disabled={
+                          msg.type !== "decision" && !msg.asset_id
                         }
-                        disabled={!msg.asset_id}
                         className="flex items-start gap-2 w-full text-left rounded-md px-2 py-1.5 hover:bg-white/10 active:bg-white/15 transition-colors disabled:opacity-40 disabled:cursor-default cursor-pointer"
                       >
                         <div className="min-w-0 flex-1">

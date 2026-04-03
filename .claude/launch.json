@@ -3,9 +3,13 @@
   "configurations": [
     {
       "name": "fusion-cell-dev",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
-      "port": 3000
+      "runtimeExecutable": "/Users/digitalmoxi/.local/share/fnm/node-versions/v24.11.1/installation/bin/node",
+      "runtimeArgs": ["/Users/digitalmoxi/.local/share/fnm/node-versions/v24.11.1/installation/bin/npx", "next", "dev"],
+      "port": 3000,
+      "autoPort": true,
+      "env": {
+        "PATH": "/Users/digitalmoxi/.local/share/fnm/node-versions/v24.11.1/installation/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+      }
     }
   ]
 }
