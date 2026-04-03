@@ -21,7 +21,7 @@ import { supabase } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/utils";
 import { useRole } from "@/lib/use-role";
 import { useThemePreferences } from "@/components/ThemeProvider";
-import { useScopedOrgId } from "@/lib/use-active-principal";
+import { useScopedOrgId, useEffectiveOrgId } from "@/lib/use-active-principal";
 import {
   fetchBillSummary,
   fetchUpcomingBills,
@@ -46,6 +46,7 @@ const GlobeMap = dynamic(() => import("@/components/map/GlobeMap").then((m) => m
 
 interface Asset {
   id: string;
+  organization_id?: string;
   name: string;
   category: string;
   estimated_value: number;
@@ -80,6 +81,9 @@ export default function DashboardPage() {
   const { userName, isAdmin, isExecutive, isDelegate, role } = useRole();
   const { density, theme } = useThemePreferences();
   const { scopedOrgId } = useScopedOrgId();
+  const { orgId: effectiveOrgId } = useEffectiveOrgId();
+  /** Map uses principal scope when set; otherwise admin/staff fall back to their home org */
+  const globeOrgId = scopedOrgId ?? effectiveOrgId ?? null;
   const { allowedCategories } = useAllowedCategories(scopedOrgId);
   const dashRouter = useRouter();
   const { isMobile, isTablet } = useBreakpoint();
@@ -94,15 +98,19 @@ export default function DashboardPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        let assetQuery = db.from("assets").select("id, name, category, estimated_value, latitude, longitude, city, state_province, country, location_type").eq("is_deleted", false).order("estimated_value", { ascending: false });
+        let assetQuery = db
+          .from("assets")
+          .select("id, organization_id, name, category, estimated_value, latitude, longitude, city, state_province, country, location_type")
+          .eq("is_deleted", false)
+          .order("estimated_value", { ascending: false });
         if (scopedOrgId) assetQuery = assetQuery.eq("organization_id", scopedOrgId);
 
         let msgQuery = db.from("messages").select("id, title, type, priority, asset_id, created_at").eq("is_deleted", false).eq("is_archived", false).order("created_at", { ascending: false }).limit(5);
         if (scopedOrgId) msgQuery = msgQuery.eq("organization_id", scopedOrgId);
 
-        // Check globe map visibility if org is scoped
-        const orgSettingsPromise = scopedOrgId
-          ? db.from("organizations").select("show_globe_map").eq("id", scopedOrgId).single()
+        const orgForGlobeSettings = scopedOrgId ?? effectiveOrgId;
+        const orgSettingsPromise = orgForGlobeSettings
+          ? db.from("organizations").select("show_globe_map").eq("id", orgForGlobeSettings).single()
           : Promise.resolve({ data: null });
 
         const [assetRes, msgRes, summary, upcoming, briefRes, orgSettings] = await Promise.all([
@@ -128,12 +136,16 @@ export default function DashboardPage() {
     }
     setIsLoading(true);
     loadData();
-  }, [scopedOrgId]);
+  }, [scopedOrgId, effectiveOrgId]);
 
   const totalValue = assets.reduce((sum, a) => sum + (a.estimated_value || 0), 0);
 
-  // Partition assets into located (with coordinates) and unlocated
-  const locatedAssets: AssetPin[] = assets
+  // Globe pins: only assets in the org used for map context (principal or home org for admins)
+  const assetsForGlobe = globeOrgId
+    ? assets.filter((a) => a.organization_id === globeOrgId)
+    : [];
+
+  const locatedAssets: AssetPin[] = assetsForGlobe
     .filter((a) => a.latitude != null && a.longitude != null)
     .map((a) => ({
       id: a.id,
@@ -148,7 +160,7 @@ export default function DashboardPage() {
       country: a.country || undefined,
     }));
 
-  const unlocatedAssets: UnlocatedAsset[] = assets
+  const unlocatedAssets: UnlocatedAsset[] = assetsForGlobe
     .filter((a) => a.latitude == null || a.longitude == null)
     .map((a) => ({
       id: a.id,
@@ -161,7 +173,7 @@ export default function DashboardPage() {
     showGlobeMap &&
     locatedAssets.length > 0 &&
     !!process.env.NEXT_PUBLIC_MAPBOX_TOKEN &&
-    scopedOrgId;
+    !!globeOrgId;
   const categoryTotals = assets.reduce((acc, a) => {
     if (!allowedCategories.includes(a.category)) return acc;
     acc[a.category] = (acc[a.category] || 0) + (a.estimated_value || 0);
@@ -221,7 +233,7 @@ export default function DashboardPage() {
           <GlobeMap
             locatedAssets={locatedAssets}
             unlocatedAssets={unlocatedAssets}
-            organizationId={scopedOrgId!}
+            organizationId={globeOrgId!}
             height={isMobile ? "35vh" : isTablet ? "38vh" : "45vh"}
             mobileMode={isMobile}
           />

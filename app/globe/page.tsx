@@ -21,7 +21,7 @@ import { MobileStatsContent } from "@/components/map/MobileStatsContent";
 import { MobileDrillDown } from "@/components/map/MobileDrillDown";
 import { supabase } from "@/lib/supabase";
 import { useRole } from "@/lib/use-role";
-import { useScopedOrgId } from "@/lib/use-active-principal";
+import { useScopedOrgId, useEffectiveOrgId } from "@/lib/use-active-principal";
 import { useBreakpoint } from "@/lib/use-breakpoint";
 import { DecisionModal } from "@/components/dashboard/DecisionModal";
 import { DashboardSearchBar } from "@/components/dashboard/DashboardSearchBar";
@@ -89,7 +89,10 @@ const ALERT_HIGHLIGHT_COLORS: Record<string, string> = {
 export default function ImmersiveGlobePage() {
   const router = useRouter();
   const { userName } = useRole();
-  const { scopedOrgId } = useScopedOrgId();
+  const { scopedOrgId, isLoading: scopedLoading } = useScopedOrgId();
+  const { orgId: effectiveOrgId, isLoading: effectiveLoading } = useEffectiveOrgId();
+  const globeOrgId = scopedOrgId ?? effectiveOrgId;
+  const orgResolved = !scopedLoading && !effectiveLoading;
   const { isMobile, isTablet } = useBreakpoint();
   const mapRef = useRef<any>(null);
 
@@ -116,7 +119,12 @@ export default function ImmersiveGlobePage() {
 
   // Load data — pre-fetch ALL messages (no limit) for alert expansion
   useEffect(() => {
-    if (!scopedOrgId) return;
+    if (!orgResolved) return;
+
+    if (!globeOrgId) {
+      setIsLoading(false);
+      return;
+    }
 
     async function loadData() {
       try {
@@ -127,13 +135,13 @@ export default function ImmersiveGlobePage() {
               .select(
                 "id, name, category, estimated_value, latitude, longitude, city, state_province, country, location_type"
               )
-              .eq("organization_id", scopedOrgId)
+              .eq("organization_id", globeOrgId)
               .eq("is_deleted", false)
               .order("estimated_value", { ascending: false }),
             db
               .from("messages")
               .select("id, title, type, priority, asset_id, created_at")
-              .eq("organization_id", scopedOrgId)
+              .eq("organization_id", globeOrgId)
               .eq("is_deleted", false)
               .eq("is_archived", false)
               .order("created_at", { ascending: false })
@@ -141,7 +149,7 @@ export default function ImmersiveGlobePage() {
             db
               .from("bills")
               .select("id, title, amount_cents, due_date, status, asset_id")
-              .eq("organization_id", scopedOrgId)
+              .eq("organization_id", globeOrgId)
               .eq("is_deleted", false)
               .in("status", ["pending", "upcoming"])
               .order("due_date", { ascending: true })
@@ -149,14 +157,14 @@ export default function ImmersiveGlobePage() {
             db
               .from("messages")
               .select("id", { count: "exact", head: true })
-              .eq("organization_id", scopedOrgId)
+              .eq("organization_id", globeOrgId)
               .eq("type", "decision")
               .eq("is_deleted", false)
               .eq("is_archived", false),
             db
               .from("organizations")
               .select("name")
-              .eq("id", scopedOrgId)
+              .eq("id", globeOrgId)
               .single(),
           ]);
 
@@ -174,7 +182,7 @@ export default function ImmersiveGlobePage() {
 
     setIsLoading(true);
     loadData();
-  }, [scopedOrgId, refreshKey]);
+  }, [globeOrgId, orgResolved, refreshKey]);
 
   // ─── Derived data ───
 
@@ -375,10 +383,54 @@ export default function ImmersiveGlobePage() {
     }
   }, []);
 
-  if (!scopedOrgId || isLoading) {
+  if (!orgResolved || (globeOrgId && isLoading)) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-black">
         <Loader2 className="h-10 w-10 animate-spin text-white/40" />
+      </div>
+    );
+  }
+
+  if (!globeOrgId) {
+    return (
+      <div className="fixed inset-0 flex flex-col items-center justify-center gap-4 bg-black px-6 text-center">
+        <p className="max-w-md text-sm text-white/70">
+          No organization is linked to this session. Open{" "}
+          <span className="font-medium text-white">Command Center</span>, select a principal, or ensure your account is a member of an organization.
+        </p>
+        <button
+          type="button"
+          onClick={() => router.push("/admin")}
+          className="rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white hover:bg-white/20"
+        >
+          Go to Command Center
+        </button>
+        <button
+          type="button"
+          onClick={() => router.push("/")}
+          className="text-sm text-white/50 hover:text-white/80"
+        >
+          Back to Dashboard
+        </button>
+      </div>
+    );
+  }
+
+  if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN) {
+    return (
+      <div className="fixed inset-0 flex flex-col items-center justify-center gap-3 bg-black px-6 text-center">
+        <p className="max-w-md text-sm text-amber-200/90">
+          Mapbox is not configured for this deployment. Add{" "}
+          <code className="rounded bg-white/10 px-1.5 py-0.5 text-xs">NEXT_PUBLIC_MAPBOX_TOKEN</code>{" "}
+          in Vercel (or your host) environment variables, then redeploy.
+        </p>
+        <button
+          type="button"
+          onClick={() => router.push("/")}
+          className="text-sm text-white/50 hover:text-white/80"
+        >
+          Back to Dashboard
+        </button>
       </div>
     );
   }
@@ -393,7 +445,7 @@ export default function ImmersiveGlobePage() {
         <GlobeMap
           locatedAssets={locatedAssets}
           unlocatedAssets={unlocatedAssets}
-          organizationId={scopedOrgId}
+          organizationId={globeOrgId}
           height="100%"
           immersive
           mobileMode
@@ -421,7 +473,7 @@ export default function ImmersiveGlobePage() {
           {selectedAssetId ? (
             <MobileDrillDown
               assetId={selectedAssetId}
-              organizationId={scopedOrgId}
+              organizationId={globeOrgId}
               onBack={handleMobileDrillDownBack}
             />
           ) : (
@@ -452,7 +504,7 @@ export default function ImmersiveGlobePage() {
           )}
         </BottomDrawer>
 
-        <DashboardSearchBar organizationId={scopedOrgId} />
+        <DashboardSearchBar organizationId={globeOrgId} />
 
         <DecisionModal
           message={selectedDecision}
@@ -469,7 +521,7 @@ export default function ImmersiveGlobePage() {
       <GlobeMap
         locatedAssets={locatedAssets}
         unlocatedAssets={unlocatedAssets}
-        organizationId={scopedOrgId}
+        organizationId={globeOrgId}
         height="100vh"
         immersive
         categoryFilter={categoryFilter}
@@ -527,7 +579,7 @@ export default function ImmersiveGlobePage() {
           nextDueAmount={nextDueBill?.amount_cents || 0}
         />
 
-        <DashboardSearchBar organizationId={scopedOrgId} />
+        <DashboardSearchBar organizationId={globeOrgId} />
       </div>
 
       <DecisionModal
