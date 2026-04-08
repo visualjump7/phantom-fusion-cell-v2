@@ -122,13 +122,14 @@ export function DecisionModal({
             className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm"
           />
 
-          {/* Modal */}
+          {/* Modal positioning wrapper — handles responsive placement */}
+          <div className="fixed left-1/2 z-[100] w-[calc(100vw_-_2rem)] max-w-full -translate-x-1/2 bottom-[calc(60px_+_env(safe-area-inset-bottom)_+_16px)] md:bottom-auto md:top-1/2 md:w-[min(640px,calc(100vw_-_2rem))] md:max-w-none md:-translate-y-1/2">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed left-1/2 top-1/2 z-[100] w-[min(640px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] shadow-2xl"
+            className="relative rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] shadow-2xl"
             style={{ padding: "var(--card-padding, 24px)" }}
           >
             {/* ── Header ── */}
@@ -272,6 +273,7 @@ export function DecisionModal({
               )}
             </AnimatePresence>
           </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>

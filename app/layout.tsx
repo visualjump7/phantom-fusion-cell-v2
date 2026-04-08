@@ -4,6 +4,8 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ActivePrincipalProvider } from "@/lib/use-active-principal";
 import { getServerThemePreferences } from "@/lib/theme-preferences-server";
+import { BottomNavBar } from "@/components/BottomNavBar";
+import { MapModeProvider } from "@/lib/use-map-mode";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -30,11 +32,16 @@ export default async function RootLayout({
           />
         )}
       </head>
-      <body className={inter.className}>
+      <body
+        className={`${inter.className} pb-[calc(60px+env(safe-area-inset-bottom))] md:pb-0`}
+      >
         <ThemeProvider initialTheme={theme} initialDensity={density}>
-          <ActivePrincipalProvider>
-            {children}
-          </ActivePrincipalProvider>
+          <MapModeProvider>
+            <ActivePrincipalProvider>
+              {children}
+              <BottomNavBar />
+            </ActivePrincipalProvider>
+          </MapModeProvider>
         </ThemeProvider>
       </body>
     </html>

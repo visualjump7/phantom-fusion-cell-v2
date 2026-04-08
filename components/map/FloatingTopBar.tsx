@@ -1,16 +1,20 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Minimize2, Layers } from "lucide-react";
+import { Minimize2 } from "lucide-react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
+import { MapViewToggle } from "./MapViewToggle";
+import type { MapStyleKey, MapProjectionKey } from "./GlobeMap";
 
 interface FloatingTopBarProps {
   principalName?: string;
   totalValue: number;
   pendingTotal: number;
-  mapStyle: "dark" | "satellite";
-  onMapStyleChange: (style: "dark" | "satellite") => void;
+  mapStyle: MapStyleKey;
+  onMapStyleChange: (style: MapStyleKey) => void;
+  projection: MapProjectionKey;
+  onProjectionChange: (projection: MapProjectionKey) => void;
 }
 
 export function FloatingTopBar({
@@ -19,6 +23,8 @@ export function FloatingTopBar({
   pendingTotal,
   mapStyle,
   onMapStyleChange,
+  projection,
+  onProjectionChange,
 }: FloatingTopBarProps) {
   return (
     <motion.div
@@ -27,7 +33,7 @@ export function FloatingTopBar({
       transition={{ delay: 0.3, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       className="absolute top-0 left-0 right-0 z-30 pointer-events-auto"
     >
-      <div className="flex items-center justify-between px-6 py-4">
+      <div className="flex items-start justify-between px-6 py-4">
         {/* Left — Logo + principal */}
         <div className="flex items-center gap-3">
           <span className="text-sm font-bold text-white/90 tracking-wide">
@@ -42,7 +48,7 @@ export function FloatingTopBar({
         </div>
 
         {/* Center — Key metrics in glass pills */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-3 pt-1">
           <div className="rounded-full bg-black/40 backdrop-blur-md border border-white/10 px-4 py-1.5 text-xs text-white/80">
             Total Projects:{" "}
             <span className="font-semibold text-white">
@@ -59,25 +65,15 @@ export function FloatingTopBar({
           )}
         </div>
 
-        {/* Right — Controls */}
-        <div className="flex items-center gap-2">
-          {/* Map style toggle */}
-          <div className="flex items-center gap-0.5 rounded-full border border-white/15 bg-black/40 backdrop-blur-md p-0.5">
-            <Layers className="h-3 w-3 text-white/50 ml-2 mr-1" />
-            {(["dark", "satellite"] as const).map((key) => (
-              <button
-                key={key}
-                onClick={() => onMapStyleChange(key)}
-                className={`rounded-full px-2.5 py-1 text-[10px] font-medium transition-colors ${
-                  mapStyle === key
-                    ? "bg-white/15 text-white"
-                    : "text-white/50 hover:text-white/80"
-                }`}
-              >
-                {key === "dark" ? "Dark" : "Satellite"}
-              </button>
-            ))}
-          </div>
+        {/* Right — Controls (two-tier stacked) */}
+        <div className="flex flex-col items-end gap-1.5">
+          <MapViewToggle
+            size="md"
+            projection={projection}
+            onProjectionChange={onProjectionChange}
+            mapStyle={mapStyle}
+            onMapStyleChange={onMapStyleChange}
+          />
 
           {/* Back to standard view */}
           <Link

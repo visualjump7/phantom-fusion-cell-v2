@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import {
   X,
@@ -158,24 +159,26 @@ export function ProjectDrillDown({
       .filter((b) => b.status === "pending")
       .reduce((sum, b) => sum + (b.amount_cents || 0), 0) || 0;
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <>
-      {/* Backdrop */}
+      {/* Backdrop — full viewport, above page content and bottom nav */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-black/30 z-30"
+        className="fixed inset-0 bg-black/30 z-[90]"
         onClick={onClose}
       />
 
-      {/* Panel */}
+      {/* Panel — full viewport height, slides in from the right */}
       <motion.div
         initial={{ x: "100%" }}
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="absolute top-0 right-0 bottom-0 w-full sm:w-[420px] z-40 overflow-y-auto border-l border-white/10 bg-card/95 backdrop-blur-xl"
+        className="fixed top-0 right-0 bottom-0 w-full sm:w-[420px] z-[100] overflow-y-auto border-l border-white/10 bg-card/95 backdrop-blur-xl"
       >
         {/* Close button */}
         <button
@@ -439,6 +442,7 @@ export function ProjectDrillDown({
           </div>
         )}
       </motion.div>
-    </>
+    </>,
+    document.body
   );
 }

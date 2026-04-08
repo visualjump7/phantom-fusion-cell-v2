@@ -13,7 +13,7 @@ import {
   PanelAsset,
 } from "@/components/map/LeftStatPanel";
 import { RightStatPanel } from "@/components/map/RightStatPanel";
-import { ImmersiveBottomBar } from "@/components/map/ImmersiveBottomBar";
+import { useMapMode } from "@/lib/use-map-mode";
 import { MobileTopBar } from "@/components/map/MobileTopBar";
 import { BottomDrawer } from "@/components/map/BottomDrawer";
 import { MobileStatsContent } from "@/components/map/MobileStatsContent";
@@ -90,8 +90,18 @@ export default function ImmersiveGlobePage() {
   const [decisionCount, setDecisionCount] = useState(0);
   const [principalName, setPrincipalName] = useState<string | undefined>();
 
-  // Map controls
-  const [mapStyle, setMapStyle] = useState<"dark" | "satellite">("dark");
+  // Map controls — shared session-wide via MapModeProvider. Initial value is
+  // localStorage → theme default (handled inside the store). Theme changes
+  // reset to the new default. User selections persist across Standard ⇄
+  // Immersive view transitions.
+  const {
+    style: mapStyle,
+    projection: mapProjection,
+    setMapStyle,
+    setMapProjection,
+  } = useMapMode();
+  const isLightMode = mapProjection === "2D" && mapStyle === "light";
+
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [drawerSnap, setDrawerSnap] = useState(1);
@@ -198,7 +208,7 @@ export default function ImmersiveGlobePage() {
               .select("id, title, amount_cents, due_date, status, asset_id")
               .eq("organization_id", globeOrgId)
               .eq("is_deleted", false)
-              .in("status", ["pending", "upcoming"])
+              .eq("status", "pending")
               .order("due_date", { ascending: true })
               .limit(20),
             db
@@ -299,7 +309,6 @@ export default function ImmersiveGlobePage() {
 
   const pendingBillTotal = bills.reduce((s, b) => s + b.amount_cents, 0);
   const monthlyOutflow = pendingBillTotal;
-  const nextDueBill = bills[0] || null;
 
   // Build asset name lookup for messages/bills
   const assetNameMap = useMemo(() => {
@@ -486,7 +495,8 @@ export default function ImmersiveGlobePage() {
   if (useDrawerLayout) {
     return (
       <div
-        className="relative w-screen overflow-hidden bg-black"
+        className="globe-light-scope relative w-screen overflow-hidden bg-black"
+        data-theme={isLightMode ? "light" : undefined}
         style={{ height: "100dvh" }}
       >
         <GlobeMapDynamic
@@ -531,6 +541,8 @@ export default function ImmersiveGlobePage() {
               alerts={alertCounts}
               monthlyOutflow={monthlyOutflow}
               pendingBillCount={bills.length}
+              pendingBillTotal={pendingBillTotal}
+              decisionCount={decisionCount}
               categories={categoryBreakdown}
               countries={countryBreakdown}
               recentMessages={messages.slice(0, 5)}
@@ -564,7 +576,10 @@ export default function ImmersiveGlobePage() {
 
   // ─── Desktop Layout: Floating Panels ───
   return (
-    <div className="fixed inset-0 bg-black overflow-hidden">
+    <div
+      className="globe-light-scope fixed inset-0 bg-black overflow-hidden"
+      data-theme={isLightMode ? "light" : undefined}
+    >
       <GlobeMapDynamic
         locatedAssets={locatedAssets}
         unlocatedAssets={unlocatedAssets}
@@ -575,6 +590,7 @@ export default function ImmersiveGlobePage() {
         externalSelectedId={selectedAssetId}
         onExternalSelect={setSelectedAssetId}
         externalMapStyle={mapStyle}
+        externalProjection={mapProjection}
         hideOverlays
         highlightAssetIds={highlightAssetIds}
         highlightColor={highlightColor}
@@ -587,6 +603,8 @@ export default function ImmersiveGlobePage() {
           pendingTotal={pendingBillTotal}
           mapStyle={mapStyle}
           onMapStyleChange={setMapStyle}
+          projection={mapProjection}
+          onProjectionChange={setMapProjection}
         />
 
         <LeftStatPanel
@@ -606,6 +624,9 @@ export default function ImmersiveGlobePage() {
           onAssetClick={handlePanelAssetClick}
           isOpen={leftOpen}
           onToggle={toggleLeft}
+          locatedCount={locatedAssets.length}
+          pendingBillTotal={pendingBillTotal}
+          decisionCount={decisionCount}
         />
 
         <RightStatPanel
@@ -620,15 +641,6 @@ export default function ImmersiveGlobePage() {
           alertFilter={alertFilter}
           onAlertFilter={handleAlertFilterChange}
           onMessageClick={setSelectedDecision}
-        />
-
-        <ImmersiveBottomBar
-          locatedCount={locatedAssets.length}
-          totalCount={assets.length}
-          pendingBillTotal={pendingBillTotal}
-          decisionCount={decisionCount}
-          nextDueDate={nextDueBill?.due_date || null}
-          nextDueAmount={nextDueBill?.amount_cents || 0}
         />
 
         <DashboardSearchBar organizationId={globeOrgId} />

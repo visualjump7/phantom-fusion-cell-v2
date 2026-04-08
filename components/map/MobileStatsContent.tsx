@@ -54,6 +54,9 @@ interface MobileStatsContentProps {
   alerts: AlertCounts;
   monthlyOutflow: number;
   pendingBillCount: number;
+  /** Globe stats block (mobile only) */
+  pendingBillTotal: number;
+  decisionCount: number;
   categories: CategoryBreakdown[];
   countries: CountryBreakdown[];
   recentMessages: RecentMessage[];
@@ -172,6 +175,8 @@ export function MobileStatsContent({
   alerts,
   monthlyOutflow,
   pendingBillCount,
+  pendingBillTotal,
+  decisionCount,
   categories,
   countries,
   recentMessages,
@@ -213,9 +218,9 @@ export function MobileStatsContent({
     : 0;
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-2 md:gap-3 overflow-visible">
       {/* Collapsed summary */}
-      <p className="text-sm text-white/70 text-center py-1">
+      <p className="order-0 text-sm text-white/70 text-center py-1">
         {locatedCount} holding{locatedCount !== 1 ? "s" : ""}
         {" \u2022 "}
         {countries.length} countr{countries.length !== 1 ? "ies" : "y"}
@@ -225,8 +230,8 @@ export function MobileStatsContent({
         </span>
       </p>
 
-      {/* ─── Project Summary (clickable) ─── */}
-      <div className="rounded-xl bg-white/5 border border-white/10 p-4">
+      {/* ─── Summary (clickable) ─── */}
+      <div className="order-1 md:order-1 rounded-xl bg-white/5 border border-white/10 p-3 md:p-4">
         <button
           onClick={() => toggleCard("holdings")}
           className="w-full text-left"
@@ -316,8 +321,8 @@ export function MobileStatsContent({
         </AnimatePresence>
       </div>
 
-      {/* ─── Alerts (clickable) ─── */}
-      <div className="rounded-xl bg-white/5 border border-white/10 p-4">
+      {/* ─── Alerts (clickable) — hidden on mobile, visible md+ ─── */}
+      <div className="hidden md:block md:order-2 rounded-xl bg-white/5 border border-white/10 p-3 md:p-4">
         <button
           onClick={() => toggleCard("alerts")}
           className="w-full text-left"
@@ -454,8 +459,8 @@ export function MobileStatsContent({
         </AnimatePresence>
       </div>
 
-      {/* ─── Cash Flow (clickable) ─── */}
-      <div className="rounded-xl bg-white/5 border border-white/10 p-4">
+      {/* ─── Monthly Outflow (clickable) ─── */}
+      <div className="order-3 md:order-3 rounded-xl bg-white/5 border border-white/10 p-3 md:p-4">
         <button
           onClick={() => toggleCard("cashflow")}
           className="w-full text-left"
@@ -463,7 +468,7 @@ export function MobileStatsContent({
           <div className="flex items-center gap-2 mb-3">
             <DollarSign className="h-3.5 w-3.5 text-blue-400" />
             <span className="text-[11px] font-medium text-white/60 uppercase tracking-wider">
-              Cash Flow
+              Monthly Outflow
             </span>
             <ChevronRight
               className={`h-3 w-3 text-white/30 ml-auto transition-transform duration-200 ${
@@ -553,7 +558,7 @@ export function MobileStatsContent({
 
       {/* Geographic Distribution */}
       {countries.length > 0 && (
-        <div className="rounded-xl bg-white/5 border border-white/10 p-4">
+        <div className="order-2 md:order-4 rounded-xl bg-white/5 border border-white/10 p-3 md:p-4">
           <div className="flex items-center gap-2 mb-3">
             <Globe className="h-3.5 w-3.5 text-cyan-400" />
             <span className="text-[11px] font-medium text-white/60 uppercase tracking-wider">
@@ -584,7 +589,7 @@ export function MobileStatsContent({
 
       {/* Recent Activity */}
       {recentMessages.length > 0 && (
-        <div className="rounded-xl bg-white/5 border border-white/10 p-4">
+        <div className="rounded-xl bg-white/5 border border-white/10 p-3 md:p-4">
           <div className="flex items-center gap-2 mb-3">
             <Bell className="h-3.5 w-3.5 text-amber-400" />
             <span className="text-[11px] font-medium text-white/60 uppercase tracking-wider">
@@ -618,8 +623,8 @@ export function MobileStatsContent({
         </div>
       )}
 
-      {/* Projects by Category */}
-      <div className="rounded-xl bg-white/5 border border-white/10 p-4">
+      {/* By Category — hidden below md (mobile). Still visible on tablet (md+). */}
+      <div className="hidden md:block md:order-5 rounded-xl bg-white/5 border border-white/10 p-3 md:p-4">
         <div className="flex items-center gap-2 mb-3">
           <PieChart className="h-3.5 w-3.5 text-violet-400" />
           <span className="text-[11px] font-medium text-white/60 uppercase tracking-wider">
@@ -686,6 +691,36 @@ export function MobileStatsContent({
               </span>
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Globe Stats (Projects Mapped / Pending Bills / Decisions) — mobile only */}
+      <div className="order-4 md:hidden rounded-xl bg-white/5 border border-white/10 p-3">
+        <div className="flex items-stretch justify-between gap-2 divide-x divide-white/10">
+          <div className="flex-1 text-center px-1">
+            <p className="text-[9px] text-white/50 uppercase tracking-wider whitespace-nowrap">
+              Projects Mapped
+            </p>
+            <p className="text-sm font-semibold text-white whitespace-nowrap mt-0.5">
+              {locatedCount}/{assetCount}
+            </p>
+          </div>
+          <div className="flex-1 text-center px-1">
+            <p className="text-[9px] text-white/50 uppercase tracking-wider whitespace-nowrap">
+              Pending Bills
+            </p>
+            <p className="text-sm font-semibold text-white whitespace-nowrap mt-0.5">
+              {formatCurrency(pendingBillTotal / 100)}
+            </p>
+          </div>
+          <div className="flex-1 text-center px-1">
+            <p className="text-[9px] text-white/50 uppercase tracking-wider whitespace-nowrap">
+              Decisions
+            </p>
+            <p className="text-sm font-semibold text-white whitespace-nowrap mt-0.5">
+              {decisionCount > 0 ? `${decisionCount} awaiting` : "None"}
+            </p>
+          </div>
         </div>
       </div>
     </div>

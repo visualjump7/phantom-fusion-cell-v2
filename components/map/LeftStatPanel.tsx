@@ -87,6 +87,10 @@ interface LeftStatPanelProps {
   /** Open/closed state for slide-to-collapse */
   isOpen: boolean;
   onToggle: () => void;
+  /** Globe stats moved from the immersive bottom bar */
+  locatedCount: number;
+  pendingBillTotal: number;
+  decisionCount: number;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -167,6 +171,9 @@ export function LeftStatPanel({
   onAssetClick,
   isOpen,
   onToggle,
+  locatedCount,
+  pendingBillTotal,
+  decisionCount,
 }: LeftStatPanelProps) {
   const totalCategoryValue = categories.reduce((s, c) => s + c.value, 0);
   const isExpanded = (card: ExpandedCard) => expandedCard === card;
@@ -500,6 +507,38 @@ export function LeftStatPanel({
               </motion.div>
             )}
           </AnimatePresence>
+        </GlassCard>
+      </motion.div>
+
+      {/* ─── Globe Stats (Projects Mapped / Pending Bills / Decisions) ─── */}
+      <motion.div variants={cardVariants}>
+        <GlassCard className="p-3 2xl:p-4 pointer-events-auto">
+          <div className="flex items-stretch justify-between gap-2 divide-x divide-white/10">
+            <div className="flex-1 text-center px-1">
+              <p className="text-[9px] text-white/50 uppercase tracking-wider whitespace-nowrap">
+                Projects Mapped
+              </p>
+              <p className="text-sm font-semibold text-white whitespace-nowrap mt-0.5">
+                {locatedCount}/{assetCount}
+              </p>
+            </div>
+            <div className="flex-1 text-center px-1">
+              <p className="text-[9px] text-white/50 uppercase tracking-wider whitespace-nowrap">
+                Pending Bills
+              </p>
+              <p className="text-sm font-semibold text-white whitespace-nowrap mt-0.5">
+                {formatCurrency(pendingBillTotal / 100)}
+              </p>
+            </div>
+            <div className="flex-1 text-center px-1">
+              <p className="text-[9px] text-white/50 uppercase tracking-wider whitespace-nowrap">
+                Decisions
+              </p>
+              <p className="text-sm font-semibold text-white whitespace-nowrap mt-0.5">
+                {decisionCount > 0 ? `${decisionCount} awaiting` : "None"}
+              </p>
+            </div>
+          </div>
         </GlassCard>
       </motion.div>
       </motion.div>

@@ -1152,3 +1152,123 @@ html[data-density="comfort"] .density-table tbody tr:nth-child(even) {
 .tiptap:focus {
   outline: none;
 }
+
+/* ──────────────────────────────────────────────────────────────
+   Map view "Light" mode — scoped overrides
+   Activated when the globe/standard map view is set to 2D + Light.
+   ApplyINFO: only to elements inside a `.globe-light-scope[data-theme="light"]`
+   ancestor; never changes colors anywhere else in the app.
+   ────────────────────────────────────────────────────────────── */
+
+.globe-light-scope[data-theme="light"] {
+  --fc-light-card-bg: #ffffff;
+  --fc-light-card-border: #e5e5e5;
+  --fc-light-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --fc-light-text-primary: #111111;
+  --fc-light-text-secondary: #555555;
+  --fc-light-text-muted: #888888;
+  --fc-light-divider: #e5e5e5;
+  --fc-light-badge-bg: #f3f4f6;
+  --fc-light-badge-text: #333333;
+  --fc-light-accent: #4ade80;
+
+  /* Re-wire CSS variables consumed by DecisionModal & similar components
+     that already read from var(--bg-card) / var(--border-color) / etc. */
+  --bg-card: var(--fc-light-card-bg);
+  --border-color: var(--fc-light-card-border);
+  --text-primary: var(--fc-light-text-primary);
+  --text-secondary: var(--fc-light-text-secondary);
+  --accent-primary: var(--fc-light-accent);
+}
+
+/* Black map background fades out (the light-style Mapbox canvas is light) */
+.globe-light-scope[data-theme="light"].bg-black,
+.globe-light-scope[data-theme="light"] .bg-black\/60,
+.globe-light-scope[data-theme="light"] .bg-black\/40,
+.globe-light-scope[data-theme="light"] .bg-black\/50,
+.globe-light-scope[data-theme="light"] .bg-black\/30 {
+  background-color: var(--fc-light-card-bg) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* GlassCard — defined in components/map/GlassCard.tsx with bg-black/40 +
+   backdrop-blur-xl + border-white/10 + shadow-2xl */
+.globe-light-scope[data-theme="light"] .border-white\/10,
+.globe-light-scope[data-theme="light"] .border-white\/15,
+.globe-light-scope[data-theme="light"] .border-white\/20 {
+  border-color: var(--fc-light-card-border) !important;
+}
+
+.globe-light-scope[data-theme="light"] .shadow-2xl,
+.globe-light-scope[data-theme="light"] .shadow-lg,
+.globe-light-scope[data-theme="light"] .shadow-xl {
+  box-shadow: var(--fc-light-card-shadow) !important;
+}
+
+/* Text colors — map all white/white-alpha utilities to dark tones */
+.globe-light-scope[data-theme="light"] .text-white,
+.globe-light-scope[data-theme="light"] .text-white\/90 {
+  color: var(--fc-light-text-primary) !important;
+}
+.globe-light-scope[data-theme="light"] .text-white\/80,
+.globe-light-scope[data-theme="light"] .text-white\/70 {
+  color: #222222 !important;
+}
+.globe-light-scope[data-theme="light"] .text-white\/60 {
+  color: var(--fc-light-text-secondary) !important;
+}
+.globe-light-scope[data-theme="light"] .text-white\/50,
+.globe-light-scope[data-theme="light"] .text-white\/40 {
+  color: var(--fc-light-text-muted) !important;
+}
+.globe-light-scope[data-theme="light"] .text-white\/30,
+.globe-light-scope[data-theme="light"] .text-white\/20 {
+  color: #aaaaaa !important;
+}
+
+/* Dividers */
+.globe-light-scope[data-theme="light"] .divide-white\/10 > :not([hidden]) ~ :not([hidden]),
+.globe-light-scope[data-theme="light"] .border-t.border-white\/10,
+.globe-light-scope[data-theme="light"] .border-b.border-white\/10 {
+  border-color: var(--fc-light-divider) !important;
+}
+
+/* Hover + subtle fills (card rows, pill active states) */
+.globe-light-scope[data-theme="light"] .bg-white\/5,
+.globe-light-scope[data-theme="light"] .bg-white\/10,
+.globe-light-scope[data-theme="light"] .bg-white\/15,
+.globe-light-scope[data-theme="light"] .bg-white\/20 {
+  background-color: var(--fc-light-badge-bg) !important;
+}
+.globe-light-scope[data-theme="light"] .hover\:bg-white\/5:hover,
+.globe-light-scope[data-theme="light"] .hover\:bg-white\/10:hover,
+.globe-light-scope[data-theme="light"] .hover\:bg-white\/15:hover,
+.globe-light-scope[data-theme="light"] .hover\:bg-white\/20:hover,
+.globe-light-scope[data-theme="light"] .active\:bg-white\/15:active {
+  background-color: #e5e7eb !important;
+}
+.globe-light-scope[data-theme="light"] .hover\:text-white\/80:hover,
+.globe-light-scope[data-theme="light"] .hover\:text-white:hover {
+  color: var(--fc-light-text-primary) !important;
+}
+
+/* Pill/badge variants used by category tags */
+.globe-light-scope[data-theme="light"] .bg-blue-600,
+.globe-light-scope[data-theme="light"] .bg-emerald-600,
+.globe-light-scope[data-theme="light"] .bg-violet-600 {
+  /* Leave category badges alone — they're deliberately colored for scannability */
+}
+
+/* Scrollbars inside scope (webkit) */
+.globe-light-scope[data-theme="light"] *::-webkit-scrollbar-thumb {
+  background-color: #cccccc !important;
+}
+.globe-light-scope[data-theme="light"] *::-webkit-scrollbar-track {
+  background-color: #f3f4f6 !important;
+}
+
+/* Specific: DashboardSearchBar container */
+.globe-light-scope[data-theme="light"] input::placeholder {
+  color: var(--fc-light-text-muted) !important;
+}
