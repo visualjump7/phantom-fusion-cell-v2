@@ -23,7 +23,7 @@ export function ImmersiveBottomBar({
 }: ImmersiveBottomBarProps) {
   const cells = [
     {
-      label: "Holdings Mapped",
+      label: "Projects Mapped",
       value: `${locatedCount}/${totalCount}`,
     },
     {

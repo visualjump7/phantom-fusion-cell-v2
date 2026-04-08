@@ -203,7 +203,7 @@ export default function WorkspaceDashboard() {
         <div>
           <div className="flex items-center gap-2 mb-3">
             <Globe className="h-4 w-4 text-primary" />
-            <h2 className="text-lg font-semibold text-foreground">Global Holdings Map</h2>
+            <h2 className="text-lg font-semibold text-foreground">Global Projects Map</h2>
           </div>
           <p className="text-sm text-muted-foreground mb-4">
             Show the interactive globe map on the principal&apos;s dashboard.

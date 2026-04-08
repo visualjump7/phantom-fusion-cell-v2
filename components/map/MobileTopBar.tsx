@@ -1,12 +1,13 @@
 "use client";
 
 import { ArrowLeft, Layers } from "lucide-react";
+import type { MapStyleKey } from "./GlobeMap";
 
 interface MobileTopBarProps {
   onBack: () => void;
   principalName?: string;
-  mapStyle: "dark" | "satellite";
-  onMapStyleChange: (style: "dark" | "satellite") => void;
+  mapStyle: MapStyleKey;
+  onMapStyleChange: (style: MapStyleKey) => void;
 }
 
 export function MobileTopBar({

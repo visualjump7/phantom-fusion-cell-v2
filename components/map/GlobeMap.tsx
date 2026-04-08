@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import Map, { Marker, NavigationControl } from "react-map-gl/mapbox";
 import { AnimatePresence } from "framer-motion";
-import { Layers } from "lucide-react";
+import { MapViewToggle } from "./MapViewToggle";
+import { useMapMode } from "@/lib/use-map-mode";
 import { MapPin } from "./MapPin";
 import { ProjectDrillDown } from "./ProjectDrillDown";
 import { GlobeStatsBar } from "./GlobeStatsBar";
@@ -14,9 +15,24 @@ import "mapbox-gl/dist/mapbox-gl.css";
 const MAP_STYLES = {
   dark: "mapbox://styles/mapbox/dark-v11",
   satellite: "mapbox://styles/mapbox/satellite-streets-v12",
+  light: "mapbox://styles/mapbox/light-v11",
 } as const;
 
-type MapStyleKey = keyof typeof MAP_STYLES;
+export type MapStyleKey = keyof typeof MAP_STYLES;
+export type MapProjectionKey = "3D" | "2D";
+
+/**
+ * Map default driven by the current app theme.
+ * - light → 2D Light (mercator, light-v11)
+ * - dark / hybrid / anything else → 3D Dark (globe, dark-v11)
+ */
+export function getMapDefaultForAppTheme(appTheme: string | null | undefined): {
+  projection: MapProjectionKey;
+  style: MapStyleKey;
+} {
+  if (appTheme === "light") return { projection: "2D", style: "light" };
+  return { projection: "3D", style: "dark" };
+}
 
 // Country centroids for flyTo
 export const COUNTRY_VIEWS: Record<string, { center: [number, number]; zoom: number }> = {
@@ -40,7 +56,7 @@ export const COUNTRY_VIEWS: Record<string, { center: [number, number]; zoom: num
   KR: { center: [127.8, 35.9], zoom: 6 },
 };
 
-interface GlobeMapProps {
+export interface GlobeMapProps {
   locatedAssets: AssetPin[];
   unlocatedAssets: UnlocatedAsset[];
   organizationId: string;
@@ -54,6 +70,8 @@ interface GlobeMapProps {
   onExternalSelect?: (id: string | null) => void;
   /** External map style control */
   externalMapStyle?: MapStyleKey;
+  /** External projection control ("3D" = globe, "2D" = mercator) */
+  externalProjection?: MapProjectionKey;
   /** Hide built-in overlays (stats bar, unlocated list, style toggle) */
   hideOverlays?: boolean;
   /** Mobile mode: larger pins, closer zoom, no nav controls */
@@ -87,6 +105,7 @@ export function GlobeMap({
   externalSelectedId,
   onExternalSelect,
   externalMapStyle,
+  externalProjection,
   hideOverlays = false,
   mobileMode = false,
   highlightAssetIds = null,
@@ -96,12 +115,22 @@ export function GlobeMap({
   const [internalSelectedId, setInternalSelectedId] = useState<string | null>(null);
   const [showUnlocated, setShowUnlocated] = useState(false);
   const [accentColor, setAccentColor] = useState("#4ade80");
-  const [internalMapStyle, setInternalMapStyle] = useState<MapStyleKey>("dark");
+  // Pull shared map mode from the context store. The store itself is
+  // seeded from localStorage → theme default and automatically resets when
+  // the app theme changes.
+  const {
+    style: storeMapStyle,
+    projection: storeProjection,
+    setMapStyle: setStoreMapStyle,
+    setMapProjection: setStoreProjection,
+  } = useMapMode();
 
-  // Use external or internal state
+  // Use external or internal (store-backed) state
   const selectedAssetId = externalSelectedId !== undefined ? externalSelectedId : internalSelectedId;
   const setSelectedAssetId = onExternalSelect || setInternalSelectedId;
-  const mapStyle = externalMapStyle || internalMapStyle;
+  const mapStyle: MapStyleKey = externalMapStyle || storeMapStyle;
+  const projection: MapProjectionKey = externalProjection || storeProjection;
+  const is2D = projection === "2D";
 
   // Determine accent color on mount and theme changes
   useEffect(() => {
@@ -116,9 +145,9 @@ export function GlobeMap({
     return () => observer.disconnect();
   }, []);
 
-  // Auto-rotation for immersive mode
+  // Auto-rotation for immersive mode (globe projection only)
   useEffect(() => {
-    if (!immersive || !mapRef.current) return;
+    if (!immersive || is2D || !mapRef.current) return;
 
     const ROTATION_SPEED = 0.015;
     const IDLE_TIMEOUT = 10_000;
@@ -175,7 +204,7 @@ export function GlobeMap({
         map.off("dragend", onInteractionEnd);
       }
     };
-  }, [immersive]);
+  }, [immersive, is2D]);
 
   const handlePinClick = useCallback(
     (assetId: string) => {
@@ -241,6 +270,9 @@ export function GlobeMap({
     }
   }, [flyToCountry, flyToAsset]);
 
+  // Projection changes are handled by remounting the Map (key={projectionName}),
+  // so there's no need to imperatively easeTo / toggle handlers here.
+
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
   if (!token) return null;
 
@@ -254,37 +286,56 @@ export function GlobeMap({
       }
     : { longitude: -95.7, latitude: 37.0, zoom: 2.8, pitch: 25, bearing: 0 };
 
-  const fogConfig = immersive
-    ? {
-        range: [0.5, 10],
-        color: "#0a0a1a",
-        "horizon-blend": 0.15,
-        "high-color": "#0a0a2e",
-        "space-color": "#000000",
-        "star-intensity": 0.8,
-      }
-    : {
-        range: [0.5, 10],
-        color: "#0a0a1a",
-        "horizon-blend": 0.1,
-        "high-color": "#0a0a2e",
-        "space-color": "#000000",
-        "star-intensity": 0.6,
-      };
+  // Memoize so prop identity stays stable across renders — otherwise
+  // react-map-gl's proxy transform re-diffs and blows the call stack.
+  const fogConfig = useMemo(() => {
+    if (is2D) return null;
+    return immersive
+      ? {
+          range: [0.5, 10],
+          color: "#0a0a1a",
+          "horizon-blend": 0.15,
+          "high-color": "#0a0a2e",
+          "space-color": "#000000",
+          "star-intensity": 0.8,
+        }
+      : {
+          range: [0.5, 10],
+          color: "#0a0a1a",
+          "horizon-blend": 0.1,
+          "high-color": "#0a0a2e",
+          "space-color": "#000000",
+          "star-intensity": 0.6,
+        };
+  }, [immersive, is2D]);
+
+  const projectionName = is2D ? "mercator" : "globe";
+
+  const isLightMode = is2D && mapStyle === "light";
 
   return (
-    <div className="relative w-full" style={{ height }}>
+    <div
+      className="globe-light-scope relative w-full"
+      data-theme={isLightMode ? "light" : undefined}
+      style={{ height }}
+    >
       <Map
+        // Keying on projection forces a full remount when the user toggles
+        // 3D ⇄ 2D. @vis.gl/react-mapbox's proxy-transform stacks on runtime
+        // projection changes and infinite-recurses in _calcMatrices — remount
+        // sidesteps it cleanly. Pins/markers/fog all re-apply automatically
+        // because they're declarative children.
+        key={`map-${projectionName}`}
         ref={mapRef}
         mapboxAccessToken={token}
-        initialViewState={initialView}
+        initialViewState={is2D ? { ...initialView, pitch: 0, bearing: 0 } : initialView}
         style={{ width: "100%", height: "100%" }}
         mapStyle={MAP_STYLES[mapStyle]}
-        projection={{ name: "globe" } as any}
+        projection={projectionName as any}
         fog={fogConfig as any}
         maxZoom={18}
         minZoom={1.2}
-        dragRotate={true}
+        dragRotate={!is2D}
         touchZoomRotate={true}
       >
         {!mobileMode && <NavigationControl position="bottom-right" />}
@@ -320,25 +371,18 @@ export function GlobeMap({
         })}
       </Map>
 
-      {/* Map style toggle — only when overlays visible */}
+      {/* Two-tier projection + style toggle (top-right).
+          Only rendered when overlays are visible (i.e. not immersive mode;
+          the immersive page renders its own MapViewToggle inside FloatingTopBar). */}
       {!hideOverlays && (
-        <div className="absolute top-3 left-3 z-20">
-          <div className="flex items-center gap-0.5 rounded-full border border-white/15 bg-black/60 backdrop-blur-md p-0.5">
-            <Layers className="h-3.5 w-3.5 text-white/50 ml-2 mr-1" />
-            {(["dark", "satellite"] as MapStyleKey[]).map((key) => (
-              <button
-                key={key}
-                onClick={() => setInternalMapStyle(key)}
-                className={`rounded-full px-3 py-1 text-[11px] font-medium transition-colors ${
-                  mapStyle === key
-                    ? "bg-white/15 text-white"
-                    : "text-white/50 hover:text-white/80"
-                }`}
-              >
-                {key === "dark" ? "Dark" : "Satellite"}
-              </button>
-            ))}
-          </div>
+        <div className="absolute top-3 right-3 z-20">
+          <MapViewToggle
+            size="sm"
+            projection={projection}
+            onProjectionChange={setStoreProjection}
+            mapStyle={mapStyle}
+            onMapStyleChange={setStoreMapStyle}
+          />
         </div>
       )}
 

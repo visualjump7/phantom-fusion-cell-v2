@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import dynamic from "next/dynamic";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FloatingTopBar } from "@/components/map/FloatingTopBar";
@@ -14,7 +13,7 @@ import {
   PanelAsset,
 } from "@/components/map/LeftStatPanel";
 import { RightStatPanel } from "@/components/map/RightStatPanel";
-import { ImmersiveBottomBar } from "@/components/map/ImmersiveBottomBar";
+import { useMapMode } from "@/lib/use-map-mode";
 import { MobileTopBar } from "@/components/map/MobileTopBar";
 import { BottomDrawer } from "@/components/map/BottomDrawer";
 import { MobileStatsContent } from "@/components/map/MobileStatsContent";
@@ -26,19 +25,7 @@ import { useBreakpoint } from "@/lib/use-breakpoint";
 import { DecisionModal } from "@/components/dashboard/DecisionModal";
 import { DashboardSearchBar } from "@/components/dashboard/DashboardSearchBar";
 import { AssetPin, UnlocatedAsset } from "@/lib/map-types";
-
-// Mapbox GL is client-only
-const GlobeMap = dynamic(
-  () => import("@/components/map/GlobeMap").then((m) => m.GlobeMap),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="fixed inset-0 flex items-center justify-center bg-black">
-        <Loader2 className="h-10 w-10 animate-spin text-white/40" />
-      </div>
-    ),
-  }
-);
+import { GlobeMapDynamic } from "@/components/map/GlobeMapDynamic";
 
 interface Asset {
   id: string;
@@ -103,17 +90,87 @@ export default function ImmersiveGlobePage() {
   const [decisionCount, setDecisionCount] = useState(0);
   const [principalName, setPrincipalName] = useState<string | undefined>();
 
-  // Map controls
-  const [mapStyle, setMapStyle] = useState<"dark" | "satellite">("dark");
+  // Map controls — shared session-wide via MapModeProvider. Initial value is
+  // localStorage → theme default (handled inside the store). Theme changes
+  // reset to the new default. User selections persist across Standard ⇄
+  // Immersive view transitions.
+  const {
+    style: mapStyle,
+    projection: mapProjection,
+    setMapStyle,
+    setMapProjection,
+  } = useMapMode();
+  const isLightMode = mapProjection === "2D" && mapStyle === "light";
+
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
-  const [drawerSnap, setDrawerSnap] = useState(0);
+  const [drawerSnap, setDrawerSnap] = useState(1);
 
   // Interactive card state
   const [expandedCard, setExpandedCard] = useState<ExpandedCard>(null);
   const [alertFilter, setAlertFilter] = useState<AlertFilter>(null);
   const [selectedDecision, setSelectedDecision] = useState<PanelMessage | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Side-panel open/closed state — default OPEN, persisted in localStorage
+  const [leftOpen, setLeftOpen] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const saved = window.localStorage.getItem("fc-left-panel");
+      return saved !== null ? saved === "true" : true;
+    }
+    return true;
+  });
+  const [rightOpen, setRightOpen] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const saved = window.localStorage.getItem("fc-right-panel");
+      return saved !== null ? saved === "true" : true;
+    }
+    return true;
+  });
+
+  const toggleLeft = useCallback(() => {
+    setLeftOpen((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem("fc-left-panel", String(next));
+      } catch {}
+      return next;
+    });
+  }, []);
+
+  const toggleRight = useCallback(() => {
+    setRightOpen((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem("fc-right-panel", String(next));
+      } catch {}
+      return next;
+    });
+  }, []);
+
+  // Keyboard shortcuts: [ toggles left, ] toggles right
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+      if (e.key === "[") {
+        e.preventDefault();
+        toggleLeft();
+      } else if (e.key === "]") {
+        e.preventDefault();
+        toggleRight();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [toggleLeft, toggleRight]);
 
   const useDrawerLayout = isMobile || isTablet;
 
@@ -151,7 +208,7 @@ export default function ImmersiveGlobePage() {
               .select("id, title, amount_cents, due_date, status, asset_id")
               .eq("organization_id", globeOrgId)
               .eq("is_deleted", false)
-              .in("status", ["pending", "upcoming"])
+              .eq("status", "pending")
               .order("due_date", { ascending: true })
               .limit(20),
             db
@@ -252,7 +309,6 @@ export default function ImmersiveGlobePage() {
 
   const pendingBillTotal = bills.reduce((s, b) => s + b.amount_cents, 0);
   const monthlyOutflow = pendingBillTotal;
-  const nextDueBill = bills[0] || null;
 
   // Build asset name lookup for messages/bills
   const assetNameMap = useMemo(() => {
@@ -439,10 +495,11 @@ export default function ImmersiveGlobePage() {
   if (useDrawerLayout) {
     return (
       <div
-        className="relative w-screen overflow-hidden bg-black"
+        className="globe-light-scope relative w-screen overflow-hidden bg-black"
+        data-theme={isLightMode ? "light" : undefined}
         style={{ height: "100dvh" }}
       >
-        <GlobeMap
+        <GlobeMapDynamic
           locatedAssets={locatedAssets}
           unlocatedAssets={unlocatedAssets}
           organizationId={globeOrgId}
@@ -484,6 +541,8 @@ export default function ImmersiveGlobePage() {
               alerts={alertCounts}
               monthlyOutflow={monthlyOutflow}
               pendingBillCount={bills.length}
+              pendingBillTotal={pendingBillTotal}
+              decisionCount={decisionCount}
               categories={categoryBreakdown}
               countries={countryBreakdown}
               recentMessages={messages.slice(0, 5)}
@@ -517,8 +576,11 @@ export default function ImmersiveGlobePage() {
 
   // ─── Desktop Layout: Floating Panels ───
   return (
-    <div className="fixed inset-0 bg-black overflow-hidden">
-      <GlobeMap
+    <div
+      className="globe-light-scope fixed inset-0 bg-black overflow-hidden"
+      data-theme={isLightMode ? "light" : undefined}
+    >
+      <GlobeMapDynamic
         locatedAssets={locatedAssets}
         unlocatedAssets={unlocatedAssets}
         organizationId={globeOrgId}
@@ -528,6 +590,7 @@ export default function ImmersiveGlobePage() {
         externalSelectedId={selectedAssetId}
         onExternalSelect={setSelectedAssetId}
         externalMapStyle={mapStyle}
+        externalProjection={mapProjection}
         hideOverlays
         highlightAssetIds={highlightAssetIds}
         highlightColor={highlightColor}
@@ -540,43 +603,44 @@ export default function ImmersiveGlobePage() {
           pendingTotal={pendingBillTotal}
           mapStyle={mapStyle}
           onMapStyleChange={setMapStyle}
+          projection={mapProjection}
+          onProjectionChange={setMapProjection}
         />
 
         <LeftStatPanel
           totalValue={totalValue}
           assetCount={assets.length}
-          alerts={alertCounts}
           monthlyOutflow={monthlyOutflow}
           pendingBillCount={bills.length}
-          allMessages={panelMessages}
           allBills={panelBills}
           allAssets={panelAssets}
+          categories={categoryBreakdown}
+          activeCategoryFilter={categoryFilter}
+          onCategoryFilter={handleCategoryFilter}
+          countries={countryBreakdown}
+          onCountryZoom={handleCountryZoom}
+          expandedCard={expandedCard}
+          onExpandCard={setExpandedCard}
+          onAssetClick={handlePanelAssetClick}
+          isOpen={leftOpen}
+          onToggle={toggleLeft}
+          locatedCount={locatedAssets.length}
+          pendingBillTotal={pendingBillTotal}
+          decisionCount={decisionCount}
+        />
+
+        <RightStatPanel
+          recentMessages={messages.slice(0, 4)}
+          onAlertClick={handleAlertClick}
+          isOpen={rightOpen}
+          onToggle={toggleRight}
+          alerts={alertCounts}
+          allMessages={panelMessages}
           expandedCard={expandedCard}
           onExpandCard={setExpandedCard}
           alertFilter={alertFilter}
           onAlertFilter={handleAlertFilterChange}
-          onAssetClick={handlePanelAssetClick}
           onMessageClick={setSelectedDecision}
-        />
-
-        <RightStatPanel
-          categories={categoryBreakdown}
-          countries={countryBreakdown}
-          recentMessages={messages.slice(0, 4)}
-          activeFilter={categoryFilter}
-          onCategoryFilter={handleCategoryFilter}
-          onCountryZoom={handleCountryZoom}
-          onAlertClick={handleAlertClick}
-          visible={!selectedAssetId}
-        />
-
-        <ImmersiveBottomBar
-          locatedCount={locatedAssets.length}
-          totalCount={assets.length}
-          pendingBillTotal={pendingBillTotal}
-          decisionCount={decisionCount}
-          nextDueDate={nextDueBill?.due_date || null}
-          nextDueAmount={nextDueBill?.amount_cents || 0}
         />
 
         <DashboardSearchBar organizationId={globeOrgId} />

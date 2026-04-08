@@ -128,9 +128,12 @@ export function BottomDrawer({
       {/* Glass background */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-2xl rounded-t-2xl border-t border-white/10" />
 
-      {/* Drag handle */}
-      <div className="relative flex justify-center pt-3 pb-2">
-        <div className="w-10 h-1 rounded-full bg-white/30" />
+      {/* Drag handle — enlarged for visibility */}
+      <div className="relative flex flex-col items-center pt-3 pb-2">
+        <div className="w-16 h-1.5 rounded-full bg-white/60 shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
+        <span className="mt-1 text-[9px] font-medium uppercase tracking-wider text-white/50">
+          Swipe to expand
+        </span>
       </div>
 
       {/* Scrollable content */}

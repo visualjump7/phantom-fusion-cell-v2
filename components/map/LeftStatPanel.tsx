@@ -3,9 +3,11 @@
 import { motion, AnimatePresence } from "framer-motion";
 import {
   TrendingUp,
-  AlertTriangle,
   DollarSign,
   ChevronRight,
+  ChevronLeft,
+  PieChart,
+  Globe,
 } from "lucide-react";
 import { GlassCard } from "./GlassCard";
 import { formatCurrency } from "@/lib/utils";
@@ -20,13 +22,6 @@ export type AlertFilter =
   | "high"
   | "medium"
   | null;
-
-interface AlertCounts {
-  urgent: number;
-  high: number;
-  medium: number;
-  decisions: number;
-}
 
 export interface PanelMessage {
   id: string;
@@ -56,86 +51,80 @@ export interface PanelAsset {
   hasLocation: boolean;
 }
 
+export interface CategoryBreakdown {
+  category: string;
+  count: number;
+  value: number;
+}
+
+export interface CountryBreakdown {
+  code: string;
+  count: number;
+  value: number;
+}
+
 interface LeftStatPanelProps {
   totalValue: number;
   assetCount: number;
-  alerts: AlertCounts;
   monthlyOutflow: number;
   pendingBillCount: number;
-  /** Full message list for expansion */
-  allMessages: PanelMessage[];
   /** Full bill list for expansion */
   allBills: PanelBill[];
   /** Asset list for holdings expansion */
   allAssets: PanelAsset[];
+  /** Category breakdown for By Category card */
+  categories: CategoryBreakdown[];
+  activeCategoryFilter: string | null;
+  onCategoryFilter: (category: string | null) => void;
+  /** Country breakdown for Geography card */
+  countries: CountryBreakdown[];
+  onCountryZoom: (code: string) => void;
   /** Which card is expanded */
   expandedCard: ExpandedCard;
   onExpandCard: (card: ExpandedCard) => void;
-  /** Active alert sub-filter */
-  alertFilter: AlertFilter;
-  onAlertFilter: (filter: AlertFilter) => void;
   /** Click a specific asset (fly + drill-down) */
   onAssetClick: (assetId: string) => void;
-  /** Click a message to open decision modal */
-  onMessageClick?: (msg: PanelMessage) => void;
+  /** Open/closed state for slide-to-collapse */
+  isOpen: boolean;
+  onToggle: () => void;
+  /** Globe stats moved from the immersive bottom bar */
+  locatedCount: number;
+  pendingBillTotal: number;
+  decisionCount: number;
 }
 
-/* ────────────────── Constants ────────────────── */
+const CATEGORY_COLORS: Record<string, string> = {
+  business: "#3b82f6",
+  family: "#10b981",
+  personal: "#8b5cf6",
+};
 
-const ALERT_CATEGORIES: {
-  key: AlertFilter;
-  label: string;
-  dotClass: string;
-  dotColor: string;
-  filter: (m: PanelMessage) => boolean;
-}[] = [
-  {
-    key: "urgent",
-    label: "Urgent",
-    dotClass: "bg-red-500",
-    dotColor: "#ef4444",
-    filter: (m) => m.priority === "urgent",
-  },
-  {
-    key: "decisions",
-    label: "Decisions Pending",
-    dotClass: "bg-amber-500",
-    dotColor: "#f59e0b",
-    filter: (m) => m.type === "decision",
-  },
-  {
-    key: "high",
-    label: "High Priority",
-    dotClass: "bg-orange-400",
-    dotColor: "#fb923c",
-    filter: (m) => m.priority === "high",
-  },
-  {
-    key: "medium",
-    label: "Updates",
-    dotClass: "bg-blue-400",
-    dotColor: "#60a5fa",
-    filter: (m) => m.priority === "medium",
-  },
-];
+const FLAG_EMOJI: Record<string, string> = {
+  US: "\u{1F1FA}\u{1F1F8}",
+  GB: "\u{1F1EC}\u{1F1E7}",
+  CA: "\u{1F1E8}\u{1F1E6}",
+  DE: "\u{1F1E9}\u{1F1EA}",
+  FR: "\u{1F1EB}\u{1F1F7}",
+  CH: "\u{1F1E8}\u{1F1ED}",
+  SG: "\u{1F1F8}\u{1F1EC}",
+  AE: "\u{1F1E6}\u{1F1EA}",
+  JP: "\u{1F1EF}\u{1F1F5}",
+  AU: "\u{1F1E6}\u{1F1FA}",
+  IN: "\u{1F1EE}\u{1F1F3}",
+  HK: "\u{1F1ED}\u{1F1F0}",
+  NL: "\u{1F1F3}\u{1F1F1}",
+  IE: "\u{1F1EE}\u{1F1EA}",
+  BR: "\u{1F1E7}\u{1F1F7}",
+  MX: "\u{1F1F2}\u{1F1FD}",
+};
+
+/* ────────────────── Constants ────────────────── */
 
 const CATEGORY_BADGE: Record<string, string> = {
   business: "bg-blue-600 text-white",
   family: "bg-emerald-600 text-white",
   personal: "bg-violet-600 text-white",
 };
-
-function timeAgo(dateStr: string): string {
-  const d = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
-  const mins = Math.floor(diffMs / 60000);
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  return `${days}d ago`;
-}
 
 /* ────────────────── Animations ────────────────── */
 
@@ -168,48 +157,62 @@ const rowVariants = {
 export function LeftStatPanel({
   totalValue,
   assetCount,
-  alerts,
   monthlyOutflow,
   pendingBillCount,
-  allMessages,
   allBills,
   allAssets,
+  categories,
+  activeCategoryFilter,
+  onCategoryFilter,
+  countries,
+  onCountryZoom,
   expandedCard,
   onExpandCard,
-  alertFilter,
-  onAlertFilter,
   onAssetClick,
-  onMessageClick,
+  isOpen,
+  onToggle,
+  locatedCount,
+  pendingBillTotal,
+  decisionCount,
 }: LeftStatPanelProps) {
+  const totalCategoryValue = categories.reduce((s, c) => s + c.value, 0);
   const isExpanded = (card: ExpandedCard) => expandedCard === card;
 
   const toggleCard = (card: NonNullable<ExpandedCard>) => {
     if (expandedCard === card) {
       onExpandCard(null);
-      if (card === "alerts") onAlertFilter(null);
     } else {
       onExpandCard(card);
-      if (card !== "alerts") onAlertFilter(null);
     }
   };
 
-  // Derive filtered messages for the active alert sub-filter
-  const alertCategory = ALERT_CATEGORIES.find((c) => c.key === alertFilter);
-  const filteredMessages = alertCategory
-    ? allMessages.filter(alertCategory.filter).slice(0, 5)
-    : [];
-  const totalFiltered = alertCategory
-    ? allMessages.filter(alertCategory.filter).length
-    : 0;
-
   return (
     <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="show"
-      className="absolute left-6 top-24 pointer-events-none hidden xl:flex flex-col gap-4 w-[200px] 2xl:w-[240px]"
+      animate={{ x: isOpen ? 0 : -260 }}
+      transition={{ type: "spring", damping: 25, stiffness: 300 }}
+      className="absolute left-6 top-24 bottom-24 pointer-events-none hidden xl:flex flex-col w-[200px] 2xl:w-[240px]"
     >
-      {/* ─── Total Holdings ─── */}
+      {/* Collapse handle — sits on the RIGHT edge of the left panel */}
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-label={isOpen ? "Collapse left panel" : "Expand left panel"}
+        className="absolute right-[-14px] top-1/2 -translate-y-1/2 z-10 flex h-10 w-2 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 pointer-events-auto transition-colors"
+      >
+        {isOpen ? (
+          <ChevronLeft className="h-3 w-3 text-white/80 absolute -right-0.5" />
+        ) : (
+          <ChevronRight className="h-3 w-3 text-white/80 absolute -right-0.5" />
+        )}
+      </button>
+
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 pr-1"
+      >
+      {/* ─── Project Summary ─── */}
       <motion.div variants={cardVariants}>
         <GlassCard className="p-3 2xl:p-4 pointer-events-auto">
           <button
@@ -219,7 +222,7 @@ export function LeftStatPanel({
             <div className="flex items-center gap-2 mb-3">
               <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
               <span className="text-[11px] font-medium text-white/60 uppercase tracking-wider">
-                Total Holdings
+                Summary
               </span>
               <ChevronRight
                 className={`h-3 w-3 text-white/30 ml-auto transition-transform duration-200 ${
@@ -298,145 +301,114 @@ export function LeftStatPanel({
         </GlassCard>
       </motion.div>
 
-      {/* ─── Alerts ─── */}
+      {/* ─── By Category ─── */}
       <motion.div variants={cardVariants}>
         <GlassCard className="p-3 2xl:p-4 pointer-events-auto">
-          <button
-            onClick={() => toggleCard("alerts")}
-            className="w-full text-left"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
-              <span className="text-[11px] font-medium text-white/60 uppercase tracking-wider">
-                Alerts
-              </span>
-              <ChevronRight
-                className={`h-3 w-3 text-white/30 ml-auto transition-transform duration-200 ${
-                  isExpanded("alerts") ? "rotate-90" : ""
-                }`}
-              />
-            </div>
-          </button>
-
-          <div className="space-y-1">
-            {ALERT_CATEGORIES.map((cat) => {
-              const count =
-                cat.key === "urgent"
-                  ? alerts.urgent
-                  : cat.key === "decisions"
-                    ? alerts.decisions
-                    : cat.key === "high"
-                      ? alerts.high
-                      : alerts.medium;
-              if (count === 0) return null;
-
-              const isActive = alertFilter === cat.key;
-
-              return (
-                <button
-                  key={cat.key}
-                  onClick={() => {
-                    if (!isExpanded("alerts")) onExpandCard("alerts");
-                    onAlertFilter(isActive ? null : cat.key);
-                  }}
-                  className={`flex items-center gap-2 w-full rounded-md px-2 py-1.5 transition-all duration-200 cursor-pointer ${
-                    isActive
-                      ? "bg-white/10 scale-[1.02]"
-                      : "hover:bg-white/5 hover:scale-[1.02]"
-                  } ${
-                    alertFilter && !isActive ? "opacity-40" : "opacity-100"
-                  }`}
-                >
-                  <div
-                    className={`h-2 w-2 rounded-full ${cat.dotClass} transition-shadow duration-200`}
-                    style={
-                      isActive
-                        ? { boxShadow: `0 0 6px ${cat.dotColor}, 0 0 12px ${cat.dotColor}40` }
-                        : undefined
-                    }
-                  />
-                  <span className="text-xs text-white/80">
-                    {count} {cat.label}
-                  </span>
-                </button>
-              );
-            })}
-            {alerts.urgent === 0 &&
-              alerts.high === 0 &&
-              alerts.decisions === 0 &&
-              alerts.medium === 0 && (
-                <p className="text-xs text-white/40 italic px-2">
-                  No active alerts
-                </p>
-              )}
+          <div className="flex items-center gap-2 mb-3">
+            <PieChart className="h-3.5 w-3.5 text-violet-400" />
+            <span className="text-[11px] font-medium text-white/60 uppercase tracking-wider">
+              By Category
+            </span>
           </div>
-
-          {/* Expanded: individual messages for active filter */}
-          <AnimatePresence>
-            {isExpanded("alerts") && alertFilter && filteredMessages.length > 0 && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.25 }}
-                className="overflow-hidden"
+          {totalCategoryValue > 0 && (
+            <div className="flex h-3 rounded-full overflow-hidden mb-3">
+              {categories.map((cat) => {
+                const pct = (cat.value / totalCategoryValue) * 100;
+                if (pct < 1) return null;
+                return (
+                  <button
+                    key={cat.category}
+                    onClick={() =>
+                      onCategoryFilter(
+                        activeCategoryFilter === cat.category
+                          ? null
+                          : cat.category
+                      )
+                    }
+                    className="transition-opacity"
+                    style={{
+                      width: `${pct}%`,
+                      backgroundColor: CATEGORY_COLORS[cat.category] || "#666",
+                      opacity:
+                        activeCategoryFilter &&
+                        activeCategoryFilter !== cat.category
+                          ? 0.3
+                          : 1,
+                    }}
+                    title={`${cat.category}: ${formatCurrency(cat.value)}`}
+                  />
+                );
+              })}
+            </div>
+          )}
+          <div className="space-y-1.5">
+            {categories.map((cat) => (
+              <button
+                key={cat.category}
+                onClick={() =>
+                  onCategoryFilter(
+                    activeCategoryFilter === cat.category ? null : cat.category
+                  )
+                }
+                className={`flex items-center justify-between w-full text-xs rounded-md px-2 py-1 transition-colors ${
+                  activeCategoryFilter === cat.category
+                    ? "bg-white/10"
+                    : "hover:bg-white/5"
+                }`}
               >
-                <div className="mt-2 pt-2 border-t border-white/10 space-y-1">
-                  <motion.div
-                    initial="hidden"
-                    animate="show"
-                    transition={{ staggerChildren: 0.05 }}
-                  >
-                    {filteredMessages.map((msg) => (
-                      <motion.button
-                        key={msg.id}
-                        variants={rowVariants}
-                        onClick={() => {
-                          if (msg.type === "decision" && onMessageClick) {
-                            onMessageClick(msg);
-                          } else if (msg.asset_id) {
-                            onAssetClick(msg.asset_id);
-                          }
-                        }}
-                        disabled={
-                          msg.type !== "decision" && !msg.asset_id
-                        }
-                        className="flex items-start gap-2 w-full text-left rounded-md px-2 py-1.5 hover:bg-white/10 active:bg-white/15 transition-colors disabled:opacity-40 disabled:cursor-default cursor-pointer"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[11px] text-white/80 truncate">
-                            {msg.title.length > 40
-                              ? msg.title.slice(0, 40) + "\u2026"
-                              : msg.title}
-                          </p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            {msg.asset_name && (
-                              <span className="text-[9px] text-white/40 truncate max-w-[100px]">
-                                {msg.asset_name}
-                              </span>
-                            )}
-                            <span className="text-[9px] text-white/30">
-                              {timeAgo(msg.created_at)}
-                            </span>
-                          </div>
-                        </div>
-                      </motion.button>
-                    ))}
-                  </motion.div>
-                  {totalFiltered > 5 && (
-                    <Link
-                      href="/messages"
-                      className="block text-[10px] text-white/40 hover:text-white/70 text-center pt-1 transition-colors"
-                    >
-                      View all {totalFiltered} &rarr;
-                    </Link>
-                  )}
+                <div className="flex items-center gap-2">
+                  <div
+                    className="h-2 w-2 rounded-full"
+                    style={{
+                      backgroundColor:
+                        CATEGORY_COLORS[cat.category] || "#666",
+                    }}
+                  />
+                  <span className="text-white/80 capitalize">
+                    {cat.category}
+                  </span>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                <span className="text-white/50">
+                  {cat.count} &middot; {formatCurrency(cat.value)}
+                </span>
+              </button>
+            ))}
+          </div>
         </GlassCard>
       </motion.div>
+
+      {/* ─── Geography ─── */}
+      {countries.length > 0 && (
+        <motion.div variants={cardVariants}>
+          <GlassCard className="p-3 2xl:p-4 pointer-events-auto">
+            <div className="flex items-center gap-2 mb-3">
+              <Globe className="h-3.5 w-3.5 text-cyan-400" />
+              <span className="text-[11px] font-medium text-white/60 uppercase tracking-wider">
+                Geography
+              </span>
+            </div>
+            <div className="space-y-1.5">
+              {countries.map((c) => (
+                <button
+                  key={c.code}
+                  onClick={() => onCountryZoom(c.code)}
+                  className="flex items-center justify-between w-full text-xs rounded-md px-2 py-1.5 hover:bg-white/5 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">
+                      {FLAG_EMOJI[c.code] || "\u{1F30D}"}
+                    </span>
+                    <span className="text-white/80">{c.code}</span>
+                  </div>
+                  <span className="text-white/50">
+                    {c.count} &middot; {formatCurrency(c.value)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </GlassCard>
+        </motion.div>
+      )}
 
       {/* ─── Cash Flow ─── */}
       <motion.div variants={cardVariants}>
@@ -536,6 +508,39 @@ export function LeftStatPanel({
             )}
           </AnimatePresence>
         </GlassCard>
+      </motion.div>
+
+      {/* ─── Globe Stats (Projects Mapped / Pending Bills / Decisions) ─── */}
+      <motion.div variants={cardVariants}>
+        <GlassCard className="p-3 2xl:p-4 pointer-events-auto">
+          <div className="flex items-stretch justify-between gap-2 divide-x divide-white/10">
+            <div className="flex-1 text-center px-1">
+              <p className="text-[9px] text-white/50 uppercase tracking-wider whitespace-nowrap">
+                Projects Mapped
+              </p>
+              <p className="text-sm font-semibold text-white whitespace-nowrap mt-0.5">
+                {locatedCount}/{assetCount}
+              </p>
+            </div>
+            <div className="flex-1 text-center px-1">
+              <p className="text-[9px] text-white/50 uppercase tracking-wider whitespace-nowrap">
+                Pending Bills
+              </p>
+              <p className="text-sm font-semibold text-white whitespace-nowrap mt-0.5">
+                {formatCurrency(pendingBillTotal / 100)}
+              </p>
+            </div>
+            <div className="flex-1 text-center px-1">
+              <p className="text-[9px] text-white/50 uppercase tracking-wider whitespace-nowrap">
+                Decisions
+              </p>
+              <p className="text-sm font-semibold text-white whitespace-nowrap mt-0.5">
+                {decisionCount > 0 ? `${decisionCount} awaiting` : "None"}
+              </p>
+            </div>
+          </div>
+        </GlassCard>
+      </motion.div>
       </motion.div>
     </motion.div>
   );

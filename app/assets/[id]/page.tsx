@@ -1,10 +1,5 @@
-import dynamic from "next/dynamic";
-
-const AssetDetailClient = dynamic(
-  () => import("./AssetDetailClient"),
-  { ssr: false }
-);
+import { AssetDetailClientLoader } from "./AssetDetailClientLoader";
 
 export default function AssetDetailPage() {
-  return <AssetDetailClient />;
+  return <AssetDetailClientLoader />;
 }
