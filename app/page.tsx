@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import {
@@ -33,16 +32,7 @@ import { useRouter } from "next/navigation";
 import { useAllowedCategories } from "@/lib/use-allowed-categories";
 import { AssetPin, UnlocatedAsset } from "@/lib/map-types";
 import { useBreakpoint } from "@/lib/use-breakpoint";
-
-// Mapbox GL is client-only — dynamic import with ssr: false
-const GlobeMap = dynamic(() => import("@/components/map/GlobeMap").then((m) => m.GlobeMap), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full flex items-center justify-center bg-black/80" style={{ height: "45vh" }}>
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-    </div>
-  ),
-});
+import { GlobeMapDynamic } from "@/components/map/GlobeMapDynamic";
 
 interface Asset {
   id: string;
@@ -230,7 +220,7 @@ export default function DashboardPage() {
       {/* Globe Map Hero */}
       {!isLoading && shouldShowGlobe && (
         <div className="relative">
-          <GlobeMap
+          <GlobeMapDynamic
             locatedAssets={locatedAssets}
             unlocatedAssets={unlocatedAssets}
             organizationId={globeOrgId!}

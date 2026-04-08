@@ -40,7 +40,7 @@ export const COUNTRY_VIEWS: Record<string, { center: [number, number]; zoom: num
   KR: { center: [127.8, 35.9], zoom: 6 },
 };
 
-interface GlobeMapProps {
+export interface GlobeMapProps {
   locatedAssets: AssetPin[];
   unlocatedAssets: UnlocatedAsset[];
   organizationId: string;

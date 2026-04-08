@@ -25,7 +25,7 @@ const QUICK_PROMPTS = [
   { label: "What needs my attention?", text: "What needs my attention right now? Prioritize the most urgent items." },
   { label: "Pending decisions", text: "What decisions are waiting for me? Summarize each one." },
   { label: "Cash flow breakdown", text: "Break down my cash flow this month by category and asset." },
-  { label: "Portfolio summary", text: "Give me a full portfolio summary with values by category." },
+  { label: "Project summary", text: "Give me a full project summary with values by category." },
   { label: "Overdue items", text: "Are there any overdue bills or urgent messages I should know about?" },
   { label: "Upcoming 30 days", text: "What are the biggest expenses coming up in the next 30 days?" },
 ];
@@ -188,7 +188,7 @@ export function AIAssistant() {
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-foreground">Fusion Cell AI</h3>
-                  <p className="text-[10px] text-muted-foreground">Full portfolio awareness</p>
+                  <p className="text-[10px] text-muted-foreground">Full project awareness</p>
                 </div>
               </div>
               <div className="flex items-center gap-1">
@@ -210,7 +210,7 @@ export function AIAssistant() {
                   <Sparkles className="mb-3 h-8 w-8 text-primary/40" />
                   <p className="mb-1 text-sm font-medium text-foreground">How can I help?</p>
                   <p className="mb-6 text-center text-xs text-muted-foreground">
-                    I have full visibility into your portfolio, bills, messages, and budgets.
+                    I have full visibility into your projects, bills, messages, and budgets.
                   </p>
                   <div className="grid w-full grid-cols-2 gap-2">
                     {QUICK_PROMPTS.map((prompt) => (

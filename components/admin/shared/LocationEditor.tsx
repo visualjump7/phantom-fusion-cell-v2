@@ -293,7 +293,7 @@ export function LocationEditor({
         )}
       </div>
       <p className="text-[11px] text-muted-foreground mb-3">
-        Add a location to display on the holdings map.
+        Add a location to display on the projects map.
       </p>
 
       <div className="space-y-2">

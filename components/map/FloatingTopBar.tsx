@@ -44,7 +44,7 @@ export function FloatingTopBar({
         {/* Center — Key metrics in glass pills */}
         <div className="hidden md:flex items-center gap-3">
           <div className="rounded-full bg-black/40 backdrop-blur-md border border-white/10 px-4 py-1.5 text-xs text-white/80">
-            Total Holdings:{" "}
+            Total Projects:{" "}
             <span className="font-semibold text-white">
               {formatCurrency(totalValue)}
             </span>

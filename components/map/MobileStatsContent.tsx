@@ -225,7 +225,7 @@ export function MobileStatsContent({
         </span>
       </p>
 
-      {/* ─── Portfolio Summary (clickable) ─── */}
+      {/* ─── Project Summary (clickable) ─── */}
       <div className="rounded-xl bg-white/5 border border-white/10 p-4">
         <button
           onClick={() => toggleCard("holdings")}
@@ -234,7 +234,7 @@ export function MobileStatsContent({
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
             <span className="text-[11px] font-medium text-white/60 uppercase tracking-wider">
-              Portfolio Summary
+              Summary
             </span>
             <ChevronRight
               className={`h-3 w-3 text-white/30 ml-auto transition-transform duration-200 ${
@@ -246,7 +246,7 @@ export function MobileStatsContent({
             {formatCurrency(totalValue)}
           </p>
           <div className="flex items-center gap-4 mt-2 text-xs text-white/50">
-            <span>{assetCount} holdings</span>
+            <span>{assetCount} projects</span>
             <span>
               {locatedCount} mapped &middot;{" "}
               {assetCount - locatedCount} unlocated
@@ -618,7 +618,7 @@ export function MobileStatsContent({
         </div>
       )}
 
-      {/* Holdings by Category */}
+      {/* Projects by Category */}
       <div className="rounded-xl bg-white/5 border border-white/10 p-4">
         <div className="flex items-center gap-2 mb-3">
           <PieChart className="h-3.5 w-3.5 text-violet-400" />
