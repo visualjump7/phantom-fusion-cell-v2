@@ -273,21 +273,9 @@ export function GlobeMap({
   // Projection changes are handled by remounting the Map (key={projectionName}),
   // so there's no need to imperatively easeTo / toggle handlers here.
 
-  const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-  if (!token) return null;
-
-  const initialView = immersive
-    ? {
-        longitude: -95.7,
-        latitude: 37.0,
-        zoom: mobileMode ? 3.2 : 3.0,
-        pitch: 40,
-        bearing: 0,
-      }
-    : { longitude: -95.7, latitude: 37.0, zoom: 2.8, pitch: 25, bearing: 0 };
-
   // Memoize so prop identity stays stable across renders — otherwise
   // react-map-gl's proxy transform re-diffs and blows the call stack.
+  // Must run before any early return (rules-of-hooks).
   const fogConfig = useMemo(() => {
     if (is2D) return null;
     return immersive
@@ -308,6 +296,19 @@ export function GlobeMap({
           "star-intensity": 0.6,
         };
   }, [immersive, is2D]);
+
+  const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+  if (!token) return null;
+
+  const initialView = immersive
+    ? {
+        longitude: -95.7,
+        latitude: 37.0,
+        zoom: mobileMode ? 3.2 : 3.0,
+        pitch: 40,
+        bearing: 0,
+      }
+    : { longitude: -95.7, latitude: 37.0, zoom: 2.8, pitch: 25, bearing: 0 };
 
   const projectionName = is2D ? "mercator" : "globe";
 
