@@ -8,12 +8,13 @@ import {
   Building2,
   DollarSign,
   MessageSquare,
+  type LucideIcon,
 } from "lucide-react";
 
 interface BottomNavItem {
   name: string;
   href: string;
-  icon: React.ComponentType<{ className?: string; size?: number }>;
+  icon: LucideIcon;
 }
 
 // Reuses the same routes/icons as the main Navbar
