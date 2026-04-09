@@ -50,27 +50,6 @@ export default function AssetDetailPage() {
   const { hasAccess, isLoading: delegateAccessLoading } = useDelegateAccess();
   const [asset, setAsset] = useState<Asset | null>(null);
   const [accessDenied, setAccessDenied] = useState(false);
-
-  // #region agent log
-  if (typeof window !== "undefined") {
-    fetch("http://127.0.0.1:7721/ingest/65022a1e-6f4d-4327-8d84-288942b26ef6", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "3dd799" },
-      body: JSON.stringify({
-        sessionId: "3dd799",
-        location: "app/assets/[id]/page.tsx:AssetDetailPage",
-        message: "Asset detail mount",
-        data: {
-          paramsId: params?.id,
-          BudgetView: typeof BudgetView,
-          AreaChart: typeof AreaChart,
-          hypothesisId: "H1",
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-  }
-  // #endregion
   const [bills, setBills] = useState<Bill[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [hasBudget, setHasBudget] = useState(false);
@@ -144,19 +123,7 @@ export default function AssetDetailPage() {
       setIsLoading(false);
       } catch (err) {
         setIsLoading(false);
-        if (typeof window !== "undefined") {
-          fetch("http://127.0.0.1:7721/ingest/65022a1e-6f4d-4327-8d84-288942b26ef6", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "3dd799" },
-            body: JSON.stringify({
-              sessionId: "3dd799",
-              location: "app/assets/[id]/page.tsx:loadData",
-              message: "Asset detail loadData error",
-              data: { error: String(err), id, hypothesisId: "H2" },
-              timestamp: Date.now(),
-            }),
-          }).catch(() => {});
-        }
+        console.error("Asset detail loadData error:", err);
       }
     }
     loadData();

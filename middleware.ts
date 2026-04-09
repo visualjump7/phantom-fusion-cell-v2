@@ -87,6 +87,16 @@ export async function middleware(request: NextRequest) {
       }
     }
 
+    // ── BUDGET EDITOR ROUTE RESTRICTIONS ──
+    // Team roles only (admin / manager / viewer). Executives and delegates
+    // are bounced to the dashboard. Viewers reach the page in read-only
+    // mode; the page component hides edit controls for them in Phase 3.
+    if (pathname.startsWith("/budget-editor")) {
+      if (!isTeam) {
+        return NextResponse.redirect(new URL("/", request.url));
+      }
+    }
+
     // ── ADMIN ROUTE RESTRICTIONS ──
     if (pathname.startsWith("/admin") || pathname === "/upload") {
       // /admin/* routes: accessible by isStaff (admin, manager) only
