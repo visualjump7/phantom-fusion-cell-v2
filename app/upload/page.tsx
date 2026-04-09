@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
+import { useScopedOrgId, useEffectiveOrgId } from "@/lib/use-active-principal";
 import {
   getSheetList, parseBudgetSheet, validateBudgetFile, generateBudgetTemplate,
   ParseResult, SheetInfo,
@@ -20,8 +21,6 @@ import {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
-
-const ORG_ID = "00000000-0000-0000-0000-000000000001";
 
 const CATEGORY_COLORS = [
   "#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6",
@@ -38,6 +37,13 @@ interface Asset {
 
 function UploadPageContent() {
   const searchParams = useSearchParams();
+
+  // Resolve the currently-active principal's organization. This drives
+  // both the asset picker and the destination org for new budgets.
+  const { scopedOrgId, isLoading: scopedLoading } = useScopedOrgId();
+  const { orgId: effectiveOrgId, isLoading: effectiveLoading } = useEffectiveOrgId();
+  const activeOrgId = scopedOrgId ?? effectiveOrgId;
+  const orgResolved = !scopedLoading && !effectiveLoading;
 
   const [step, setStep] = useState<WizardStep>("select");
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -57,12 +63,19 @@ function UploadPageContent() {
   const [existingBudgetId, setExistingBudgetId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!orgResolved || !activeOrgId) return;
     async function loadAssets() {
+      // Scope the asset list to the currently-active principal's org
+      // so users can't accidentally attach a budget to the wrong client.
       const { data } = await db
-        .from("assets").select("id, name, category")
-        .eq("is_deleted", false).order("name");
+        .from("assets")
+        .select("id, name, category")
+        .eq("is_deleted", false)
+        .eq("organization_id", activeOrgId)
+        .order("name");
       setAssets(data || []);
-      const presetAsset = searchParams.get("asset");
+      const presetAsset =
+        searchParams.get("asset") || searchParams.get("assetId");
       const presetYear = searchParams.get("year");
       if (presetAsset && data?.some((a: Asset) => a.id === presetAsset)) {
         setSelectedAssetId(presetAsset);
@@ -71,7 +84,7 @@ function UploadPageContent() {
       }
     }
     loadAssets();
-  }, [searchParams]);
+  }, [searchParams, orgResolved, activeOrgId]);
 
   useEffect(() => {
     if (!selectedAssetId || !selectedYear) { setExistingBudgetId(null); return; }
@@ -154,6 +167,10 @@ function UploadPageContent() {
 
   const handleImport = async () => {
     if (!parseResult || parseResult.lineItems.length === 0 || !selectedAssetId) return;
+    if (!activeOrgId) {
+      setError("No active organization. Open the Command Center and select a principal first.");
+      return;
+    }
     setStep("importing"); setImportProgress(0); setError(null);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -166,22 +183,33 @@ function UploadPageContent() {
       if (!budgetId) {
         const { data: newBudget, error: budgetErr } = await db
           .from("budgets")
-          .insert({ asset_id: selectedAssetId, organization_id: ORG_ID, year: selectedYear, created_by: user.id })
+          .insert({ asset_id: selectedAssetId, organization_id: activeOrgId, year: selectedYear, created_by: user.id })
           .select("id").single();
         if (budgetErr) throw new Error(`Failed to create budget: ${budgetErr.message}`);
         budgetId = newBudget.id;
       }
 
+      // Resolve expense categories: prefer org-scoped, fall back to global
+      // (organization_id IS NULL), create org-scoped if nothing matches.
       const categoryMap = new Map<string, string>();
       for (const catName of parseResult.categories) {
-        const { data: existing } = await db.from("expense_categories")
-          .select("id").eq("name", catName).limit(1);
+        const { data: existing } = await db
+          .from("expense_categories")
+          .select("id, organization_id")
+          .ilike("name", catName)
+          .or(`organization_id.eq.${activeOrgId},organization_id.is.null`)
+          .limit(5);
         if (existing && existing.length > 0) {
-          categoryMap.set(catName, existing[0].id);
+          // Prefer the org-scoped row if multiple match.
+          const orgScoped = existing.find((r: { organization_id: string | null }) => r.organization_id === activeOrgId);
+          categoryMap.set(catName, (orgScoped || existing[0]).id);
         } else {
           const color = CATEGORY_COLORS[categoryMap.size % CATEGORY_COLORS.length];
           const { data: created, error: catErr } = await db
-            .from("expense_categories").insert({ name: catName, color }).select("id").single();
+            .from("expense_categories")
+            .insert({ name: catName, color, organization_id: activeOrgId })
+            .select("id")
+            .single();
           if (catErr) throw new Error(`Failed to create category "${catName}": ${catErr.message}`);
           categoryMap.set(catName, created.id);
         }
@@ -190,7 +218,7 @@ function UploadPageContent() {
       const batchSize = 20;
       let imported = 0;
       for (let i = 0; i < parseResult.lineItems.length; i += batchSize) {
-        const batch = parseResult.lineItems.slice(i, i + batchSize).map((item) => ({
+        const batch = parseResult.lineItems.slice(i, i + batchSize).map((item, localIdx) => ({
           budget_id: budgetId,
           expense_category_id: categoryMap.get(item.category),
           description: item.name,
@@ -198,6 +226,8 @@ function UploadPageContent() {
           may: item.may, jun: item.jun, jul: item.jul, aug: item.aug,
           sep: item.sep, oct: item.oct, nov: item.nov, dec: item.dec,
           annual_total: item.annual_total,
+          is_fixed: item.is_fixed,
+          sort_order: i + localIdx,
         }));
         const { error: insertErr } = await db.from("budget_line_items").insert(batch);
         if (insertErr) throw new Error(`Failed to insert line items: ${insertErr.message}`);

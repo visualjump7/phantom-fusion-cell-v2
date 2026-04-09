@@ -20,6 +20,7 @@ import {
   DollarSign,
   FileText,
   Globe,
+  FileSpreadsheet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,7 @@ const mainNavItems: NavItem[] = [
 
 const adminNavItems: NavItem[] = [
   { name: "Command Center", href: "/admin", icon: ShieldCheck },
+  { name: "Budget Editor", href: "/budget-editor", icon: FileSpreadsheet },
 ];
 
 export function Navbar() {
