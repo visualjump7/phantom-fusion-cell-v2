@@ -33,6 +33,7 @@ export function DashboardSearchBar({ organizationId }: DashboardSearchBarProps) 
         onClick={handleClick}
         className={`
           fixed bottom-20 left-1/2 -translate-x-1/2 z-30
+          pointer-events-auto
           flex items-center gap-3
           w-[min(600px,calc(100vw-2rem))]
           rounded-xl
