@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fusion Cell</title>
+  <meta name="description" content="Fusion Cell — a living nucleus for directors and managers, with every module one breath away." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/orb.css" />
+</head>
+<body>
+  <main class="stage" aria-label="Fusion Cell overview">
+    <div class="orbit" role="presentation">
+      <!-- Connecting lines (rendered by JS into this SVG) -->
+      <svg class="orbit-lines" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
+
+      <!-- Core orb — also the entry point for Advanced Search -->
+      <button type="button" class="orb-core" id="orb-search" aria-label="Advanced Search">
+        <span class="orb-ring" aria-hidden="true"></span>
+        <span class="orb-ring delay" aria-hidden="true"></span>
+        <span class="orb" aria-hidden="true"></span>
+        <span class="orb-label">Advanced Search</span>
+      </button>
+
+      <!-- Orbital nodes. Angles = (360/8)*i - 90 so node 0 is at 12 o'clock -->
+      <div class="nodes">
+        <a class="node" href="#" style="--angle: -90deg;  --i: 0;">
+          <div class="node-inner">
+            <div class="node-head">
+              <span class="node-icon"><i data-lucide="layout-dashboard"></i></span>
+              <span class="node-label">Dashboard</span>
+            </div>
+            <p class="node-desc">Overview of holdings, total value, category breakdown.</p>
+          </div>
+        </a>
+
+        <a class="node" href="#" style="--angle: -45deg;  --i: 1;">
+          <div class="node-inner">
+            <div class="node-head">
+              <span class="node-icon"><i data-lucide="folder-tree"></i></span>
+              <span class="node-label">Directory</span>
+            </div>
+            <p class="node-desc">Project profiles, personnel, galleries.</p>
+          </div>
+        </a>
+
+        <a class="node" href="#" style="--angle: 0deg;    --i: 2;">
+          <div class="node-inner">
+            <div class="node-head">
+              <span class="node-icon"><i data-lucide="bell"></i></span>
+              <span class="node-label">Alerts</span>
+            </div>
+            <p class="node-desc">Structured communications, decisions, action items.</p>
+          </div>
+        </a>
+
+        <a class="node" href="#" style="--angle: 45deg;   --i: 3;">
+          <div class="node-inner">
+            <div class="node-head">
+              <span class="node-icon"><i data-lucide="wallet"></i></span>
+              <span class="node-label">Cash Flow</span>
+            </div>
+            <p class="node-desc">Obligations, invoices, calendar view.</p>
+          </div>
+        </a>
+
+        <a class="node" href="#" style="--angle: 90deg;   --i: 4;">
+          <div class="node-inner">
+            <div class="node-head">
+              <span class="node-icon"><i data-lucide="pie-chart"></i></span>
+              <span class="node-label">Budgets</span>
+            </div>
+            <p class="node-desc">Operating budgets, fixed and variable breakdowns, line items.</p>
+          </div>
+        </a>
+
+        <a class="node" href="#" style="--angle: 135deg;  --i: 5;">
+          <div class="node-inner">
+            <div class="node-head">
+              <span class="node-icon"><i data-lucide="gavel"></i></span>
+              <span class="node-label">Decisions</span>
+            </div>
+            <p class="node-desc">Approve and reject workflows, audit trail, confirmations.</p>
+          </div>
+        </a>
+
+        <a class="node" href="#" style="--angle: 180deg;  --i: 6;">
+          <div class="node-inner">
+            <div class="node-head">
+              <span class="node-icon"><i data-lucide="landmark"></i></span>
+              <span class="node-label">Holdings</span>
+            </div>
+            <p class="node-desc">Properties, aircraft, vessels, vehicles, collections.</p>
+          </div>
+        </a>
+
+        <a class="node" href="#" style="--angle: -135deg; --i: 7;">
+          <div class="node-inner">
+            <div class="node-head">
+              <span class="node-icon"><i data-lucide="search"></i></span>
+              <span class="node-label">Advanced Search</span>
+            </div>
+            <p class="node-desc">Full-context search across every record in the app.</p>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <div class="wordmark">
+      Fusion Cell
+      <span class="dim">A living nucleus for directors and managers</span>
+    </div>
+  </main>
+
+  <section class="cta-section" id="contact">
+    <h2>Start a Conversation</h2>
+    <p>For directors and managers evaluating a Fusion Cell engagement.</p>
+    <a class="cta-button" href="mailto:hello@fusioncell.com">
+      hello@fusioncell.com
+      <i data-lucide="arrow-right"></i>
+    </a>
+  </section>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

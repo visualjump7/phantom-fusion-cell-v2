@@ -10,6 +10,12 @@
       "env": {
         "PATH": "/Users/digitalmoxi/.local/share/fnm/node-versions/v24.11.1/installation/bin:/usr/bin:/bin:/usr/sbin:/sbin"
       }
+    },
+    {
+      "name": "fusioncell-site",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "5173", "--directory", "fusioncell-site"],
+      "port": 5173
     }
   ]
 }
