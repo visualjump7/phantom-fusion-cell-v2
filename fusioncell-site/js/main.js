@@ -32,6 +32,13 @@
       line.setAttribute('y1', y1);
       line.setAttribute('x2', x2);
       line.setAttribute('y2', y2);
+      // Carry the node index onto the line so CSS stagger can read --i.
+      line.style.setProperty('--i', String(i));
+
+      // Tint each line with its node's accent color.
+      const accent = getComputedStyle(node).getPropertyValue('--node-accent').trim();
+      if (accent) line.setAttribute('stroke', accent);
+
       frag.appendChild(line);
     });
 
