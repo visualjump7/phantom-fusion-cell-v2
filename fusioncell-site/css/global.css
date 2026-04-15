@@ -11,7 +11,99 @@ body {
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
   overflow-x: hidden;
+  position: relative;
 }
+
+/* ───────── Ambient glow spots ─────────
+   Four large, heavily-blurred radial gradients that drift slowly around the
+   edges of the viewport. Fixed to the viewport, behind all content,
+   non-interactive. Disabled under prefers-reduced-motion. */
+.bg-glows {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.bg-glows::before,
+.bg-glows::after,
+.bg-glows > .glow {
+  content: "";
+  position: absolute;
+  width: 60vmax;
+  height: 60vmax;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.22;
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+
+.bg-glows::before {
+  top: -20vmax;
+  left: -20vmax;
+  background: radial-gradient(circle, rgba(74, 222, 128, 0.55) 0%, transparent 60%);
+  animation: drift-a 38s ease-in-out infinite alternate;
+}
+
+.bg-glows::after {
+  bottom: -25vmax;
+  right: -22vmax;
+  background: radial-gradient(circle, rgba(129, 140, 248, 0.45) 0%, transparent 60%);
+  animation: drift-b 46s ease-in-out infinite alternate;
+}
+
+.bg-glows .glow.three {
+  top: 35%;
+  right: -25vmax;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.38) 0%, transparent 60%);
+  animation: drift-c 52s ease-in-out infinite alternate;
+}
+
+.bg-glows .glow.four {
+  bottom: -15vmax;
+  left: 20%;
+  background: radial-gradient(circle, rgba(192, 132, 252, 0.32) 0%, transparent 60%);
+  animation: drift-d 58s ease-in-out infinite alternate;
+}
+
+@keyframes drift-a {
+  0%   { transform: translate(0, 0)         scale(1); }
+  50%  { transform: translate(6vw, 4vh)     scale(1.12); }
+  100% { transform: translate(-4vw, 8vh)    scale(0.95); }
+}
+
+@keyframes drift-b {
+  0%   { transform: translate(0, 0)         scale(1); }
+  50%  { transform: translate(-7vw, -5vh)   scale(0.9); }
+  100% { transform: translate(5vw, -2vh)    scale(1.1); }
+}
+
+@keyframes drift-c {
+  0%   { transform: translate(0, 0)         scale(1.05); }
+  50%  { transform: translate(-6vw, 6vh)    scale(0.92); }
+  100% { transform: translate(2vw, -7vh)    scale(1.15); }
+}
+
+@keyframes drift-d {
+  0%   { transform: translate(0, 0)         scale(0.95); }
+  50%  { transform: translate(4vw, -4vh)    scale(1.12); }
+  100% { transform: translate(-5vw, 2vh)    scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-glows::before,
+  .bg-glows::after,
+  .bg-glows > .glow { animation: none !important; }
+}
+body.reduced .bg-glows::before,
+body.reduced .bg-glows::after,
+body.reduced .bg-glows > .glow { animation: none !important; }
+
+/* Lift foreground content above the glow layer. */
+.stage,
+.cta-section { position: relative; z-index: 1; }
 
 a { color: inherit; text-decoration: none; }
 

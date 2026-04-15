@@ -105,16 +105,17 @@
 .orbit-line {
   stroke: var(--line);
   stroke-width: 1;
+  stroke-opacity: 0.18;
   stroke-dasharray: 2 4;
-  transition: stroke 250ms ease, stroke-width 250ms ease, opacity 250ms ease;
+  transition: stroke-opacity 250ms ease, stroke-width 250ms ease, opacity 250ms ease;
   opacity: 0.9;
 }
 
 /* Lines fade in after nodes arrive at their orbital positions */
 .orbit-line {
   opacity: 0;
-  animation: line-fade 600ms ease forwards;
-  animation-delay: calc(var(--i, 0) * 60ms + 640ms);
+  animation: line-fade 1100ms cubic-bezier(.22, .61, .36, 1) forwards;
+  animation-delay: calc(var(--i, 0) * 110ms + 1000ms);
 }
 
 @keyframes line-fade {
@@ -123,7 +124,7 @@
 }
 
 .orbit-line.hot {
-  stroke: var(--line-hot);
+  stroke-opacity: 0.85;
   stroke-width: 1.5;
   opacity: 1;
 }
@@ -139,8 +140,8 @@
     rotate(var(--angle))
     translate(var(--radius))
     rotate(calc(var(--angle) * -1));
-  animation: node-emerge 900ms cubic-bezier(.2,.75,.2,1) backwards;
-  animation-delay: calc(var(--i) * 80ms + 120ms);
+  animation: node-emerge 1500ms cubic-bezier(.22, .61, .36, 1) backwards;
+  animation-delay: calc(var(--i) * 140ms + 250ms);
 }
 
 /* Each node starts stacked at the orb (translate 0), fades in,
@@ -153,9 +154,9 @@
       rotate(var(--angle))
       translate(0)
       rotate(calc(var(--angle) * -1))
-      scale(0.5);
+      scale(0.55);
   }
-  60% { opacity: 1; }
+  50% { opacity: 1; }
   100% {
     opacity: 1;
     transform:
@@ -178,9 +179,9 @@
   border-radius: 14px;
   color: var(--text);
   transition:
-    transform 260ms cubic-bezier(.2,.8,.2,1),
-    border-color 260ms ease,
-    box-shadow 260ms ease;
+    transform 520ms cubic-bezier(.22, .61, .36, 1),
+    border-color 520ms cubic-bezier(.22, .61, .36, 1),
+    box-shadow 520ms cubic-bezier(.22, .61, .36, 1);
   animation: drift 7s ease-in-out infinite;
   animation-delay: calc(var(--i) * 0.35s);
   will-change: transform;
@@ -200,8 +201,8 @@
   border-radius: 8px;
   display: grid;
   place-items: center;
-  background: var(--accent-glow);
-  color: var(--accent);
+  background: var(--node-glow, var(--accent-glow));
+  color: var(--node-accent, var(--accent));
   flex-shrink: 0;
 }
 
@@ -221,14 +222,17 @@
   max-height: 0;
   opacity: 0;
   overflow: hidden;
-  transition: max-height 300ms ease, opacity 260ms ease, margin-top 260ms ease;
+  transition:
+    max-height 640ms cubic-bezier(.22, .61, .36, 1),
+    opacity 520ms cubic-bezier(.22, .61, .36, 1),
+    margin-top 560ms cubic-bezier(.22, .61, .36, 1);
 }
 
 .node:hover .node-inner,
 .node:focus-within .node-inner {
   transform: scale(1.04);
-  border-color: var(--accent-dim);
-  box-shadow: 0 8px 40px -8px var(--accent-glow);
+  border-color: var(--node-accent, var(--accent-dim));
+  box-shadow: 0 8px 40px -8px var(--node-glow, var(--accent-glow));
 }
 
 .node:hover .node-desc,

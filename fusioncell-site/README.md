@@ -1,6 +1,6 @@
 # Fusion Cell — Orbital Landing Page
 
-Framework-free static landing page. A pulsing mint-green orb at the center of the viewport with eight principal-facing modules (Dashboard, Directory, Alerts, Cash Flow, Budgets, Decisions, Holdings, Advanced Search) arranged in orbit around it.
+Framework-free static landing page. A pulsing mint-green orb at the center of the viewport with seven principal-facing modules (Dashboard, Alerts, Cash Flow, Daily Brief, Travel, Projects, Budgets) arranged in orbit around it. The orb itself is the Advanced Search entry point.
 
 ## View
 

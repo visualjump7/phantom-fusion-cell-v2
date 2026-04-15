@@ -11,11 +11,16 @@
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
 
-  <link rel="stylesheet" href="css/variables.css" />
-  <link rel="stylesheet" href="css/global.css" />
-  <link rel="stylesheet" href="css/orb.css" />
+  <link rel="stylesheet" href="css/variables.css?v=6" />
+  <link rel="stylesheet" href="css/global.css?v=6" />
+  <link rel="stylesheet" href="css/orb.css?v=6" />
 </head>
 <body>
+  <div class="bg-glows" aria-hidden="true">
+    <span class="glow three"></span>
+    <span class="glow four"></span>
+  </div>
+
   <main class="stage" aria-label="Fusion Cell overview">
     <div class="orbit" role="presentation">
       <!-- Connecting lines (rendered by JS into this SVG) -->
@@ -29,29 +34,20 @@
         <span class="orb-label">Advanced Search</span>
       </button>
 
-      <!-- Orbital nodes. Angles = (360/8)*i - 90 so node 0 is at 12 o'clock -->
+      <!-- Orbital nodes. 7 modules spaced at ~51.43° (360/7) intervals,
+           starting at 12 o'clock. Advanced Search lives on the orb itself. -->
       <div class="nodes">
-        <a class="node" href="#" style="--angle: -90deg;  --i: 0;">
+        <a class="node" href="#" style="--angle: -90deg;     --i: 0; --node-accent: #38bdf8; --node-glow: rgba(56, 189, 248, 0.18);">
           <div class="node-inner">
             <div class="node-head">
               <span class="node-icon"><i data-lucide="layout-dashboard"></i></span>
               <span class="node-label">Dashboard</span>
             </div>
-            <p class="node-desc">Overview of holdings, total value, category breakdown.</p>
+            <p class="node-desc">Overview of projects, total value, category breakdown.</p>
           </div>
         </a>
 
-        <a class="node" href="#" style="--angle: -45deg;  --i: 1;">
-          <div class="node-inner">
-            <div class="node-head">
-              <span class="node-icon"><i data-lucide="folder-tree"></i></span>
-              <span class="node-label">Directory</span>
-            </div>
-            <p class="node-desc">Project profiles, personnel, galleries.</p>
-          </div>
-        </a>
-
-        <a class="node" href="#" style="--angle: 0deg;    --i: 2;">
+        <a class="node" href="#" style="--angle: -38.57deg;  --i: 1; --node-accent: #fbbf24; --node-glow: rgba(251, 191, 36, 0.18);">
           <div class="node-inner">
             <div class="node-head">
               <span class="node-icon"><i data-lucide="bell"></i></span>
@@ -61,7 +57,7 @@
           </div>
         </a>
 
-        <a class="node" href="#" style="--angle: 45deg;   --i: 3;">
+        <a class="node" href="#" style="--angle: 12.86deg;   --i: 2; --node-accent: #10b981; --node-glow: rgba(16, 185, 129, 0.18);">
           <div class="node-inner">
             <div class="node-head">
               <span class="node-icon"><i data-lucide="wallet"></i></span>
@@ -71,7 +67,37 @@
           </div>
         </a>
 
-        <a class="node" href="#" style="--angle: 90deg;   --i: 4;">
+        <a class="node" href="#" style="--angle: 64.29deg;   --i: 3; --node-accent: #fb7185; --node-glow: rgba(251, 113, 133, 0.18);">
+          <div class="node-inner">
+            <div class="node-head">
+              <span class="node-icon"><i data-lucide="newspaper"></i></span>
+              <span class="node-label">Daily Brief</span>
+            </div>
+            <p class="node-desc">Morning summary of what needs your attention today.</p>
+          </div>
+        </a>
+
+        <a class="node" href="#" style="--angle: 115.71deg;  --i: 4; --node-accent: #22d3ee; --node-glow: rgba(34, 211, 238, 0.18);">
+          <div class="node-inner">
+            <div class="node-head">
+              <span class="node-icon"><i data-lucide="plane"></i></span>
+              <span class="node-label">Travel</span>
+            </div>
+            <p class="node-desc">Trips, itineraries, flights, accommodations.</p>
+          </div>
+        </a>
+
+        <a class="node" href="#" style="--angle: 167.14deg;  --i: 5; --node-accent: #eab308; --node-glow: rgba(234, 179, 8, 0.18);">
+          <div class="node-inner">
+            <div class="node-head">
+              <span class="node-icon"><i data-lucide="landmark"></i></span>
+              <span class="node-label">Projects</span>
+            </div>
+            <p class="node-desc">Properties, aircraft, vessels, vehicles, collections.</p>
+          </div>
+        </a>
+
+        <a class="node" href="#" style="--angle: -141.43deg; --i: 6; --node-accent: #c084fc; --node-glow: rgba(192, 132, 252, 0.18);">
           <div class="node-inner">
             <div class="node-head">
               <span class="node-icon"><i data-lucide="pie-chart"></i></span>
@@ -80,42 +106,12 @@
             <p class="node-desc">Operating budgets, fixed and variable breakdowns, line items.</p>
           </div>
         </a>
-
-        <a class="node" href="#" style="--angle: 135deg;  --i: 5;">
-          <div class="node-inner">
-            <div class="node-head">
-              <span class="node-icon"><i data-lucide="gavel"></i></span>
-              <span class="node-label">Decisions</span>
-            </div>
-            <p class="node-desc">Approve and reject workflows, audit trail, confirmations.</p>
-          </div>
-        </a>
-
-        <a class="node" href="#" style="--angle: 180deg;  --i: 6;">
-          <div class="node-inner">
-            <div class="node-head">
-              <span class="node-icon"><i data-lucide="landmark"></i></span>
-              <span class="node-label">Holdings</span>
-            </div>
-            <p class="node-desc">Properties, aircraft, vessels, vehicles, collections.</p>
-          </div>
-        </a>
-
-        <a class="node" href="#" style="--angle: -135deg; --i: 7;">
-          <div class="node-inner">
-            <div class="node-head">
-              <span class="node-icon"><i data-lucide="search"></i></span>
-              <span class="node-label">Advanced Search</span>
-            </div>
-            <p class="node-desc">Full-context search across every record in the app.</p>
-          </div>
-        </a>
       </div>
     </div>
 
     <div class="wordmark">
       Fusion Cell
-      <span class="dim">A living nucleus for directors and managers</span>
+      <span class="dim">Your world, simplified.</span>
     </div>
   </main>
 
