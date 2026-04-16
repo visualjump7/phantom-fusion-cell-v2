@@ -42,8 +42,8 @@ interface NavItem {
 }
 
 const mainNavItems: NavItem[] = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Globe", href: "/globe", icon: Globe },
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Map", href: "/globe", icon: Globe },
   { name: "Daily Brief", href: "/brief", icon: FileText, executiveOnly: true },
   { name: "Directory", href: "/assets", icon: Building2, delegateVisible: true, delegateName: "My Projects" },
   { name: "Cash Flow", href: "/cash-flow", icon: DollarSign },

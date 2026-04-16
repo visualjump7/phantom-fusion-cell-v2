@@ -19,8 +19,8 @@ interface BottomNavItem {
 
 // Reuses the same routes/icons as the main Navbar
 const bottomNavItems: BottomNavItem[] = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Globe", href: "/globe", icon: Globe },
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Map", href: "/globe", icon: Globe },
   { name: "Directory", href: "/assets", icon: Building2 },
   { name: "Cash Flow", href: "/cash-flow", icon: DollarSign },
   { name: "Alerts", href: "/messages", icon: MessageSquare },
@@ -28,7 +28,8 @@ const bottomNavItems: BottomNavItem[] = [
 
 // Routes that manage their own bottom UI (fullscreen immersive views).
 // The bottom nav is suppressed on these paths to avoid overlap.
-const SUPPRESS_ON: string[] = ["/globe"];
+// "/" is the orbital landing — its design is meant to stand alone.
+const SUPPRESS_ON: string[] = ["/globe", "/"];
 
 export function BottomNavBar() {
   const pathname = usePathname();

@@ -304,15 +304,18 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
-  padding: 14px 16px;
-  background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface) 100%);
+  padding: 14px 22px;
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 12px;
   color: var(--text);
+  /* Base (closing) transition: longer + small delay so the card lingers
+     after the mouse leaves. The :hover rule below overrides with 0 delay
+     for an immediate open. */
   transition:
-    transform 520ms cubic-bezier(.22, .61, .36, 1),
-    border-color 520ms cubic-bezier(.22, .61, .36, 1),
-    box-shadow 520ms cubic-bezier(.22, .61, .36, 1);
+    transform 720ms cubic-bezier(.22, .61, .36, 1) 140ms,
+    border-color 720ms cubic-bezier(.22, .61, .36, 1) 140ms,
+    box-shadow 720ms cubic-bezier(.22, .61, .36, 1) 140ms;
   animation: drift 7s ease-in-out infinite;
   animation-delay: calc(var(--i) * 0.35s);
   will-change: transform;
@@ -326,24 +329,45 @@
   width: 100%;
 }
 
+/* Node icon: simple solid-color dot. No Lucide icon shape, just a filled
+   circle in the node's accent color. Matches the reference comp. */
 .fc-landing-shell .node-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-  background: var(--node-glow, var(--accent-glow));
-  color: var(--node-accent, var(--accent));
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--node-accent, var(--accent));
   flex-shrink: 0;
 }
 
-.fc-landing-shell .node-icon svg { width: 16px; height: 16px; stroke-width: 2; }
+/* Hide any Lucide SVG inside node-icon (replaced by the dot) */
+.fc-landing-shell .node-icon svg { display: none; }
+
+/* Any other Lucide icon rendered in the shell (e.g. the small arrow under
+   the orb) keeps outline weight for consistency. */
+.fc-landing-shell svg { stroke-width: 1.5; fill: none; }
 
 .fc-landing-shell .node-label {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 500;
   letter-spacing: -0.01em;
   color: var(--text);
+}
+
+/* Count pill rendered on the right side of a node's head row.
+   Colors inherit from the node's --node-accent / --node-glow. */
+.fc-landing-shell .node-badge {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  background: var(--node-glow, var(--accent-glow));
+  color: var(--node-accent, var(--accent));
+  border: 1px solid var(--node-accent, var(--accent-dim));
+  min-width: 22px;
+  text-align: center;
+  flex-shrink: 0;
 }
 
 .fc-landing-shell .node-desc {
@@ -354,17 +378,25 @@
   opacity: 0;
   overflow: hidden;
   margin: 0;
+  /* Base (closing) transition: gentle linger after hover ends. */
   transition:
-    max-height 640ms cubic-bezier(.22, .61, .36, 1),
-    opacity 520ms cubic-bezier(.22, .61, .36, 1),
-    margin-top 560ms cubic-bezier(.22, .61, .36, 1);
+    max-height 760ms cubic-bezier(.22, .61, .36, 1) 140ms,
+    opacity 620ms cubic-bezier(.22, .61, .36, 1) 140ms,
+    margin-top 700ms cubic-bezier(.22, .61, .36, 1) 140ms;
 }
 
+/* Opening transition: immediate (zero delay) so the card responds
+   instantly to a mouse-enter or focus. Duration is slightly shorter
+   than the close so the open feels crisp while the close feels fluid. */
 .fc-landing-shell .node:hover .node-inner,
 .fc-landing-shell .node:focus-within .node-inner {
-  transform: scale(1.04);
+  transform: scale(1.03);
   border-color: var(--node-accent, var(--accent-dim));
-  box-shadow: 0 8px 40px -8px var(--node-glow, var(--accent-glow));
+  box-shadow: 0 4px 24px -6px var(--node-glow, var(--accent-glow));
+  transition:
+    transform 820ms cubic-bezier(.22, .61, .36, 1) 0ms,
+    border-color 820ms cubic-bezier(.22, .61, .36, 1) 0ms,
+    box-shadow 820ms cubic-bezier(.22, .61, .36, 1) 0ms;
 }
 
 .fc-landing-shell .node:hover .node-desc,
@@ -372,6 +404,10 @@
   max-height: 80px;
   opacity: 1;
   margin-top: 2px;
+  transition:
+    max-height 860ms cubic-bezier(.22, .61, .36, 1) 0ms,
+    opacity 700ms cubic-bezier(.22, .61, .36, 1) 0ms,
+    margin-top 760ms cubic-bezier(.22, .61, .36, 1) 0ms;
 }
 
 @keyframes drift {
