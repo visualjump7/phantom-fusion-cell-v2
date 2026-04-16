@@ -12,7 +12,7 @@ function ap(code: string) {
 export const SAMPLE_TRIPS: Trip[] = [
   {
     id: "trip-001",
-    name: "European Summer Tour",
+    name: "London & Riviera — Q2 Board Meetings",
     organizationId: "demo-org",
     startDate: "2026-06-14",
     endDate: "2026-06-26",
@@ -30,7 +30,7 @@ export const SAMPLE_TRIPS: Trip[] = [
         airline: "NetJets",
         flightNumber: "NJ 204",
         tailNumber: "N650GS",
-        notes: "Gulfstream G650. Catering confirmed — dietary sheet attached.",
+        notes: "Gulfstream G650. Briefing materials loaded on cabin iPad. Catering confirmed.",
       },
       {
         id: "ev-02",
@@ -47,7 +47,7 @@ export const SAMPLE_TRIPS: Trip[] = [
         dropoffLng: -0.1494,
         vehicleType: "sedan",
         driverOrCompany: "Addison Lee",
-        notes: "Meet & greet arranged at arrivals. Driver holding name card.",
+        notes: "Meet & greet at arrivals. Driver holding name card. Board packet in vehicle.",
       },
       {
         id: "ev-03",
@@ -62,7 +62,7 @@ export const SAMPLE_TRIPS: Trip[] = [
         propertyLng: -0.1494,
         confirmationNumber: "CL-29847",
         roomType: "Linley Suite",
-        notes: "Flowers arranged. Late check-out confirmed.",
+        notes: "Meeting room reserved for morning prep. Late check-out confirmed.",
       },
       {
         id: "ev-04",
@@ -77,7 +77,7 @@ export const SAMPLE_TRIPS: Trip[] = [
         venueLng: -0.2010,
         partySize: 4,
         reservationConfirmation: "LED-1847",
-        notes: "Tasting menu. Window table requested. Dietary restrictions communicated.",
+        notes: "Working dinner with UK counsel. Private dining room. NDA docs prepared.",
       },
       {
         id: "ev-05",
@@ -106,7 +106,7 @@ export const SAMPLE_TRIPS: Trip[] = [
         dropoffLng: 7.3299,
         vehicleType: "helicopter",
         driverOrCompany: "Azur Helicopters",
-        notes: "Helipad at hotel confirmed. 8-minute flight.",
+        notes: "Helipad at hotel confirmed. 8-minute transfer. Luggage handled separately.",
       },
       {
         id: "ev-07",
@@ -121,7 +121,7 @@ export const SAMPLE_TRIPS: Trip[] = [
         propertyLng: 7.3299,
         confirmationNumber: "GH-55291",
         roomType: "Cap Ferrat Suite — sea view",
-        notes: "Spa appointments pre-booked. Pool cabana 3 reserved daily.",
+        notes: "Offsite strategy sessions scheduled. Conference AV setup confirmed.",
       },
       {
         id: "ev-08",
@@ -134,8 +134,8 @@ export const SAMPLE_TRIPS: Trip[] = [
         venueAddress: "Grand-Hotel du Cap-Ferrat, poolside",
         venueLat: 43.6805,
         venueLng: 7.3295,
-        partySize: 2,
-        notes: "Poolside lunch. Rosé pre-ordered.",
+        partySize: 6,
+        notes: "Investor lunch with Meridian Capital partners. Private table confirmed.",
       },
       {
         id: "ev-09",
@@ -149,13 +149,13 @@ export const SAMPLE_TRIPS: Trip[] = [
         airline: "NetJets",
         flightNumber: "NJ 207",
         tailNumber: "N650GS",
-        notes: "Return leg. Same Gulfstream G650.",
+        notes: "Return leg. Post-trip debrief materials prepped on cabin iPad.",
       },
     ],
   },
   {
     id: "trip-002",
-    name: "Aspen Weekend",
+    name: "Aspen — Annual Portfolio Review",
     organizationId: "demo-org",
     startDate: "2026-07-10",
     endDate: "2026-07-13",
@@ -186,6 +186,7 @@ export const SAMPLE_TRIPS: Trip[] = [
         propertyLng: -106.8186,
         confirmationNumber: "LN-4412",
         roomType: "Premier Suite",
+        notes: "Conference room booked for full-day review sessions. IT/AV setup confirmed.",
       },
       {
         id: "ev-12",
