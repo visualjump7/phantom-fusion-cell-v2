@@ -1,17 +1,14 @@
 /**
- * Calendar sync service.
+ * Calendar sync service. **Server-only** — node-ical pulls Node built-ins
+ * (node:crypto, node:fs) that break client bundling. Browser code should
+ * call the /api/calendar/sync-source route instead.
  *
  * syncSource       — fetch + parse a single source, upsert cache rows,
  *                    trim stale rows inside the window, update status.
  * syncAllActiveSources — iterate active sources respecting a 30-min cooldown.
  * syncSourcesForOrg — manual admin trigger, ignores cooldown.
- *
- * Safe to call from the browser (supabase client) or from the Edge Function
- * (service-role client). The module exports a factory so the edge function
- * can inject its own client.
  */
 
-import { supabase as defaultClient } from "@/lib/supabase";
 import { fetchAndParseICS, type ParsedEvent } from "@/lib/calendar-ics";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -43,7 +40,7 @@ export interface SyncResult {
   error?: string;
 }
 
-export function createCalendarSync(client: Client = defaultClient) {
+export function createCalendarSync(client: Client) {
   async function syncSource(sourceId: string): Promise<SyncResult> {
     const { data: source, error } = await client
       .from("calendar_sources")
@@ -198,6 +195,5 @@ export function createCalendarSync(client: Client = defaultClient) {
   return { syncSource, syncAllActiveSources, syncSourcesForOrg };
 }
 
-// Default browser-client instance for convenience.
-const { syncSource, syncAllActiveSources, syncSourcesForOrg } = createCalendarSync();
-export { syncSource, syncAllActiveSources, syncSourcesForOrg };
+// Callers must pass their own supabase client (anon for route handlers,
+// service-role for the Edge Function).

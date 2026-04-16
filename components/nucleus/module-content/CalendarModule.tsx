@@ -39,8 +39,30 @@ import {
   deleteCalendarSource,
   type ExternalEvent,
 } from "@/lib/calendar-service";
-import { syncSource } from "@/lib/calendar-sync-service";
 import type { SystemEvent } from "@/lib/calendar-system";
+
+// Syncs run server-side so node-ical's Node built-ins never end up in the
+// browser bundle. The API route lives at /api/calendar/sync-source.
+async function syncSourceViaApi(sourceId: string): Promise<{
+  success: boolean;
+  error?: string;
+  eventsUpserted?: number;
+}> {
+  try {
+    const res = await fetch("/api/calendar/sync-source", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sourceId }),
+    });
+    const json = await res.json();
+    return json;
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
 import { useNucleus } from "@/components/nucleus/NucleusContext";
 
 type AnyEvent =
@@ -621,7 +643,7 @@ function AddCalendarModal({
       setSaving(false);
       return;
     }
-    const sync = await syncSource(create.id);
+    const sync = await syncSourceViaApi(create.id);
     if (!sync.success) {
       setError(`Calendar saved but first sync failed: ${sync.error}. Check the URL and try again.`);
       setSaving(false);
