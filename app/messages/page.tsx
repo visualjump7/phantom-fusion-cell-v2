@@ -21,6 +21,8 @@ import {
   archiveMessage,
   createMessage,
   getMessageStatus,
+  isOverdue,
+  formatOverdueLabel,
   Message,
 } from "@/lib/message-service";
 import { formatTimeAgo } from "@/lib/utils";
@@ -257,6 +259,11 @@ export default function MessagesPage() {
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <Badge variant="outline" className={`text-xs ${priorityColors[msg.priority]}`}>{msg.priority}</Badge>
                   <Badge variant="outline" className="text-xs capitalize">{msg.type.replace("_", " ")}</Badge>
+                  {isOverdue(msg) && msg.due_date && (
+                    <Badge variant="outline" className="text-xs bg-orange-500 text-white border-orange-500">
+                      {formatOverdueLabel(msg.due_date)}
+                    </Badge>
+                  )}
                   {msg.asset_name && (
                     <Link href={`/assets/${msg.asset_id}`} className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
                       <Building2 className="h-3 w-3" />{msg.asset_name}

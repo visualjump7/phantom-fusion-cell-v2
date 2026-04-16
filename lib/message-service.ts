@@ -70,6 +70,35 @@ export interface FetchMessagesOptions {
   search?: string;
   asset_id?: string;
   organization_id?: string;
+  /** When true, restrict results to messages where isOverdue(msg) === true. */
+  overdue?: boolean;
+}
+
+/**
+ * A message is "overdue" when:
+ *  - it has a due_date,
+ *  - no response has been recorded,
+ *  - its due_date is in the past.
+ * No auto-escalation behavior is triggered — visibility only. See
+ * Phase 10 notes in fusion-cell-v1-finish-line-build.
+ */
+export function isOverdue(msg: Pick<Message, "due_date" | "response">): boolean {
+  if (!msg.due_date) return false;
+  if (msg.response) return false;
+  return new Date(msg.due_date) < new Date();
+}
+
+/**
+ * Convenience formatter: "Overdue by Xd Yh" given a past due_date.
+ */
+export function formatOverdueLabel(dueDate: string): string {
+  const diffMs = Date.now() - new Date(dueDate).getTime();
+  if (diffMs <= 0) return "";
+  const days = Math.floor(diffMs / 86_400_000);
+  const hours = Math.floor((diffMs % 86_400_000) / 3_600_000);
+  if (days > 0 && hours > 0) return `Overdue by ${days}d ${hours}h`;
+  if (days > 0) return `Overdue by ${days}d`;
+  return `Overdue by ${hours}h`;
 }
 
 // ─── FETCH ───
@@ -147,6 +176,17 @@ export async function fetchMessages(options?: FetchMessagesOptions): Promise<Mes
     sender_email: m.sender?.email || null,
     response: responseLookup.get(m.id) || null,
   }));
+
+  // Client-side overdue filter — Phase 10 visibility only.
+  if (options?.overdue) {
+    result = result.filter((m: Message) => isOverdue(m));
+    // Sort oldest due_date first so attention goes to the longest-outstanding.
+    result.sort((a: Message, b: Message) => {
+      const ad = a.due_date ? new Date(a.due_date).getTime() : Infinity;
+      const bd = b.due_date ? new Date(b.due_date).getTime() : Infinity;
+      return ad - bd;
+    });
+  }
 
   // Client-side status filter
   if (options?.status && options.status !== "all") {

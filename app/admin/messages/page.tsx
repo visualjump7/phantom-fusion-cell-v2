@@ -25,6 +25,8 @@ import {
   archiveMessage,
   unarchiveMessage,
   getMessageStatus,
+  isOverdue,
+  formatOverdueLabel,
   Message,
   CreateMessageInput,
 } from "@/lib/message-service";
@@ -144,11 +146,13 @@ export default function AdminMessagesPage() {
   const db = supabase as any;
 
   const loadData = async () => {
+    const overdueOnly = filterStatus === "overdue";
     const [msgData, assetRes] = await Promise.all([
       fetchMessages({
         type: filterType,
         priority: filterPriority,
-        status: filterStatus,
+        status: overdueOnly ? "all" : filterStatus,
+        overdue: overdueOnly,
         includeArchived: showArchived,
         search: searchQuery || undefined,
       }),
@@ -186,6 +190,7 @@ export default function AdminMessagesPage() {
       confirmed: all.filter((m) => m.response?.confirmed_at).length,
       approved: all.filter((m) => m.response?.response_type === "approved").length,
       rejected: all.filter((m) => m.response?.response_type === "rejected").length,
+      overdue: all.filter((m) => isOverdue(m)).length,
     };
   }, [messages]);
 
@@ -329,7 +334,7 @@ export default function AdminMessagesPage() {
         </div>
 
         {/* Stats Row */}
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
           <button onClick={() => { setFilterStatus("all"); }} className="text-left">
             <Card className={`border-border bg-card/60 transition-colors hover:border-primary/30 ${filterStatus === "all" ? "border-primary/50" : ""}`}>
               <CardContent className="p-3">
@@ -359,6 +364,14 @@ export default function AdminMessagesPage() {
               <CardContent className="p-3">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Confirmed</p>
                 <p className="text-xl font-bold text-primary">{stats.confirmed}</p>
+              </CardContent>
+            </Card>
+          </button>
+          <button onClick={() => setFilterStatus("overdue")} className="text-left">
+            <Card className={`border-border bg-card/60 transition-colors hover:border-orange-500/40 ${filterStatus === "overdue" ? "border-orange-500/60" : ""}`}>
+              <CardContent className="p-3">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Overdue</p>
+                <p className="text-xl font-bold text-orange-500">{stats.overdue}</p>
               </CardContent>
             </Card>
           </button>
@@ -594,14 +607,14 @@ export default function AdminMessagesPage() {
               const status = getMessageStatus(msg);
               const needsConfirmation = msg.response && !msg.response.confirmed_at &&
                 (msg.response.response_type === "approved" || msg.response.response_type === "rejected");
-              const isOverdue = msg.due_date && new Date(msg.due_date) < new Date() && status === "pending";
+              const overdue = isOverdue(msg);
               const menuOpen = openMenuId === msg.id;
 
               return (
                 <motion.div key={msg.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} layout>
                   <Card className={`border-border bg-card/60 backdrop-blur-sm transition-colors ${
                     needsConfirmation ? "border-amber-500/30 bg-amber-500/[0.02]"
-                    : isOverdue ? "border-red-500/30 bg-red-500/[0.02]"
+                    : overdue ? "border-orange-500/40 bg-orange-500/[0.03]"
                     : msg.is_archived ? "opacity-60" : ""
                   }`}>
                     <CardContent className="p-4">
@@ -614,8 +627,10 @@ export default function AdminMessagesPage() {
                               <div className="flex items-center gap-2 flex-wrap">
                                 <h3 className="text-sm font-semibold text-foreground truncate">{msg.title}</h3>
                                 {msg.is_archived && <Badge variant="outline" className="text-[10px]">Archived</Badge>}
-                                {isOverdue && (
-                                  <Badge variant="outline" className="text-[10px] bg-red-600 text-white border-red-600">Overdue</Badge>
+                                {overdue && (
+                                  <Badge variant="outline" className="text-[10px] bg-orange-500 text-white border-orange-500">
+                                    {msg.due_date ? formatOverdueLabel(msg.due_date) : "Overdue"}
+                                  </Badge>
                                 )}
                               </div>
                             </div>
@@ -694,7 +709,7 @@ export default function AdminMessagesPage() {
                               </span>
                             )}
                             {msg.due_date && (
-                              <span className={`inline-flex items-center gap-1 text-[10px] ${isOverdue ? "text-red-400" : "text-muted-foreground"}`}>
+                              <span className={`inline-flex items-center gap-1 text-[10px] ${overdue ? "text-orange-400" : "text-muted-foreground"}`}>
                                 <CalendarIcon className="h-2.5 w-2.5" />Due {new Date(msg.due_date).toLocaleDateString()}
                               </span>
                             )}
