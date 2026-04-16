@@ -13,6 +13,7 @@ interface AddEventFormProps {
   onUpdateEvent?: (eventId: string, event: ItineraryEvent) => void;
   editingEvent?: ItineraryEvent | null;
   onCancelEdit?: () => void;
+  onClose?: () => void;
 }
 
 const TABS: { type: EventType; Icon: typeof Plane }[] = [
@@ -22,7 +23,7 @@ const TABS: { type: EventType; Icon: typeof Plane }[] = [
   { type: "reservation", Icon: Utensils },
 ];
 
-export function AddEventForm({ tripId, onAddEvent, onUpdateEvent, editingEvent, onCancelEdit }: AddEventFormProps) {
+export function AddEventForm({ tripId, onAddEvent, onUpdateEvent, editingEvent, onCancelEdit, onClose }: AddEventFormProps) {
   const [activeTab, setActiveTab] = useState<EventType>("flight");
 
   // Switch tab when editing an event of a different type
@@ -61,7 +62,7 @@ export function AddEventForm({ tripId, onAddEvent, onUpdateEvent, editingEvent, 
               type="button"
               onClick={() => setActiveTab(type)}
               className={`
-                flex-1 flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-[11px] font-medium transition-all
+                flex-1 flex items-center justify-center gap-1.5 rounded-md px-2 py-2.5 min-h-[44px] text-[11px] font-medium transition-all
                 ${activeTab === type
                   ? "bg-card text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
