@@ -30,7 +30,10 @@ import { useThemePreferences } from "@/components/ThemeProvider";
 import { GlobalClientBanner } from "@/components/admin/shared/GlobalClientBanner";
 import { SearchBar, SearchTrigger } from "@/components/search/SearchBar";
 import { useEffectiveOrgId } from "@/lib/use-active-principal";
-import { AdminToolbar } from "@/components/admin/AdminToolbar";
+import {
+  AdminSettingsMenu,
+  AdminOverlayHost,
+} from "@/components/admin/AdminSettingsMenu";
 
 interface NavItem {
   name: string;
@@ -68,6 +71,7 @@ export function Navbar() {
   const { density } = useThemePreferences();
   const { orgId: effectiveOrgId } = useEffectiveOrgId();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [nucleusOverlayOpen, setNucleusOverlayOpen] = useState(false);
 
   // Global Cmd+K shortcut
   useEffect(() => {
@@ -151,7 +155,6 @@ export function Navbar() {
                 <SearchTrigger onClick={() => setSearchOpen(true)} />
               </div>
             )}
-            <AdminToolbar />
             {isStaff && (
               <div className="relative hidden md:block" ref={adminDropdownRef}>
                 <button
@@ -209,15 +212,19 @@ export function Navbar() {
                 <motion.div
                   initial={{ opacity: 0, y: -4 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="absolute right-0 top-full mt-1 min-w-[160px] rounded-lg border border-border bg-card py-1 shadow-lg"
+                  className="absolute right-0 top-full mt-1 min-w-[220px] rounded-lg border border-border bg-card py-1 shadow-lg"
                 >
+                  <AdminSettingsMenu
+                    onOpenNucleus={() => setNucleusOverlayOpen(true)}
+                    onRequestClose={() => setSettingsDropdownOpen(false)}
+                  />
                   <Link
                     href="/settings"
                     onClick={() => setSettingsDropdownOpen(false)}
                     className="flex min-h-[var(--tap-target-min)] items-center gap-2 px-3 py-2 text-[length:var(--font-size-body)] font-medium text-foreground hover:bg-muted transition-colors"
                   >
                     <Settings className="h-4 w-4" />
-                    Settings
+                    All Settings
                   </Link>
                   <div className="my-1 border-t border-border" />
                   <button
@@ -316,6 +323,10 @@ export function Navbar() {
         onClose={() => setSearchOpen(false)}
       />
     )}
+    <AdminOverlayHost
+      open={nucleusOverlayOpen}
+      onClose={() => setNucleusOverlayOpen(false)}
+    />
     </>
   );
 }
