@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Building2, Receipt, MessageSquare, Upload, ChevronRight, Loader2, Trash2, FileText, Users, Tag, Globe,
+  Building2, Receipt, MessageSquare, Upload, ChevronRight, Loader2, Trash2, FileText, Users, Tag, Globe, Sparkles,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -82,6 +82,7 @@ export default function WorkspaceDashboard() {
     { name: "Bills", href: `/admin/client/${orgId}/bills`, icon: Receipt, stat: `${billSummary?.upcomingCount || 0} pending` },
     { name: "Alerts", href: `/admin/client/${orgId}/messages`, icon: MessageSquare, stat: `${alertsCount} active` },
     { name: "Daily Briefs", href: `/admin/client/${orgId}/briefs`, icon: FileText, stat: "Compose briefs" },
+    { name: "Principal Experience", href: `/admin/client/${orgId}/principal-experience`, icon: Sparkles, stat: "Module visibility" },
     ...(isAdmin ? [{ name: "Delegates", href: `/admin/client/${orgId}/delegates`, icon: Users, stat: "Manage access" }] : []),
     ...(canUpload ? [{ name: "Budget Upload", href: `/admin/client/${orgId}/upload`, icon: Upload, stat: "Import budgets" }] : []),
   ];
