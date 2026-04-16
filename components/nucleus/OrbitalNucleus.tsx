@@ -30,9 +30,14 @@ export interface OrbitalNucleusProps {
   onOrbClick?: () => void;
   mode?: NucleusMode;
   centerLogoSrc?: string;
+  /**
+   * Optional per-module count badge, e.g. { comms: 6 } to show "6" on the
+   * Alerts button. Zero / missing values render nothing.
+   */
+  badges?: Record<string, number>;
 }
 
-const ORBIT_RADIUS_DESKTOP = 280; // px
+const ORBIT_RADIUS_DESKTOP = 320; // px
 const MOBILE_BREAKPOINT = 768;
 
 function useIsMobile() {
@@ -53,6 +58,7 @@ export function OrbitalNucleus({
   onOrbClick,
   mode = "principal",
   centerLogoSrc,
+  badges,
 }: OrbitalNucleusProps) {
   const reduce = useReducedMotion();
   const isMobile = useIsMobile();
@@ -93,6 +99,7 @@ export function OrbitalNucleus({
           onOrbClick={onOrbClick}
           centerLogoSrc={centerLogoSrc}
           reduce={!!reduce}
+          badges={badges}
         />
       ) : (
         <DesktopOrbit
@@ -102,6 +109,7 @@ export function OrbitalNucleus({
           onOrbClick={onOrbClick}
           centerLogoSrc={centerLogoSrc}
           reduce={!!reduce}
+          badges={badges}
         />
       )}
     </div>
@@ -119,10 +127,12 @@ function DesktopOrbit({
   onOrbClick,
   centerLogoSrc,
   reduce,
+  badges,
 }: {
   modules: ModuleMeta[];
   positions: number[];
   onModuleClick: (key: ModuleKey) => void;
+  badges?: Record<string, number>;
   onOrbClick?: () => void;
   centerLogoSrc?: string;
   reduce: boolean;
@@ -190,12 +200,14 @@ function DesktopOrbit({
       {/* Central orb */}
       <CenterOrb onClick={onOrbClick} centerLogoSrc={centerLogoSrc} reduce={reduce} />
 
-      {/* Module nodes — positioning is on the outer <div> so Framer Motion's
-          scale transform on the inner motion.button doesn't clobber it. */}
+      {/* Module nodes — pill-shaped cards with accent-colored icon + label.
+          Positioning lives on the outer <div> so Framer Motion's scale on the
+          inner motion.button doesn't clobber it. */}
       {modules.map((m, i) => {
         const rad = (positions[i] * Math.PI) / 180;
         const x = Math.cos(rad) * r;
         const y = Math.sin(rad) * r;
+        const badge = badges?.[m.key] ?? 0;
         return (
           <div
             key={m.key}
@@ -209,29 +221,35 @@ function DesktopOrbit({
             <motion.button
               type="button"
               onClick={() => onModuleClick(m.key)}
-              initial={reduce ? { opacity: 1 } : { opacity: 0, scale: 0.7 }}
+              initial={reduce ? { opacity: 1 } : { opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{
                 delay: reduce ? 0 : 0.08 * i,
                 duration: 0.35,
                 ease: "easeOut",
               }}
-              whileHover={{ scale: 1.06 }}
-              whileTap={{ scale: 0.97 }}
-              className="flex flex-col items-center gap-2 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
-              aria-label={`Open ${m.label}`}
+              whileHover={{ scale: 1.04, y: -1 }}
+              whileTap={{ scale: 0.98 }}
+              className="flex items-center gap-2.5 whitespace-nowrap rounded-xl border border-white/10 bg-black/70 px-4 py-3 text-left backdrop-blur-sm outline-none transition-[border-color] duration-200 hover:border-emerald-400/40 focus-visible:ring-2 focus-visible:ring-emerald-400/60"
+              style={{ boxShadow: `0 0 28px ${m.glow}` }}
+              aria-label={`Open ${m.label}${badge > 0 ? ` (${badge} pending)` : ""}`}
             >
-              <span
-                className="flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-black/80 backdrop-blur-sm transition-[box-shadow,border-color] duration-200 hover:border-emerald-400/40"
-                style={{
-                  boxShadow: `0 0 24px ${m.glow}`,
-                }}
-              >
-                <m.icon className="h-6 w-6 text-white" aria-hidden />
-              </span>
-              <span className="whitespace-nowrap text-xs font-medium text-white/80">
+              <m.icon
+                className="h-4 w-4 shrink-0"
+                style={{ color: m.accent }}
+                aria-hidden
+              />
+              <span className="text-sm font-semibold text-white">
                 {m.label}
               </span>
+              {badge > 0 && (
+                <span
+                  className="ml-1 flex h-5 min-w-[20px] items-center justify-center rounded-full border bg-black/40 px-1.5 text-[11px] font-semibold"
+                  style={{ borderColor: m.accent, color: m.accent }}
+                >
+                  {badge > 99 ? "99+" : badge}
+                </span>
+              )}
             </motion.button>
           </div>
         );
@@ -250,41 +268,56 @@ function MobileHexGrid({
   onOrbClick,
   centerLogoSrc,
   reduce,
+  badges,
 }: {
   modules: ModuleMeta[];
   onModuleClick: (key: ModuleKey) => void;
   onOrbClick?: () => void;
   centerLogoSrc?: string;
   reduce: boolean;
+  badges?: Record<string, number>;
 }) {
   return (
     <div className="flex h-full w-full flex-col items-center justify-start gap-10 px-6 pb-16 pt-10">
       <CenterOrb onClick={onOrbClick} centerLogoSrc={centerLogoSrc} reduce={reduce} compact />
-      <div className="grid w-full max-w-sm grid-cols-2 gap-4">
-        {modules.map((m, i) => (
-          <motion.button
-            key={m.key}
-            type="button"
-            onClick={() => onModuleClick(m.key)}
-            initial={reduce ? { opacity: 1 } : { opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              delay: reduce ? 0 : 0.08 * i,
-              duration: 0.3,
-              ease: "easeOut",
-            }}
-            className="flex flex-col items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.02] px-3 py-4 transition hover:border-emerald-400/40 active:scale-[0.98]"
-            aria-label={`Open ${m.label}`}
-          >
-            <span
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-black/80"
+      <div className="flex w-full max-w-sm flex-col gap-3">
+        {modules.map((m, i) => {
+          const badge = badges?.[m.key] ?? 0;
+          return (
+            <motion.button
+              key={m.key}
+              type="button"
+              onClick={() => onModuleClick(m.key)}
+              initial={reduce ? { opacity: 1 } : { opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                delay: reduce ? 0 : 0.08 * i,
+                duration: 0.3,
+                ease: "easeOut",
+              }}
+              className="flex w-full items-center gap-2.5 rounded-xl border border-white/10 bg-black/70 px-4 py-3 text-left transition hover:border-emerald-400/40 active:scale-[0.98]"
               style={{ boxShadow: `0 0 20px ${m.glow}` }}
+              aria-label={`Open ${m.label}${badge > 0 ? ` (${badge} pending)` : ""}`}
             >
-              <m.icon className="h-5 w-5 text-white" aria-hidden />
-            </span>
-            <span className="text-xs font-medium text-white/80">{m.label}</span>
-          </motion.button>
-        ))}
+              <m.icon
+                className="h-4 w-4 shrink-0"
+                style={{ color: m.accent }}
+                aria-hidden
+              />
+              <span className="flex-1 text-sm font-semibold text-white">
+                {m.label}
+              </span>
+              {badge > 0 && (
+                <span
+                  className="flex h-5 min-w-[20px] items-center justify-center rounded-full border bg-black/40 px-1.5 text-[11px] font-semibold"
+                  style={{ borderColor: m.accent, color: m.accent }}
+                >
+                  {badge > 99 ? "99+" : badge}
+                </span>
+              )}
+            </motion.button>
+          );
+        })}
       </div>
     </div>
   );

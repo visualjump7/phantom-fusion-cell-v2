@@ -15,13 +15,14 @@ import { useRole } from "@/lib/use-role";
 import { useEffectiveOrgId } from "@/lib/use-active-principal";
 import { getVisibleModulesForUser } from "@/lib/module-visibility-service";
 import { MODULE_METADATA } from "@/lib/module-metadata";
-import { ALL_MODULE_KEYS, type ModuleKey } from "@/lib/modules";
+import { ALL_MODULE_KEYS, MODULE_KEYS, type ModuleKey } from "@/lib/modules";
 import { OrbitalNucleus } from "@/components/nucleus/OrbitalNucleus";
 import { FocusedOverlay } from "@/components/nucleus/FocusedOverlay";
 import { NucleusProvider, useNucleus } from "@/components/nucleus/NucleusContext";
 import { getModuleContent } from "@/components/nucleus/module-content";
 import { usePreview } from "@/lib/preview-context";
 import { WelcomeOverlay } from "@/components/nucleus/WelcomeOverlay";
+import { fetchMessages } from "@/lib/message-service";
 
 export default function NucleusPage() {
   return (
@@ -40,6 +41,7 @@ function NucleusPageInner() {
 
   const [visibleModules, setVisibleModules] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [badges, setBadges] = useState<Record<string, number>>({});
 
   const isAdminSide = useMemo(
     () => ["admin", "owner", "manager"].includes((role ?? "").toLowerCase()),
@@ -89,6 +91,32 @@ function NucleusPageInner() {
     effectiveIsAdminSide,
   ]);
 
+  // Pull unresolved-decision count for the Comms badge. Matches the same
+  // "pending" definition used elsewhere in the app.
+  useEffect(() => {
+    if (!effectiveOrgForQuery) return;
+    let cancelled = false;
+    fetchMessages({ organization_id: effectiveOrgForQuery })
+      .then((msgs) => {
+        if (cancelled) return;
+        const pending = msgs.filter(
+          (m) =>
+            (m.type === "decision" || m.type === "action_required") &&
+            !m.response
+        ).length;
+        setBadges((prev) => ({
+          ...prev,
+          [MODULE_KEYS.COMMS]: pending,
+        }));
+      })
+      .catch(() => {
+        /* leave badges empty on error */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [effectiveOrgForQuery]);
+
   function handleModuleClick(key: ModuleKey) {
     const meta = MODULE_METADATA[key];
     if (!meta) return;
@@ -115,6 +143,7 @@ function NucleusPageInner() {
       <OrbitalNucleus
         visibleModules={visibleModules}
         onModuleClick={handleModuleClick}
+        badges={badges}
         mode={preview.active ? "preview" : effectiveIsAdminSide ? "admin" : "principal"}
       />
       <FocusedOverlay
