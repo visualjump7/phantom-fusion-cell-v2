@@ -16,7 +16,6 @@
 import { useMemo, useEffect, useState } from "react";
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
-import { Search } from "lucide-react";
 import {
   MODULE_METADATA,
   type ModuleMeta,
@@ -390,7 +389,7 @@ function CenterOrb({
         whileHover={{ scale: 1.04 }}
         whileTap={{ scale: 0.97 }}
       >
-        {centerLogoSrc ? (
+        {centerLogoSrc && (
           <Image
             src={centerLogoSrc}
             alt="Fusion Cell"
@@ -398,16 +397,8 @@ function CenterOrb({
             height={compact ? 40 : 56}
             className="relative opacity-95"
           />
-        ) : (
-          <Search
-            className={
-              compact
-                ? "relative h-6 w-6 text-white drop-shadow-[0_0_8px_rgba(74,222,128,0.9)]"
-                : "relative h-8 w-8 text-white drop-shadow-[0_0_10px_rgba(74,222,128,0.9)]"
-            }
-            aria-hidden
-          />
         )}
+        {/* No icon by default — the orb itself is the affordance. */}
       </motion.button>
     </div>
   );

@@ -83,15 +83,17 @@ export function FocusedOverlay({
             className="absolute inset-0 hidden bg-black/70 backdrop-blur-md md:block"
           />
 
-          {/* Panel */}
-          <motion.div
-            className="absolute inset-0 flex h-[100dvh] w-full flex-col overflow-hidden border-0 bg-black text-white md:inset-auto md:left-1/2 md:top-1/2 md:h-[90dvh] md:max-h-[90vh] md:w-[min(1200px,92vw)] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-2xl md:border md:border-emerald-400/30 md:shadow-[0_20px_80px_rgba(74,222,128,0.15)]"
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.96 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            onClick={(e) => e.stopPropagation()}
-          >
+          {/* Panel — outer flex centers the inner motion.div so Framer Motion's
+              scale transform doesn't collide with a centering translate. */}
+          <div className="pointer-events-none absolute inset-0 flex items-stretch justify-stretch md:items-center md:justify-center md:p-6">
+            <motion.div
+              className="pointer-events-auto flex w-full h-[100dvh] flex-col overflow-hidden bg-black text-white md:h-[94dvh] md:max-h-[94vh] md:w-full md:max-w-[1400px] md:rounded-2xl md:border md:border-emerald-400/30 md:shadow-[0_20px_80px_rgba(74,222,128,0.18)]"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              onClick={(e) => e.stopPropagation()}
+            >
             {/* Header */}
             <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-3 md:px-6 md:py-4">
               <div className="flex items-center gap-3">
@@ -121,7 +123,8 @@ export function FocusedOverlay({
 
             {/* Body — scrollable */}
             <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
-          </motion.div>
+            </motion.div>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
