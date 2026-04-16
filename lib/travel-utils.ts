@@ -157,6 +157,65 @@ export function getEventLabel(e: ItineraryEvent): string {
   }
 }
 
+// ── Ground routes via Mapbox Directions API ─────────────────────
+
+/**
+ * Fetch driving routes for ground transport events.
+ * Returns a GeoJSON FeatureCollection of LineStrings — one per ground event
+ * that has both pickup and dropoff coordinates.
+ */
+export async function fetchGroundRoutes(
+  events: ItineraryEvent[],
+  mapboxToken: string,
+  selectedId?: string
+): Promise<GeoJSON.FeatureCollection> {
+  const groundEvents = events.filter(
+    (e) =>
+      e.type === "ground" &&
+      e.pickupLat != null &&
+      e.pickupLng != null &&
+      e.dropoffLat != null &&
+      e.dropoffLng != null
+  );
+
+  const features: GeoJSON.Feature[] = [];
+
+  for (const e of groundEvents) {
+    const props = {
+      id: e.id,
+      selected: e.id === selectedId,
+      label: e.driverOrCompany || "Ground transport",
+      vehicleType: e.vehicleType || "car",
+    };
+
+    // Straight-line fallback coordinates
+    const fallbackGeometry: GeoJSON.LineString = {
+      type: "LineString",
+      coordinates: [
+        [e.pickupLng!, e.pickupLat!],
+        [e.dropoffLng!, e.dropoffLat!],
+      ],
+    };
+
+    try {
+      const coords = `${e.pickupLng},${e.pickupLat};${e.dropoffLng},${e.dropoffLat}`;
+      const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coords}?geometries=geojson&overview=full&access_token=${mapboxToken}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Directions API error");
+      const data = await res.json();
+      const route = data.routes?.[0]?.geometry;
+      if (!route) throw new Error("No route geometry");
+
+      features.push({ type: "Feature", properties: props, geometry: route });
+    } catch {
+      // Fallback: straight dashed line between pickup and dropoff
+      features.push({ type: "Feature", properties: props, geometry: fallbackGeometry });
+    }
+  }
+
+  return { type: "FeatureCollection", features };
+}
+
 // ── Formatting ──────────────────────────────────────────────────
 
 export function formatDuration(startISO: string, endISO: string): string {

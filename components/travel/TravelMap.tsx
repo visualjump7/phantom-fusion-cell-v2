@@ -9,11 +9,14 @@ import {
   flightArcsGeoJSON,
   airportDotsGeoJSON,
   locationPinsGeoJSON,
+  fetchGroundRoutes,
   eventsBounds,
   getEventCoordinates,
 } from "@/lib/travel-utils";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+
+const EMPTY_FC: GeoJSON.FeatureCollection = { type: "FeatureCollection", features: [] };
 
 interface TravelMapProps {
   events: ItineraryEvent[];
@@ -25,10 +28,21 @@ export function TravelMap({ events, selectedEventId, onSelectEvent }: TravelMapP
   const mapRef = useRef<MapRef>(null);
   const [is3D, setIs3D] = useState(true);
   const [loaded, setLoaded] = useState(false);
+  const [groundRoutes, setGroundRoutes] = useState<GeoJSON.FeatureCollection>(EMPTY_FC);
 
   const arcsGeo = flightArcsGeoJSON(events, selectedEventId);
   const airportsGeo = airportDotsGeoJSON(events);
   const pinsGeo = locationPinsGeoJSON(events, selectedEventId);
+
+  // Fetch driving routes for ground transport events
+  useEffect(() => {
+    if (!MAPBOX_TOKEN) return;
+    let alive = true;
+    fetchGroundRoutes(events, MAPBOX_TOKEN, selectedEventId ?? undefined).then((fc) => {
+      if (alive) setGroundRoutes(fc);
+    });
+    return () => { alive = false; };
+  }, [events, selectedEventId]);
 
   // Fit all events on load
   const fitAll = useCallback(() => {
@@ -115,6 +129,36 @@ export function TravelMap({ events, selectedEventId, onSelectEvent }: TravelMapP
             layout={{ "line-cap": "round", "line-join": "round" }}
           />
         </Source>
+
+        {/* Ground transport driving routes */}
+        {groundRoutes.features.length > 0 && (
+          <Source id="ground-routes" type="geojson" data={groundRoutes}>
+            <Layer
+              id="ground-routes-dim"
+              type="line"
+              filter={["!=", ["get", "selected"], true]}
+              paint={{
+                "line-color": EVENT_META.ground.color,
+                "line-opacity": 0.35,
+                "line-width": 2.5,
+                "line-dasharray": [3, 2],
+              }}
+              layout={{ "line-cap": "round", "line-join": "round" }}
+            />
+            <Layer
+              id="ground-routes-selected"
+              type="line"
+              filter={["==", ["get", "selected"], true]}
+              paint={{
+                "line-color": EVENT_META.ground.color,
+                "line-opacity": 0.85,
+                "line-width": 4,
+                "line-dasharray": [3, 2],
+              }}
+              layout={{ "line-cap": "round", "line-join": "round" }}
+            />
+          </Source>
+        )}
 
         {/* Airport dots */}
         <Source id="airports" type="geojson" data={airportsGeo}>
