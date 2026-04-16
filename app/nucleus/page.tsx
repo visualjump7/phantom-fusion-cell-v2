@@ -21,6 +21,7 @@ import { FocusedOverlay } from "@/components/nucleus/FocusedOverlay";
 import { NucleusProvider, useNucleus } from "@/components/nucleus/NucleusContext";
 import { getModuleContent } from "@/components/nucleus/module-content";
 import { usePreview } from "@/lib/preview-context";
+import { WelcomeOverlay } from "@/components/nucleus/WelcomeOverlay";
 
 export default function NucleusPage() {
   return (
@@ -123,6 +124,7 @@ function NucleusPageInner() {
       >
         {activeModule ? getModuleContent(activeModule) : null}
       </FocusedOverlay>
+      <WelcomeOverlay />
     </>
   );
 }

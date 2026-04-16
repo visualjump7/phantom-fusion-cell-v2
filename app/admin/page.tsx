@@ -98,22 +98,40 @@ export default function CommandCenterPage() {
       {isAdmin && (
         <div>
           <h2 className="mb-4 text-lg font-semibold text-foreground">Administration</h2>
-          <Link href="/admin/users">
-            <Card className="group cursor-pointer border-border transition-colors hover:bg-muted/30">
-              <CardContent className="flex items-center justify-between p-5">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-primary/10 p-2">
-                    <Users className="h-5 w-5 text-primary" />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Link href="/admin/onboard-principal">
+              <Card className="group cursor-pointer border-border transition-colors hover:bg-muted/30">
+                <CardContent className="flex items-center justify-between p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-emerald-500/15 p-2">
+                      <Users className="h-5 w-5 text-emerald-400" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">Onboard Principal</p>
+                      <p className="text-xs text-muted-foreground">Guided wizard: org, principal, modules, holdings</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-foreground">Team Management</p>
-                    <p className="text-xs text-muted-foreground">Invite users, manage roles and permissions</p>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                </CardContent>
+              </Card>
+            </Link>
+            <Link href="/admin/users">
+              <Card className="group cursor-pointer border-border transition-colors hover:bg-muted/30">
+                <CardContent className="flex items-center justify-between p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-primary/10 p-2">
+                      <Users className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">Team Management</p>
+                      <p className="text-xs text-muted-foreground">Invite users, manage roles and permissions</p>
+                    </div>
                   </div>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-              </CardContent>
-            </Card>
-          </Link>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                </CardContent>
+              </Card>
+            </Link>
+          </div>
         </div>
       )}
 

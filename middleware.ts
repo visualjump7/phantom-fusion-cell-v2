@@ -134,6 +134,11 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL("/admin", request.url));
       }
 
+      // /admin/onboard-principal: admin only
+      if (pathname === "/admin/onboard-principal" && !isAdmin) {
+        return NextResponse.redirect(new URL("/admin", request.url));
+      }
+
       // /admin/users: admin only
       if (pathname === "/admin/users" && !isAdmin) {
         return NextResponse.redirect(new URL("/admin", request.url));
