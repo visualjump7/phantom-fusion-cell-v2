@@ -69,6 +69,26 @@ export async function middleware(request: NextRequest) {
     const isStaff = isAdmin || userRole === "manager";
     const isTeam = isStaff || userRole === "viewer";
     const isDelegate = userRole === "delegate";
+    const isExecutive = userRole === "executive";
+
+    // ── LANDING REDIRECT ──
+    // Principals (executive) are nucleus-first by design: "/" (and "/dashboard"
+    // taken without an intentional nav) bounce to "/nucleus". Team members
+    // honor their profiles.default_landing preference when hitting "/".
+    if (pathname === "/") {
+      if (isExecutive) {
+        return NextResponse.redirect(new URL("/nucleus", request.url));
+      }
+      if (isStaff || userRole === "viewer") {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("default_landing")
+          .eq("id", user.id)
+          .maybeSingle();
+        const target = profile?.default_landing === "nucleus" ? "/nucleus" : "/dashboard";
+        return NextResponse.redirect(new URL(target, request.url));
+      }
+    }
 
     // ── DELEGATE ROUTE RESTRICTIONS ──
     if (isDelegate) {
