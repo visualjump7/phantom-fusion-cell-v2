@@ -14,12 +14,17 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
 import { useRole } from "@/lib/use-role";
 import { useThemePreferences } from "@/components/ThemeProvider";
+import {
+  getDefaultLanding,
+  setDefaultLanding,
+  type DefaultLanding,
+} from "@/lib/profile-service";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
 
 export default function SettingsPage() {
-  const { role, userName, userEmail, userId } = useRole();
+  const { role, userName, userEmail, userId, isStaff } = useRole();
   const { theme, density, setTheme, setDensity } = useThemePreferences();
 
   // Profile
@@ -27,6 +32,10 @@ export default function SettingsPage() {
   const [phone, setPhone] = useState("");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // Default landing (team members only)
+  const [defaultLanding, setDefaultLandingState] = useState<DefaultLanding>("dashboard");
+  const [savingLanding, setSavingLanding] = useState(false);
 
   // Password
   const [newPassword, setNewPassword] = useState("");
@@ -42,9 +51,25 @@ export default function SettingsPage() {
         setFullName(data.full_name || "");
         setPhone(data.phone || "");
       }
+      if (isStaff) {
+        const landing = await getDefaultLanding(userId);
+        setDefaultLandingState(landing);
+      }
     }
     loadProfile();
-  }, [userId]);
+  }, [userId, isStaff]);
+
+  async function handleDefaultLandingChange(next: DefaultLanding) {
+    if (!userId || next === defaultLanding) return;
+    setSavingLanding(true);
+    setDefaultLandingState(next);
+    const res = await setDefaultLanding(userId, next);
+    if (!res.success) {
+      // Revert on failure
+      setDefaultLandingState(defaultLanding);
+    }
+    setSavingLanding(false);
+  }
 
   const handleSaveProfile = async () => {
     if (!fullName.trim()) { setProfileMsg({ type: "error", text: "Name is required" }); return; }
@@ -301,6 +326,56 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
+          </motion.div>
+          )}
+
+          {isStaff && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
+            <Card className="border-border bg-card/60">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-2">
+                  <MonitorSmartphone className="h-4 w-4 text-primary" />
+                  <CardTitle className="text-base">Default Landing</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="mb-3 text-xs text-muted-foreground">
+                  Where you land after logging in. Dashboard is the full admin view; Nucleus is the principal-first orbital view.
+                </p>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <button
+                    onClick={() => handleDefaultLandingChange("dashboard")}
+                    disabled={savingLanding}
+                    className={`relative rounded-xl border-2 p-4 text-left transition-all disabled:opacity-60 ${
+                      defaultLanding === "dashboard" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                    }`}
+                  >
+                    <p className="text-sm font-semibold text-foreground">Dashboard</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Full-chrome admin workspace (default).</p>
+                    {defaultLanding === "dashboard" && (
+                      <div className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
+                        <CheckCircle className="h-3 w-3 text-primary-foreground" />
+                      </div>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleDefaultLandingChange("nucleus")}
+                    disabled={savingLanding}
+                    className={`relative rounded-xl border-2 p-4 text-left transition-all disabled:opacity-60 ${
+                      defaultLanding === "nucleus" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                    }`}
+                  >
+                    <p className="text-sm font-semibold text-foreground">Nucleus</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Orbital entry point with focused overlays.</p>
+                    {defaultLanding === "nucleus" && (
+                      <div className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
+                        <CheckCircle className="h-3 w-3 text-primary-foreground" />
+                      </div>
+                    )}
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
           </motion.div>
           )}
         </div>

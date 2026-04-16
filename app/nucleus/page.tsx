@@ -20,6 +20,7 @@ import { OrbitalNucleus } from "@/components/nucleus/OrbitalNucleus";
 import { FocusedOverlay } from "@/components/nucleus/FocusedOverlay";
 import { NucleusProvider, useNucleus } from "@/components/nucleus/NucleusContext";
 import { getModuleContent } from "@/components/nucleus/module-content";
+import { usePreview } from "@/lib/preview-context";
 
 export default function NucleusPage() {
   return (
@@ -33,6 +34,7 @@ function NucleusPageInner() {
   const router = useRouter();
   const { role, userId, isLoading: roleLoading } = useRole();
   const { orgId, isLoading: orgLoading } = useEffectiveOrgId();
+  const preview = usePreview();
   const { activeModule, openModule, close } = useNucleus();
 
   const [visibleModules, setVisibleModules] = useState<string[]>([]);
@@ -43,16 +45,23 @@ function NucleusPageInner() {
     [role]
   );
 
+  // Preview mode overrides: resolve against the previewed principal, always
+  // use the "principal" perspective, and bypass the admin "all modules" path.
+  const effectiveUserId = preview.active ? preview.principalId : userId;
+  const effectiveOrgForQuery = preview.active ? preview.orgId : orgId;
+  const effectiveRole = preview.active ? "executive" : role;
+  const effectiveIsAdminSide = preview.active ? false : isAdminSide;
+
   useEffect(() => {
     if (roleLoading || orgLoading) return;
-    if (!userId || !orgId) {
-      setVisibleModules(isAdminSide ? [...ALL_MODULE_KEYS] : []);
+    if (!effectiveUserId || !effectiveOrgForQuery) {
+      setVisibleModules(effectiveIsAdminSide ? [...ALL_MODULE_KEYS] : []);
       setLoading(false);
       return;
     }
 
     let cancelled = false;
-    getVisibleModulesForUser(orgId, userId, role)
+    getVisibleModulesForUser(effectiveOrgForQuery, effectiveUserId, effectiveRole)
       .then((keys) => {
         if (!cancelled) {
           setVisibleModules(keys);
@@ -62,7 +71,7 @@ function NucleusPageInner() {
       .catch((err) => {
         if (!cancelled) {
           console.error("[nucleus] getVisibleModulesForUser failed", err);
-          setVisibleModules(isAdminSide ? [...ALL_MODULE_KEYS] : []);
+          setVisibleModules(effectiveIsAdminSide ? [...ALL_MODULE_KEYS] : []);
           setLoading(false);
         }
       });
@@ -70,7 +79,14 @@ function NucleusPageInner() {
     return () => {
       cancelled = true;
     };
-  }, [roleLoading, orgLoading, userId, orgId, role, isAdminSide]);
+  }, [
+    roleLoading,
+    orgLoading,
+    effectiveUserId,
+    effectiveOrgForQuery,
+    effectiveRole,
+    effectiveIsAdminSide,
+  ]);
 
   function handleModuleClick(key: ModuleKey) {
     const meta = MODULE_METADATA[key];
@@ -98,7 +114,7 @@ function NucleusPageInner() {
       <OrbitalNucleus
         visibleModules={visibleModules}
         onModuleClick={handleModuleClick}
-        mode={isAdminSide ? "admin" : "principal"}
+        mode={preview.active ? "preview" : effectiveIsAdminSide ? "admin" : "principal"}
       />
       <FocusedOverlay
         open={!!activeModule}

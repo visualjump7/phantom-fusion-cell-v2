@@ -6,6 +6,9 @@ import { ActivePrincipalProvider } from "@/lib/use-active-principal";
 import { getServerThemePreferences } from "@/lib/theme-preferences-server";
 import { BottomNavBar } from "@/components/BottomNavBar";
 import { MapModeProvider } from "@/lib/use-map-mode";
+import { PreviewProvider } from "@/lib/preview-context";
+import { PreviewBanner } from "@/components/admin/PreviewBanner";
+import { PreviewRouteGuard } from "@/components/admin/PreviewRouteGuard";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -38,8 +41,12 @@ export default async function RootLayout({
         <ThemeProvider initialTheme={theme} initialDensity={density}>
           <MapModeProvider>
             <ActivePrincipalProvider>
-              {children}
-              <BottomNavBar />
+              <PreviewProvider>
+                <PreviewBanner />
+                <PreviewRouteGuard />
+                {children}
+                <BottomNavBar />
+              </PreviewProvider>
             </ActivePrincipalProvider>
           </MapModeProvider>
         </ThemeProvider>

@@ -30,6 +30,7 @@ import { useThemePreferences } from "@/components/ThemeProvider";
 import { GlobalClientBanner } from "@/components/admin/shared/GlobalClientBanner";
 import { SearchBar, SearchTrigger } from "@/components/search/SearchBar";
 import { useEffectiveOrgId } from "@/lib/use-active-principal";
+import { AdminToolbar } from "@/components/admin/AdminToolbar";
 
 interface NavItem {
   name: string;
@@ -150,6 +151,7 @@ export function Navbar() {
                 <SearchTrigger onClick={() => setSearchOpen(true)} />
               </div>
             )}
+            <AdminToolbar />
             {isStaff && (
               <div className="relative hidden md:block" ref={adminDropdownRef}>
                 <button
