@@ -33,11 +33,13 @@ export function EventCard({ event, index, isSelected, onClick, onEdit, onDelete 
   const duration = formatDuration(event.startTime, event.endTime);
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
       className={`
-        group relative w-full text-left rounded-xl border p-4 transition-all duration-300
+        group relative w-full text-left rounded-xl border p-4 transition-all duration-300 cursor-pointer
         ${isSelected
           ? "border-border bg-card shadow-[0_0_16px_-4px] shadow-primary/8"
           : "border-border/60 bg-card/40 hover:border-border hover:bg-card/70"
@@ -100,7 +102,7 @@ export function EventCard({ event, index, isSelected, onClick, onEdit, onDelete 
           </p>
         )}
       </div>
-    </button>
+    </div>
   );
 }
 
