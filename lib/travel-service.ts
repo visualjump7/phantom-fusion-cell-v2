@@ -266,6 +266,18 @@ export async function uploadTravelDocument(input: {
   return { success: true, id: data.id };
 }
 
+export async function setDocumentAiAccessible(
+  id: string,
+  accessible: boolean
+): Promise<{ success: boolean; error?: string }> {
+  const { error } = await db
+    .from("travel_documents")
+    .update({ ai_accessible: accessible })
+    .eq("id", id);
+  if (error) return { success: false, error: error.message };
+  return { success: true };
+}
+
 export async function getSignedDocumentUrl(
   storagePath: string
 ): Promise<string | null> {

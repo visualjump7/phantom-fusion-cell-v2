@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  fetchDocumentIndex,
+  formatDocumentContext,
+  type DocumentSummary,
+} from "@/lib/document-index";
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
@@ -219,6 +224,22 @@ async function assembleAccountContext(
         context += ` | Status: ${c.status}\n`;
       }
     }
+    context += `\n`;
+  }
+
+  // === DOCUMENTS (Phase 9) ===
+  try {
+    const docs = await fetchDocumentIndex(fetchTable, organizationId);
+    if (docs.length > 0) {
+      context += formatDocumentContext(docs);
+      // Tuck the document list onto the context string so the route handler
+      // can read it back for audit logging without re-querying.
+      (assembleAccountContext as unknown as {
+        _lastDocs?: DocumentSummary[];
+      })._lastDocs = docs;
+    }
+  } catch (err) {
+    console.warn("[search] document index failed", err);
   }
 
   return context;
@@ -238,6 +259,9 @@ RULES:
 8. Respond as the search system itself: 'Found X across Y projects.'
 9. For expense queries, search BOTH budget line items AND bills. Budget line items have expense category names and descriptions. Bills have title, category, and payee fields. Search all text fields for relevant keywords.
 10. For time-based queries, use the monthly breakdown data (jan-dec) in budget line items to calculate quarterly or seasonal totals.
+11. For document queries ("show me", "find", "pull up", "what documents do I have for X"), respond with a clean list of relevant docs from the DOCUMENTS section, each formatted as a tappable link:
+   - [Document title](link) — brief context (one line)
+   Do not summarize document contents unless explicitly asked — the principal opens the document themselves to read it. Include these as items in the "breakdown" array with the "label" as "[Title](link)" and a short "detail" line.
 
 RESPONSE FORMAT (MUST be valid JSON, no markdown fences):
 {
@@ -260,6 +284,32 @@ Keep breakdown to 1-10 items. Each should reference the specific project when ap
 
 ACCOUNT DATA:
 ${context}`;
+}
+
+async function logDocumentQuery(
+  supabaseUrl: string,
+  supabaseKey: string,
+  organizationId: string,
+  query: string,
+  documentIds: string[]
+): Promise<void> {
+  await fetch(`${supabaseUrl}/rest/v1/audit_log`, {
+    method: "POST",
+    headers: {
+      apikey: supabaseKey,
+      Authorization: `Bearer ${supabaseKey}`,
+      "Content-Type": "application/json",
+      Prefer: "return=minimal",
+    },
+    body: JSON.stringify({
+      organization_id: organizationId,
+      action: "ai.document_query",
+      metadata: {
+        query_text: query,
+        document_ids_returned: documentIds,
+      },
+    }),
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -367,6 +417,30 @@ export async function POST(request: NextRequest) {
                 }).format(item.value)
               : null,
         }));
+      }
+
+      // Audit log for document queries — fires when the response breakdown
+      // references any documents from the indexed set.
+      const docs = (assembleAccountContext as unknown as {
+        _lastDocs?: DocumentSummary[];
+      })._lastDocs;
+      if (docs && result.breakdown && Array.isArray(result.breakdown)) {
+        const referencedIds = docs
+          .filter((d) =>
+            result.breakdown.some((b: { label?: string }) =>
+              b.label && b.label.includes(d.title)
+            )
+          )
+          .map((d) => d.id);
+        if (referencedIds.length > 0) {
+          await logDocumentQuery(
+            supabaseUrl,
+            supabaseKey,
+            organizationId,
+            query,
+            referencedIds
+          ).catch(() => {});
+        }
       }
 
       return NextResponse.json({
