@@ -167,45 +167,50 @@ function DesktopOrbit({
       {/* Central orb */}
       <CenterOrb onClick={onOrbClick} centerLogoSrc={centerLogoSrc} reduce={reduce} />
 
-      {/* Module nodes */}
+      {/* Module nodes — positioning is on the outer <div> so Framer Motion's
+          scale transform on the inner motion.button doesn't clobber it. */}
       {modules.map((m, i) => {
         const rad = (positions[i] * Math.PI) / 180;
         const x = Math.cos(rad) * r;
         const y = Math.sin(rad) * r;
         return (
-          <motion.button
+          <div
             key={m.key}
-            type="button"
-            onClick={() => onModuleClick(m.key)}
-            initial={reduce ? { opacity: 1 } : { opacity: 0, scale: 0.7 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{
-              delay: reduce ? 0 : 0.08 * i,
-              duration: 0.35,
-              ease: "easeOut",
-            }}
-            whileHover={{ scale: 1.06 }}
-            whileTap={{ scale: 0.97 }}
-            className="absolute flex flex-col items-center gap-2 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
+            className="absolute"
             style={{
               left: "50%",
               top: "50%",
               transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
             }}
-            aria-label={`Open ${m.label}`}
           >
-            <span
-              className="flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-black/80 backdrop-blur-sm transition-[box-shadow,border-color] duration-200 hover:border-emerald-400/40"
-              style={{
-                boxShadow: `0 0 24px ${m.glow}`,
+            <motion.button
+              type="button"
+              onClick={() => onModuleClick(m.key)}
+              initial={reduce ? { opacity: 1 } : { opacity: 0, scale: 0.7 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{
+                delay: reduce ? 0 : 0.08 * i,
+                duration: 0.35,
+                ease: "easeOut",
               }}
+              whileHover={{ scale: 1.06 }}
+              whileTap={{ scale: 0.97 }}
+              className="flex flex-col items-center gap-2 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
+              aria-label={`Open ${m.label}`}
             >
-              <m.icon className="h-6 w-6 text-white" aria-hidden />
-            </span>
-            <span className="whitespace-nowrap text-xs font-medium text-white/80">
-              {m.label}
-            </span>
-          </motion.button>
+              <span
+                className="flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-black/80 backdrop-blur-sm transition-[box-shadow,border-color] duration-200 hover:border-emerald-400/40"
+                style={{
+                  boxShadow: `0 0 24px ${m.glow}`,
+                }}
+              >
+                <m.icon className="h-6 w-6 text-white" aria-hidden />
+              </span>
+              <span className="whitespace-nowrap text-xs font-medium text-white/80">
+                {m.label}
+              </span>
+            </motion.button>
+          </div>
         );
       })}
     </div>
