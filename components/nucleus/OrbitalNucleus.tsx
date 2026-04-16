@@ -139,12 +139,32 @@ function DesktopOrbit({
         style={{ boxShadow: "inset 0 0 60px rgba(74,222,128,0.04)" }}
       />
 
-      {/* Orbit lines */}
+      {/* Orbit lines — dashed mint energy lines flowing outward from the core. */}
       <svg
         aria-hidden
         className="pointer-events-none absolute inset-0 h-full w-full"
         viewBox="-360 -360 720 720"
       >
+        <style>{`
+          @keyframes fc-nucleus-flow {
+            from { stroke-dashoffset: 0; }
+            to   { stroke-dashoffset: -48; }
+          }
+          @keyframes fc-nucleus-line-fade {
+            from { opacity: 0; }
+            to   { opacity: 0.85; }
+          }
+          .fc-nucleus-line {
+            stroke-dasharray: 4 8;
+            opacity: 0;
+            animation:
+              fc-nucleus-line-fade 900ms cubic-bezier(.22,.61,.36,1) forwards,
+              fc-nucleus-flow 3.6s linear infinite;
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .fc-nucleus-line { animation: none; opacity: 0.6; }
+          }
+        `}</style>
         {modules.map((m, i) => {
           const rad = (positions[i] * Math.PI) / 180;
           const x2 = Math.cos(rad) * r;
@@ -152,13 +172,17 @@ function DesktopOrbit({
           return (
             <line
               key={m.key}
+              className="fc-nucleus-line"
               x1={0}
               y1={0}
               x2={x2}
               y2={y2}
               stroke={m.accent}
-              strokeOpacity={0.15}
-              strokeWidth={1}
+              strokeOpacity={0.55}
+              strokeWidth={1.25}
+              style={{
+                animationDelay: `${i * 120 + 600}ms, ${i * 400}ms`,
+              }}
             />
           );
         })}
@@ -283,55 +307,109 @@ function CenterOrb({
   compact?: boolean;
 }) {
   const size = compact ? 96 : 140;
+  const positionClass = compact
+    ? "relative flex items-center justify-center"
+    : "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2";
+
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label="Open Advanced Search"
-      className={
-        compact
-          ? "relative flex items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
-          : "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60"
-      }
+    <div
+      className={`${positionClass} pointer-events-none`}
       style={{ width: size, height: size }}
     >
+      {/* Ripple rings — three staggered pulses expanding outward. */}
       {!reduce && (
         <>
           <motion.span
             aria-hidden
-            className="absolute inset-0 rounded-full"
-            style={{ boxShadow: "0 0 40px rgba(74,222,128,0.35)" }}
-            animate={{ scale: [1, 1.15, 1], opacity: [0.6, 0.2, 0.6] }}
-            transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute rounded-full border border-emerald-400/40"
+            style={{ inset: -18 }}
+            animate={{ scale: [0.85, 1.35], opacity: [0.55, 0] }}
+            transition={{ duration: 3.4, repeat: Infinity, ease: "easeOut" }}
           />
           <motion.span
             aria-hidden
-            className="absolute inset-0 rounded-full"
-            style={{ boxShadow: "0 0 80px rgba(74,222,128,0.2)" }}
-            animate={{ scale: [1, 1.25, 1], opacity: [0.4, 0.1, 0.4] }}
+            className="absolute rounded-full border border-emerald-400/35"
+            style={{ inset: -18 }}
+            animate={{ scale: [0.85, 1.35], opacity: [0.45, 0] }}
             transition={{
-              duration: 2.4,
+              duration: 3.4,
               repeat: Infinity,
-              delay: 1.2,
-              ease: "easeInOut",
+              ease: "easeOut",
+              delay: 1.1,
+            }}
+          />
+          <motion.span
+            aria-hidden
+            className="absolute rounded-full border border-emerald-400/30"
+            style={{ inset: -18 }}
+            animate={{ scale: [0.85, 1.35], opacity: [0.35, 0] }}
+            transition={{
+              duration: 3.4,
+              repeat: Infinity,
+              ease: "easeOut",
+              delay: 2.2,
             }}
           />
         </>
       )}
-      <span className="relative flex h-full w-full items-center justify-center rounded-full border border-emerald-400/40 bg-gradient-to-br from-emerald-500/20 via-emerald-400/10 to-black">
+
+      {/* Soft radial glow underneath the core — breathes with the pulse. */}
+      {!reduce && (
+        <motion.span
+          aria-hidden
+          className="absolute rounded-full"
+          style={{
+            inset: -24,
+            background:
+              "radial-gradient(circle at 50% 50%, rgba(74,222,128,0.35) 0%, rgba(74,222,128,0.15) 38%, transparent 70%)",
+            filter: "blur(6px)",
+          }}
+          animate={{ scale: [1, 1.08, 1], opacity: [0.85, 1, 0.85] }}
+          transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+        />
+      )}
+
+      {/* The orb itself — radial-gradient fill, scale-pulse. */}
+      <motion.button
+        type="button"
+        onClick={onClick}
+        aria-label="Open Advanced Search"
+        className="pointer-events-auto relative flex h-full w-full items-center justify-center rounded-full border border-emerald-400/50 outline-none transition-[filter] duration-200 focus-visible:ring-2 focus-visible:ring-emerald-400/60 hover:border-emerald-400/80"
+        style={{
+          background:
+            "radial-gradient(circle at 50% 50%, rgba(74,222,128,0.85) 0%, rgba(74,222,128,0.35) 28%, rgba(74,222,128,0.08) 58%, rgba(0,0,0,0.9) 82%)",
+          boxShadow:
+            "0 0 40px rgba(74,222,128,0.35), inset 0 0 30px rgba(74,222,128,0.25)",
+        }}
+        animate={
+          reduce
+            ? undefined
+            : { scale: [1, 1.06, 1], opacity: [0.92, 1, 0.92] }
+        }
+        transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+        whileHover={{ scale: 1.04 }}
+        whileTap={{ scale: 0.97 }}
+      >
         {centerLogoSrc ? (
           <Image
             src={centerLogoSrc}
             alt="Fusion Cell"
             width={compact ? 40 : 56}
             height={compact ? 40 : 56}
-            className="opacity-90"
+            className="relative opacity-95"
           />
         ) : (
-          <Search className={compact ? "h-6 w-6 text-emerald-300" : "h-8 w-8 text-emerald-300"} aria-hidden />
+          <Search
+            className={
+              compact
+                ? "relative h-6 w-6 text-white drop-shadow-[0_0_8px_rgba(74,222,128,0.9)]"
+                : "relative h-8 w-8 text-white drop-shadow-[0_0_10px_rgba(74,222,128,0.9)]"
+            }
+            aria-hidden
+          />
         )}
-      </span>
-    </button>
+      </motion.button>
+    </div>
   );
 }
 

@@ -6,8 +6,9 @@ const db = supabase as any;
 export type DefaultLanding = "dashboard" | "nucleus";
 
 /**
- * Returns the per-admin landing preference. Defaults to "dashboard" when no
- * row or no value is stored.
+ * Returns the per-admin landing preference. New admins default to the
+ * Nucleus; anyone who explicitly sets "dashboard" in Settings keeps that.
+ * The column's CHECK constraint guarantees values are one of the two.
  */
 export async function getDefaultLanding(userId: string): Promise<DefaultLanding> {
   const { data, error } = await db
@@ -18,11 +19,11 @@ export async function getDefaultLanding(userId: string): Promise<DefaultLanding>
 
   if (error || !data) {
     if (error) console.error("[getDefaultLanding]", error);
-    return "dashboard";
+    return "nucleus";
   }
 
-  const value = data.default_landing as DefaultLanding | null;
-  return value === "nucleus" ? "nucleus" : "dashboard";
+  // Only an explicit "dashboard" overrides the nucleus default.
+  return data.default_landing === "dashboard" ? "dashboard" : "nucleus";
 }
 
 /**

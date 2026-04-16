@@ -72,9 +72,12 @@ export async function middleware(request: NextRequest) {
     const isExecutive = userRole === "executive";
 
     // ── LANDING REDIRECT ──
-    // Principals (executive) are nucleus-first by design: "/" (and "/dashboard"
-    // taken without an intentional nav) bounce to "/nucleus". Team members
-    // honor their profiles.default_landing preference when hitting "/".
+    // Principals (executive) are nucleus-first by design: "/" bounces to
+    // "/nucleus" unconditionally.
+    //
+    // Team members (admin / manager / viewer) also default to "/nucleus" on
+    // first login. Only an explicit profiles.default_landing = 'dashboard'
+    // sends them to /dashboard — toggle lives in Settings.
     if (pathname === "/") {
       if (isExecutive) {
         return NextResponse.redirect(new URL("/nucleus", request.url));
@@ -85,7 +88,7 @@ export async function middleware(request: NextRequest) {
           .select("default_landing")
           .eq("id", user.id)
           .maybeSingle();
-        const target = profile?.default_landing === "nucleus" ? "/nucleus" : "/dashboard";
+        const target = profile?.default_landing === "dashboard" ? "/dashboard" : "/nucleus";
         return NextResponse.redirect(new URL(target, request.url));
       }
     }
