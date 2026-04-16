@@ -1,17 +1,5 @@
 "use client";
 
-/**
- * Fusion Cell — Travel: Trip Detail
- *
- * Three-panel itinerary view:
- * - Left: chronological timeline of all events (flights, ground, hotels, reservations)
- * - Center: Mapbox map with arcs for flights, pins for everything else
- * - Right: tabbed form to add new events
- *
- * Phase 1: events stored in local state (hydrated from sample data).
- * Phase 2: real Supabase CRUD.
- */
-
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -20,30 +8,41 @@ import { Navbar } from "@/components/Navbar";
 import { ItineraryTimeline } from "@/components/travel/ItineraryTimeline";
 import { TravelMap } from "@/components/travel/TravelMap";
 import { AddEventForm } from "@/components/travel/AddEventForm";
-import { getSampleTrip } from "@/lib/sample-trips";
+import { useTravel } from "@/lib/travel-store";
 import type { ItineraryEvent } from "@/lib/travel-types";
 
 export default function TripDetailPage() {
   const { tripId } = useParams<{ tripId: string }>();
-  const sampleTrip = getSampleTrip(tripId);
+  const { getTrip, addEvent, updateEvent, deleteEvent } = useTravel();
+  const trip = getTrip(tripId);
 
-  const [events, setEvents] = useState<ItineraryEvent[]>(
-    sampleTrip?.events ?? []
-  );
+  const events = trip?.events ?? [];
+  const tripName = trip?.name ?? "Untitled Trip";
+
   const [selectedEventId, setSelectedEventId] = useState<string | null>(
     events[0]?.id ?? null
   );
-
-  const tripName = sampleTrip?.name ?? "Untitled Trip";
+  const [editingEvent, setEditingEvent] = useState<ItineraryEvent | null>(null);
 
   function handleAddEvent(event: ItineraryEvent) {
-    setEvents((prev) => {
-      const updated = [...prev, event].sort(
-        (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-      );
-      return updated;
-    });
+    addEvent(tripId, event);
     setSelectedEventId(event.id);
+  }
+
+  function handleUpdateEvent(eventId: string, event: ItineraryEvent) {
+    updateEvent(tripId, eventId, event);
+    setEditingEvent(null);
+  }
+
+  function handleDeleteEvent(eventId: string) {
+    deleteEvent(tripId, eventId);
+    if (selectedEventId === eventId) {
+      setSelectedEventId(events.find((e) => e.id !== eventId)?.id ?? null);
+    }
+  }
+
+  function handleEditEvent(event: ItineraryEvent) {
+    setEditingEvent(event);
   }
 
   return (
@@ -72,6 +71,8 @@ export default function TripDetailPage() {
             events={events}
             selectedEventId={selectedEventId}
             onSelectEvent={setSelectedEventId}
+            onEditEvent={handleEditEvent}
+            onDeleteEvent={handleDeleteEvent}
           />
         </div>
 
@@ -84,9 +85,15 @@ export default function TripDetailPage() {
           />
         </div>
 
-        {/* Right: add event form */}
+        {/* Right: add/edit event form */}
         <div className="hidden lg:flex flex-col border-l border-border overflow-hidden bg-background">
-          <AddEventForm tripId={tripId} onAddEvent={handleAddEvent} />
+          <AddEventForm
+            tripId={tripId}
+            onAddEvent={handleAddEvent}
+            onUpdateEvent={handleUpdateEvent}
+            editingEvent={editingEvent}
+            onCancelEdit={() => setEditingEvent(null)}
+          />
         </div>
       </div>
 
@@ -97,6 +104,8 @@ export default function TripDetailPage() {
           events={events}
           selectedEventId={selectedEventId}
           onSelectEvent={setSelectedEventId}
+          onEditEvent={handleEditEvent}
+          onDeleteEvent={handleDeleteEvent}
         />
       </div>
     </div>

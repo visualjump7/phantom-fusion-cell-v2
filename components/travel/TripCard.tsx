@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { MapPin, Plane, Car, Building2, Utensils, ChevronRight } from "lucide-react";
+import { MapPin, Plane, Car, Building2, Utensils, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import type { Trip, EventType } from "@/lib/travel-types";
 import { EVENT_META } from "@/lib/travel-types";
 import { formatDateRange } from "@/lib/travel-utils";
 
 interface TripCardProps {
   trip: Trip;
+  onEdit?: (trip: Trip) => void;
+  onDelete?: (trip: Trip) => void;
 }
 
 const ICONS: Record<EventType, typeof Plane> = {
@@ -17,7 +19,7 @@ const ICONS: Record<EventType, typeof Plane> = {
   reservation: Utensils,
 };
 
-export function TripCard({ trip }: TripCardProps) {
+export function TripCard({ trip, onEdit, onDelete }: TripCardProps) {
   const counts = trip.events.reduce((acc, e) => {
     acc[e.type] = (acc[e.type] || 0) + 1;
     return acc;
@@ -37,7 +39,29 @@ export function TripCard({ trip }: TripCardProps) {
           </h3>
           <p className="text-xs text-muted-foreground mt-1">{dateRange}</p>
         </div>
-        <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors mt-1" />
+        <div className="flex items-center gap-1">
+          {onEdit && (
+            <button
+              type="button"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEdit(trip); }}
+              className="p-1.5 rounded-md text-muted-foreground/0 group-hover:text-muted-foreground hover:!text-foreground hover:bg-muted/40 transition-all"
+              aria-label="Edit trip"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+          )}
+          {onDelete && (
+            <button
+              type="button"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(trip); }}
+              className="p-1.5 rounded-md text-muted-foreground/0 group-hover:text-muted-foreground hover:!text-destructive hover:bg-destructive/10 transition-all"
+              aria-label="Delete trip"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          )}
+          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+        </div>
       </div>
 
       {/* Event type counts */}

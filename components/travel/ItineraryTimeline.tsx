@@ -10,9 +10,11 @@ interface ItineraryTimelineProps {
   events: ItineraryEvent[];
   selectedEventId: string | null;
   onSelectEvent: (id: string) => void;
+  onEditEvent?: (event: ItineraryEvent) => void;
+  onDeleteEvent?: (eventId: string) => void;
 }
 
-export function ItineraryTimeline({ tripName, events, selectedEventId, onSelectEvent }: ItineraryTimelineProps) {
+export function ItineraryTimeline({ tripName, events, selectedEventId, onSelectEvent, onEditEvent, onDeleteEvent }: ItineraryTimelineProps) {
   // Count events by type
   const counts = events.reduce((acc, e) => {
     acc[e.type] = (acc[e.type] || 0) + 1;
@@ -64,6 +66,8 @@ export function ItineraryTimeline({ tripName, events, selectedEventId, onSelectE
             index={i}
             isSelected={event.id === selectedEventId}
             onClick={() => onSelectEvent(event.id)}
+            onEdit={onEditEvent}
+            onDelete={onDeleteEvent}
           />
         ))}
 

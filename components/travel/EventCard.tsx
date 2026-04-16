@@ -1,6 +1,6 @@
 "use client";
 
-import { Plane, Car, Building2, Utensils } from "lucide-react";
+import { Plane, Car, Building2, Utensils, Pencil, Trash2 } from "lucide-react";
 import type { ItineraryEvent, EventType } from "@/lib/travel-types";
 import { EVENT_META } from "@/lib/travel-types";
 import { formatDuration, formatTime, formatDate } from "@/lib/travel-utils";
@@ -10,6 +10,8 @@ interface EventCardProps {
   index: number;
   isSelected: boolean;
   onClick: () => void;
+  onEdit?: (event: ItineraryEvent) => void;
+  onDelete?: (eventId: string) => void;
 }
 
 const ICONS: Record<EventType, typeof Plane> = {
@@ -25,7 +27,7 @@ const STATUS_DOT: Record<string, string> = {
   completed: "bg-muted-foreground/40",
 };
 
-export function EventCard({ event, index, isSelected, onClick }: EventCardProps) {
+export function EventCard({ event, index, isSelected, onClick, onEdit, onDelete }: EventCardProps) {
   const meta = EVENT_META[event.type];
   const Icon = ICONS[event.type];
   const duration = formatDuration(event.startTime, event.endTime);
@@ -35,7 +37,7 @@ export function EventCard({ event, index, isSelected, onClick }: EventCardProps)
       type="button"
       onClick={onClick}
       className={`
-        relative w-full text-left rounded-xl border p-4 transition-all duration-300
+        group relative w-full text-left rounded-xl border p-4 transition-all duration-300
         ${isSelected
           ? "border-border bg-card shadow-[0_0_16px_-4px] shadow-primary/8"
           : "border-border/60 bg-card/40 hover:border-border hover:bg-card/70"
@@ -56,6 +58,26 @@ export function EventCard({ event, index, isSelected, onClick }: EventCardProps)
         </span>
         <div className={`h-1.5 w-1.5 rounded-full ml-1 ${STATUS_DOT[event.status]}`} />
         <span className="ml-auto text-[11px] text-muted-foreground">{duration}</span>
+        {onEdit && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onEdit(event); }}
+            className="p-1 rounded text-muted-foreground/0 group-hover:text-muted-foreground hover:!text-foreground transition-all"
+            aria-label="Edit event"
+          >
+            <Pencil className="h-3 w-3" />
+          </button>
+        )}
+        {onDelete && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onDelete(event.id); }}
+            className="p-1 rounded text-muted-foreground/0 group-hover:text-muted-foreground hover:!text-destructive transition-all"
+            aria-label="Delete event"
+          >
+            <Trash2 className="h-3 w-3" />
+          </button>
+        )}
       </div>
 
       {/* Content — varies by type */}
