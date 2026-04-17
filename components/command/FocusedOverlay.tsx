@@ -14,7 +14,7 @@
 
 import { useEffect, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useCommand } from "./CommandContext";
 import { OverlayNavMenu } from "./OverlayNavMenu";
 
@@ -60,7 +60,11 @@ export function FocusedOverlay({
   }, [open]);
 
   const headerLabel = navStack[navStack.length - 1]?.label ?? moduleLabel;
-  const showBack = allowInternalBack && canGoBack;
+  const canPopInternal = allowInternalBack && canGoBack;
+  // Single left-arrow affordance: pop the internal nav stack if there's one,
+  // otherwise close the overlay and return to the command page.
+  const handleBack = canPopInternal ? pop : onClose;
+  const backAriaLabel = canPopInternal ? "Back" : "Back to command";
 
   return (
     <AnimatePresence>
@@ -98,29 +102,19 @@ export function FocusedOverlay({
             {/* Header */}
             <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-3 md:px-6 md:py-4">
               <div className="flex items-center gap-3">
-                <OverlayNavMenu />
-                {showBack && (
-                  <button
-                    type="button"
-                    onClick={pop}
-                    aria-label="Back"
-                    className="flex h-9 w-9 items-center justify-center rounded-full text-white/70 transition hover:bg-white/5 hover:text-white"
-                  >
-                    <ArrowLeft className="h-5 w-5" />
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  aria-label={backAriaLabel}
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-white/70 transition hover:bg-white/5 hover:text-white"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
                 <h2 className="text-base font-semibold tracking-tight md:text-lg">
                   {headerLabel}
                 </h2>
               </div>
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Close"
-                className="flex h-9 w-9 items-center justify-center rounded-full text-white/70 transition hover:bg-white/5 hover:text-white"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <OverlayNavMenu align="right" />
             </div>
 
             {/* Body — scrollable */}

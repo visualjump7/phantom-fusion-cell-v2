@@ -78,7 +78,15 @@ const adminNavItems: NavItem[] = [
   { name: "Budget Editor", href: "/budget-editor", icon: FileSpreadsheet },
 ];
 
-export function OverlayNavMenu() {
+export function OverlayNavMenu({
+  align = "left",
+}: {
+  /** Side of the trigger the dropdown panel opens toward. Default "left"
+   *  opens the panel downward-right (anchored at left:0); "right" opens it
+   *  downward-left (anchored at right:0), which is what we want when the
+   *  hamburger is placed on the right edge of the overlay header. */
+  align?: "left" | "right";
+} = {}) {
   const router = useRouter();
   const pathname = usePathname();
   const { close: closeOverlay } = useCommand();
@@ -150,7 +158,10 @@ export function OverlayNavMenu() {
       {open && (
         <div
           role="menu"
-          className="absolute left-0 top-full z-[60] mt-2 w-64 rounded-xl border border-white/10 bg-neutral-900/95 py-1 shadow-2xl backdrop-blur-md"
+          className={cn(
+            "absolute top-full z-[60] mt-2 w-64 rounded-xl border border-white/10 bg-neutral-900/95 py-1 shadow-2xl backdrop-blur-md",
+            align === "right" ? "right-0" : "left-0"
+          )}
         >
           {visibleMain.map((item) => {
             const isActive = pathname.startsWith(item.href);
