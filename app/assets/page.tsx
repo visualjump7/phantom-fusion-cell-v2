@@ -137,6 +137,20 @@ export default function AssetsPage() {
     setShowModal(true);
   };
 
+  // Deep-link: /assets?create=1 auto-opens the add-project modal on arrival
+  // (used by the Command-page FAB). Reads from window.location.search to
+  // keep the page client-rendered without a useSearchParams Suspense
+  // boundary. Strip the param once consumed so a refresh doesn't reopen.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("create") !== "1") return;
+    openAddModal();
+    const url = new URL(window.location.href);
+    url.searchParams.delete("create");
+    window.history.replaceState({}, "", url.toString());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const openEditModal = (asset: Asset) => {
     setEditingAsset(asset);
     setFormName(asset.name);

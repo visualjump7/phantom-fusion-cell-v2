@@ -118,6 +118,20 @@ export default function AdminMessagesPage() {
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
   const [isSending, setIsSending] = useState(false);
 
+  // Deep-link: /admin/messages?compose=1 auto-opens the compose form on
+  // arrival (used by the Command-page FAB). Reads from window.location.search
+  // to avoid useSearchParams' Suspense-boundary requirement. Strip the
+  // param once consumed so a refresh doesn't reopen the form.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("compose") !== "1") return;
+    setEditingMessage(null);
+    setShowCompose(true);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("compose");
+    window.history.replaceState({}, "", url.toString());
+  }, []);
+
   // Compose fields
   const [composeType, setComposeType] = useState("decision");
   const [composeTitle, setComposeTitle] = useState("");

@@ -24,6 +24,7 @@ import { usePreview } from "@/lib/preview-context";
 import { WelcomeOverlay } from "@/components/command/WelcomeOverlay";
 import { fetchMessages } from "@/lib/message-service";
 import { SearchBar } from "@/components/search/SearchBar";
+import { CreateActionFAB } from "@/components/command/CreateActionFAB";
 
 export default function CommandPage() {
   return (
@@ -163,6 +164,7 @@ function CommandPageInner() {
           onClose={() => setSearchOpen(false)}
         />
       )}
+      <CreateActionFAB />
       <WelcomeOverlay />
     </>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, MapPin } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
@@ -17,6 +17,21 @@ export default function TravelListPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
   const [deletingTrip, setDeletingTrip] = useState<Trip | null>(null);
+
+  // Deep-link: /calendar?create=1 auto-opens the new-trip modal on arrival
+  // (used by the Command-page FAB). Reads from window.location.search to
+  // keep the whole page client-rendered without the useSearchParams
+  // Suspense-boundary requirement. Strip the param once consumed so a
+  // refresh doesn't reopen the modal.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("create") !== "1") return;
+    setEditingTrip(null);
+    setModalOpen(true);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("create");
+    window.history.replaceState({}, "", url.toString());
+  }, []);
 
   function handleSaveTrip(trip: Trip) {
     if (editingTrip) {
