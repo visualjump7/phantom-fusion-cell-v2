@@ -63,7 +63,7 @@ async function syncSourceViaApi(sourceId: string): Promise<{
     };
   }
 }
-import { useNucleus } from "@/components/nucleus/NucleusContext";
+import { useCommand } from "@/components/command/CommandContext";
 
 type AnyEvent =
   | { kind: "external"; e: ExternalEvent }
@@ -108,7 +108,7 @@ export function CalendarModule() {
   const { userId, isStaff } = useRole();
   const preview = usePreview();
   const { blocked, guardClick } = useActionGuard();
-  const { close } = useNucleus();
+  const { close } = useCommand();
 
   const principalId = preview.active ? preview.principalId : userId;
 

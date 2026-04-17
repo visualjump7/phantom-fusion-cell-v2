@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * NucleusContext — shared state between OrbitalNucleus and FocusedOverlay.
+ * CommandContext — shared state between OrbitalCommand and FocusedOverlay.
  *
  * Responsibilities:
  *   - Track which module is currently open inside the overlay.
@@ -28,7 +28,7 @@ export interface ModuleNavEntry {
   label?: string; // optional header label override
 }
 
-export interface NucleusContextValue {
+export interface CommandContextValue {
   activeModule: ModuleKey | null;
   navStack: ModuleNavEntry[];
   openModule: (key: ModuleKey) => void;
@@ -39,9 +39,9 @@ export interface NucleusContextValue {
   canGoBack: boolean;
 }
 
-const NucleusContext = createContext<NucleusContextValue | null>(null);
+const CommandContext = createContext<CommandContextValue | null>(null);
 
-export function NucleusProvider({ children }: { children: ReactNode }) {
+export function CommandProvider({ children }: { children: ReactNode }) {
   const [activeModule, setActiveModule] = useState<ModuleKey | null>(null);
   const [navStack, setNavStack] = useState<ModuleNavEntry[]>([]);
 
@@ -71,7 +71,7 @@ export function NucleusProvider({ children }: { children: ReactNode }) {
     setNavStack((stack) => stack.slice(0, -1));
   }, []);
 
-  const value = useMemo<NucleusContextValue>(
+  const value = useMemo<CommandContextValue>(
     () => ({
       activeModule,
       navStack,
@@ -86,14 +86,14 @@ export function NucleusProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <NucleusContext.Provider value={value}>{children}</NucleusContext.Provider>
+    <CommandContext.Provider value={value}>{children}</CommandContext.Provider>
   );
 }
 
-export function useNucleus(): NucleusContextValue {
-  const ctx = useContext(NucleusContext);
+export function useCommand(): CommandContextValue {
+  const ctx = useContext(CommandContext);
   if (!ctx) {
-    throw new Error("useNucleus must be used inside <NucleusProvider>");
+    throw new Error("useCommand must be used inside <CommandProvider>");
   }
   return ctx;
 }
@@ -104,7 +104,7 @@ export function useNucleus(): NucleusContextValue {
  * current top entry.
  */
 export function useModuleNav() {
-  const { navStack, push, pop } = useNucleus();
+  const { navStack, push, pop } = useCommand();
   const current = navStack[navStack.length - 1] ?? null;
   return { navStack, push, pop, current };
 }

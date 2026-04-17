@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * OrbitalNucleus — the principal's entry point.
+ * OrbitalCommand — the principal's entry point.
  *
  * Renders a pulsing central orb (Advanced Search) surrounded by up to 9
  * module buttons. The visual treatment mirrors app/landing.css but the
@@ -22,13 +22,13 @@ import {
 } from "@/lib/module-metadata";
 import { ALL_MODULE_KEYS, type ModuleKey } from "@/lib/modules";
 
-export type NucleusMode = "principal" | "admin" | "preview";
+export type CommandMode = "principal" | "admin" | "preview";
 
-export interface OrbitalNucleusProps {
+export interface OrbitalCommandProps {
   visibleModules: string[];
   onModuleClick: (key: ModuleKey) => void;
   onOrbClick?: () => void;
-  mode?: NucleusMode;
+  mode?: CommandMode;
   centerLogoSrc?: string;
   /**
    * Optional per-module count badge, e.g. { comms: 6 } to show "6" on the
@@ -52,14 +52,14 @@ function useIsMobile() {
   return isMobile;
 }
 
-export function OrbitalNucleus({
+export function OrbitalCommand({
   visibleModules,
   onModuleClick,
   onOrbClick,
   mode = "principal",
   centerLogoSrc,
   badges,
-}: OrbitalNucleusProps) {
+}: OrbitalCommandProps) {
   const reduce = useReducedMotion();
   const isMobile = useIsMobile();
 
@@ -176,14 +176,17 @@ function DesktopOrbit({
         `}</style>
         {modules.map((m, i) => {
           const rad = (positions[i] * Math.PI) / 180;
+          const innerR = 82; // start just outside the 140px orb's bright edge
+          const x1 = Math.cos(rad) * innerR;
+          const y1 = Math.sin(rad) * innerR;
           const x2 = Math.cos(rad) * r;
           const y2 = Math.sin(rad) * r;
           return (
             <line
               key={m.key}
               className="fc-nucleus-line"
-              x1={0}
-              y1={0}
+              x1={x1}
+              y1={y1}
               x2={x2}
               y2={y2}
               stroke={m.accent}
@@ -437,4 +440,4 @@ function CenterOrb({
   );
 }
 
-export default OrbitalNucleus;
+export default OrbitalCommand;

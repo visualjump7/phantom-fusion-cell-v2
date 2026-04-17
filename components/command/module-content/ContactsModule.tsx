@@ -24,7 +24,7 @@ import {
   type ContactCategory,
   type CreateGlobalContactInput,
 } from "@/lib/contacts-service";
-import { useNucleus } from "@/components/nucleus/NucleusContext";
+import { useCommand } from "@/components/command/CommandContext";
 
 type FilterChip = "all" | "personnel" | "subcontractor" | "global";
 
@@ -49,7 +49,7 @@ export function ContactsModule() {
   const { orgId } = useEffectiveOrgId();
   const { isStaff } = useRole();
   const { blocked, guardClick } = useActionGuard();
-  const { push, pop, navStack, close } = useNucleus();
+  const { push, pop, navStack, close } = useCommand();
 
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);

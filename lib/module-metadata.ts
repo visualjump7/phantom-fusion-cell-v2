@@ -54,7 +54,7 @@ export const MODULE_METADATA: Record<ModuleKey, ModuleMeta> = {
   },
   [MODULE_KEYS.COMMS]: {
     key: MODULE_KEYS.COMMS,
-    label: "Comms",
+    label: "Alerts",
     description: "Alerts, decisions, action items.",
     icon: Bell,
     routePath: "/messages",

@@ -256,12 +256,18 @@ RULES:
 5. Format currency as USD with commas ($1,234,567).
 6. Be concise. Lead with the direct answer, then provide breakdown.
 7. Never identify yourself as AI, an assistant, or a chatbot.
-8. Respond as the search system itself: 'Found X across Y projects.'
+8. Phrase the "answer" field as the search system itself (e.g. "Found X across Y projects." or "Total value of all business projects is $X."). This framing belongs INSIDE the JSON answer field — do NOT add any prose before or after the JSON object.
 9. For expense queries, search BOTH budget line items AND bills. Budget line items have expense category names and descriptions. Bills have title, category, and payee fields. Search all text fields for relevant keywords.
 10. For time-based queries, use the monthly breakdown data (jan-dec) in budget line items to calculate quarterly or seasonal totals.
 11. For document queries ("show me", "find", "pull up", "what documents do I have for X"), respond with a clean list of relevant docs from the DOCUMENTS section, each formatted as a tappable link:
    - [Document title](link) — brief context (one line)
    Do not summarize document contents unless explicitly asked — the principal opens the document themselves to read it. Include these as items in the "breakdown" array with the "label" as "[Title](link)" and a short "detail" line.
+
+OUTPUT RULES:
+- Your ENTIRE reply must be a single JSON object and nothing else.
+- No prose, greetings, or explanation before the opening "{".
+- No text, notes, or commentary after the closing "}".
+- No markdown code fences.
 
 RESPONSE FORMAT (MUST be valid JSON, no markdown fences):
 {
@@ -392,8 +398,17 @@ export async function POST(request: NextRequest) {
         .replace(/^```json\n?/, "")
         .replace(/\n?```$/, "")
         .trim();
+      // Be tolerant of stray prose around the JSON (e.g. model prepends a
+      // sentence before the object). Slice from the first "{" to the last
+      // "}" so JSON.parse sees valid JSON regardless of wrapping text.
+      const firstBrace = cleaned.indexOf("{");
+      const lastBrace = cleaned.lastIndexOf("}");
+      const jsonSlice =
+        firstBrace >= 0 && lastBrace > firstBrace
+          ? cleaned.slice(firstBrace, lastBrace + 1)
+          : cleaned;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result: any = JSON.parse(cleaned);
+      const result: any = JSON.parse(jsonSlice);
 
       if (result.total != null) {
         result.formattedTotal = new Intl.NumberFormat("en-US", {
@@ -449,10 +464,16 @@ export async function POST(request: NextRequest) {
         durationMs: Date.now() - startTime,
       });
     } catch {
+      // JSON parse failed even after tolerant slicing. Show only the prose
+      // portion (up to the first "{") so the user doesn't see a raw JSON
+      // dump on the screen.
+      const firstBrace = rawText.indexOf("{");
+      const answerOnly =
+        firstBrace >= 0 ? rawText.slice(0, firstBrace).trim() : rawText.trim();
       return NextResponse.json({
         success: true,
         result: {
-          answer: rawText,
+          answer: answerOnly || "Couldn't parse a clean answer — try rephrasing.",
           total: null,
           formattedTotal: null,
           breakdown: [],

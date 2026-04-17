@@ -28,7 +28,7 @@ export function PreviewRouteGuard() {
     if (!active) return;
     const blocked = ADMIN_PREFIXES.some((p) => pathname.startsWith(p));
     if (blocked) {
-      router.replace("/nucleus");
+      router.replace("/command");
     }
   }, [active, pathname, router]);
 

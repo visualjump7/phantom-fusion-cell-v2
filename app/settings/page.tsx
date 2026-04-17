@@ -340,7 +340,7 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent>
                 <p className="mb-3 text-xs text-muted-foreground">
-                  Where you land after logging in. Dashboard is the full admin view; Nucleus is the principal-first orbital view.
+                  Where you land after logging in. Dashboard is the full admin view; Command is the principal-first orbital view.
                 </p>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <button
@@ -359,15 +359,15 @@ export default function SettingsPage() {
                     )}
                   </button>
                   <button
-                    onClick={() => handleDefaultLandingChange("nucleus")}
+                    onClick={() => handleDefaultLandingChange("command")}
                     disabled={savingLanding}
                     className={`relative rounded-xl border-2 p-4 text-left transition-all disabled:opacity-60 ${
-                      defaultLanding === "nucleus" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                      defaultLanding === "command" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
                     }`}
                   >
-                    <p className="text-sm font-semibold text-foreground">Nucleus</p>
+                    <p className="text-sm font-semibold text-foreground">Command</p>
                     <p className="mt-1 text-xs text-muted-foreground">Orbital entry point with focused overlays.</p>
-                    {defaultLanding === "nucleus" && (
+                    {defaultLanding === "command" && (
                       <div className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
                         <CheckCircle className="h-3 w-3 text-primary-foreground" />
                       </div>

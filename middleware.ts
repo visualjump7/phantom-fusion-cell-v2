@@ -31,6 +31,20 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
+  // ── LEGACY ROUTE REDIRECT (runs before auth checks) ──
+  // /nucleus was renamed to /command. Redirect one-for-one regardless of
+  // auth state so old bookmarks produce consistent behavior: the auth
+  // check below will still bounce unauth users to /login, just with
+  // /command as the post-login intent instead of /nucleus.
+  if (pathname === "/nucleus") {
+    return NextResponse.redirect(new URL("/command", request.url));
+  }
+  if (pathname.startsWith("/nucleus/")) {
+    return NextResponse.redirect(
+      new URL(pathname.replace(/^\/nucleus/, "/command"), request.url)
+    );
+  }
+
   // Public routes — no auth needed
   const isPublicRoute =
     pathname === "/login" ||
@@ -72,15 +86,15 @@ export async function middleware(request: NextRequest) {
     const isExecutive = userRole === "executive";
 
     // ── LANDING REDIRECT ──
-    // Principals (executive) are nucleus-first by design: "/" bounces to
-    // "/nucleus" unconditionally.
+    // Principals (executive) are Command-first by design: "/" bounces to
+    // "/command" unconditionally.
     //
-    // Team members (admin / manager / viewer) also default to "/nucleus" on
+    // Team members (admin / manager / viewer) also default to "/command" on
     // first login. Only an explicit profiles.default_landing = 'dashboard'
     // sends them to /dashboard — toggle lives in Settings.
     if (pathname === "/") {
       if (isExecutive) {
-        return NextResponse.redirect(new URL("/nucleus", request.url));
+        return NextResponse.redirect(new URL("/command", request.url));
       }
       if (isStaff || userRole === "viewer") {
         const { data: profile } = await supabase
@@ -88,7 +102,7 @@ export async function middleware(request: NextRequest) {
           .select("default_landing")
           .eq("id", user.id)
           .maybeSingle();
-        const target = profile?.default_landing === "dashboard" ? "/dashboard" : "/nucleus";
+        const target = profile?.default_landing === "dashboard" ? "/dashboard" : "/command";
         return NextResponse.redirect(new URL(target, request.url));
       }
     }

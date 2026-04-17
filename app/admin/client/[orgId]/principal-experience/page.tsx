@@ -156,7 +156,7 @@ export default function PrincipalExperiencePage() {
       principalName: principal.name,
       orgId,
     });
-    router.push("/nucleus");
+    router.push("/command");
     router.refresh();
   }
 

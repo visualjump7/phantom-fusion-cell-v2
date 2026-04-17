@@ -16,32 +16,34 @@ import { useEffectiveOrgId } from "@/lib/use-active-principal";
 import { getVisibleModulesForUser } from "@/lib/module-visibility-service";
 import { MODULE_METADATA } from "@/lib/module-metadata";
 import { ALL_MODULE_KEYS, MODULE_KEYS, type ModuleKey } from "@/lib/modules";
-import { OrbitalNucleus } from "@/components/nucleus/OrbitalNucleus";
-import { FocusedOverlay } from "@/components/nucleus/FocusedOverlay";
-import { NucleusProvider, useNucleus } from "@/components/nucleus/NucleusContext";
-import { getModuleContent } from "@/components/nucleus/module-content";
+import { OrbitalCommand } from "@/components/command/OrbitalCommand";
+import { FocusedOverlay } from "@/components/command/FocusedOverlay";
+import { CommandProvider, useCommand } from "@/components/command/CommandContext";
+import { getModuleContent } from "@/components/command/module-content";
 import { usePreview } from "@/lib/preview-context";
-import { WelcomeOverlay } from "@/components/nucleus/WelcomeOverlay";
+import { WelcomeOverlay } from "@/components/command/WelcomeOverlay";
 import { fetchMessages } from "@/lib/message-service";
+import { SearchBar } from "@/components/search/SearchBar";
 
-export default function NucleusPage() {
+export default function CommandPage() {
   return (
-    <NucleusProvider>
-      <NucleusPageInner />
-    </NucleusProvider>
+    <CommandProvider>
+      <CommandPageInner />
+    </CommandProvider>
   );
 }
 
-function NucleusPageInner() {
+function CommandPageInner() {
   const router = useRouter();
   const { role, userId, isLoading: roleLoading } = useRole();
   const { orgId, isLoading: orgLoading } = useEffectiveOrgId();
   const preview = usePreview();
-  const { activeModule, openModule, close } = useNucleus();
+  const { activeModule, openModule, close } = useCommand();
 
   const [visibleModules, setVisibleModules] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [badges, setBadges] = useState<Record<string, number>>({});
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const isAdminSide = useMemo(
     () => ["admin", "owner", "manager"].includes((role ?? "").toLowerCase()),
@@ -140,9 +142,10 @@ function NucleusPageInner() {
 
   return (
     <>
-      <OrbitalNucleus
+      <OrbitalCommand
         visibleModules={visibleModules}
         onModuleClick={handleModuleClick}
+        onOrbClick={() => setSearchOpen(true)}
         badges={badges}
         mode={preview.active ? "preview" : effectiveIsAdminSide ? "admin" : "principal"}
       />
@@ -153,6 +156,13 @@ function NucleusPageInner() {
       >
         {activeModule ? getModuleContent(activeModule) : null}
       </FocusedOverlay>
+      {effectiveOrgForQuery && (
+        <SearchBar
+          organizationId={effectiveOrgForQuery}
+          isOpen={searchOpen}
+          onClose={() => setSearchOpen(false)}
+        />
+      )}
       <WelcomeOverlay />
     </>
   );

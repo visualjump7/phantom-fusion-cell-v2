@@ -15,7 +15,6 @@ import {
   LogOut,
   Menu,
   X,
-  ChevronDown,
   ShieldCheck,
   DollarSign,
   FileText,
@@ -63,9 +62,7 @@ export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [adminDropdownOpen, setAdminDropdownOpen] = useState(false);
   const [settingsDropdownOpen, setSettingsDropdownOpen] = useState(false);
-  const adminDropdownRef = useRef<HTMLDivElement>(null);
   const settingsDropdownRef = useRef<HTMLDivElement>(null);
   const { isAdmin, isStaff, isExecutive, isDelegate, role } = useRole();
   const { density } = useThemePreferences();
@@ -87,18 +84,15 @@ export function Navbar() {
 
 
   useEffect(() => {
-    if (!adminDropdownOpen && !settingsDropdownOpen) return;
+    if (!settingsDropdownOpen) return;
     const handler = (e: MouseEvent) => {
-      if (adminDropdownOpen && adminDropdownRef.current && !adminDropdownRef.current.contains(e.target as Node)) {
-        setAdminDropdownOpen(false);
-      }
-      if (settingsDropdownOpen && settingsDropdownRef.current && !settingsDropdownRef.current.contains(e.target as Node)) {
+      if (settingsDropdownRef.current && !settingsDropdownRef.current.contains(e.target as Node)) {
         setSettingsDropdownOpen(false);
       }
     };
     document.addEventListener("click", handler);
     return () => document.removeEventListener("click", handler);
-  }, [adminDropdownOpen, settingsDropdownOpen]);
+  }, [settingsDropdownOpen]);
 
   const handleSignOut = async () => {
     clearRoleCache();
@@ -155,50 +149,6 @@ export function Navbar() {
                 <SearchTrigger onClick={() => setSearchOpen(true)} />
               </div>
             )}
-            {isStaff && (
-              <div className="relative hidden md:block" ref={adminDropdownRef}>
-                <button
-                  type="button"
-                  onClick={() => setAdminDropdownOpen((v) => !v)}
-                  className={cn(
-                    "flex min-h-[var(--tap-target-min)] items-center gap-2 rounded-lg px-3 py-2 text-[length:var(--font-size-body)] font-medium transition-colors",
-                    adminNavItems.some((item) => pathname.startsWith(item.href))
-                      ? "bg-primary/10 text-primary"
-                      : "text-primary/70 hover:bg-primary/10 hover:text-primary"
-                  )}
-                >
-                  <ShieldCheck className="h-4 w-4" />
-                  Admin
-                  <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", adminDropdownOpen && "rotate-180")} />
-                </button>
-                {adminDropdownOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="absolute right-0 top-full mt-1 min-w-[160px] rounded-lg border border-border bg-card py-1 shadow-lg"
-                  >
-                    {adminNavItems.map((item) => {
-                      const isActive = pathname.startsWith(item.href);
-                      return (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          onClick={() => setAdminDropdownOpen(false)}
-                          className={cn(
-                            "flex min-h-[var(--tap-target-min)] items-center gap-2 px-3 py-2 text-[length:var(--font-size-body)] font-medium transition-colors",
-                            isActive ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
-                          )}
-                        >
-                          <item.icon className="h-4 w-4" />
-                          {item.name}
-                        </Link>
-                      );
-                    })}
-                  </motion.div>
-                )}
-              </div>
-            )}
-
             <div className="relative hidden md:block" ref={settingsDropdownRef}>
               <button
                 type="button"

@@ -16,15 +16,18 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import {
   CircleDot,
   Eye,
   ChevronRight,
   LayoutDashboard,
-  Orbit,
   Loader2,
+  ShieldCheck,
+  FileSpreadsheet,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useRole } from "@/lib/use-role";
 import { fetchClientProfiles, type ClientProfile } from "@/lib/client-service";
 import { supabase } from "@/lib/supabase";
@@ -34,13 +37,13 @@ import {
   setDefaultLanding,
   type DefaultLanding,
 } from "@/lib/profile-service";
-import { OrbitalNucleus } from "@/components/nucleus/OrbitalNucleus";
-import { FocusedOverlay } from "@/components/nucleus/FocusedOverlay";
+import { OrbitalCommand } from "@/components/command/OrbitalCommand";
+import { FocusedOverlay } from "@/components/command/FocusedOverlay";
 import {
-  NucleusProvider,
-  useNucleus,
-} from "@/components/nucleus/NucleusContext";
-import { getModuleContent } from "@/components/nucleus/module-content";
+  CommandProvider,
+  useCommand,
+} from "@/components/command/CommandContext";
+import { getModuleContent } from "@/components/command/module-content";
 import { MODULE_METADATA } from "@/lib/module-metadata";
 import { ALL_MODULE_KEYS, type ModuleKey } from "@/lib/modules";
 
@@ -65,14 +68,23 @@ export function AdminSettingsMenu({
   onRequestClose: () => void;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { isStaff, userId } = useRole();
   const { enterPreview, active: previewActive } = usePreview();
+
+  const adminNavItems = useMemo(
+    () => [
+      { name: "Command Center", href: "/admin", icon: ShieldCheck },
+      { name: "Budget Editor", href: "/budget-editor", icon: FileSpreadsheet },
+    ],
+    []
+  );
 
   const [principals, setPrincipals] = useState<PrincipalOption[]>([]);
   const [loadingPrincipals, setLoadingPrincipals] = useState(true);
   const [showPrincipalList, setShowPrincipalList] = useState(false);
 
-  const [landing, setLanding] = useState<DefaultLanding>("nucleus");
+  const [landing, setLanding] = useState<DefaultLanding>("command");
   const [landingLoading, setLandingLoading] = useState(true);
   const [landingSaving, setLandingSaving] = useState(false);
 
@@ -133,7 +145,7 @@ export function AdminSettingsMenu({
         principalName: opt.name,
         orgId: opt.orgId,
       });
-      router.push("/nucleus");
+      router.push("/command");
       router.refresh();
     },
     [enterPreview, onRequestClose, router]
@@ -150,7 +162,7 @@ export function AdminSettingsMenu({
 
   const handleToggleLanding = useCallback(async () => {
     if (!userId || landingSaving || landingLoading) return;
-    const next: DefaultLanding = landing === "nucleus" ? "dashboard" : "nucleus";
+    const next: DefaultLanding = landing === "command" ? "dashboard" : "command";
     setLandingSaving(true);
     setLanding(next);
     const res = await setDefaultLanding(userId, next);
@@ -167,6 +179,26 @@ export function AdminSettingsMenu({
       <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         Admin
       </div>
+
+      {adminNavItems.map((item) => {
+        const isActive = pathname ? pathname.startsWith(item.href) : false;
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={onRequestClose}
+            className={cn(
+              "flex min-h-[var(--tap-target-min)] items-center gap-2 px-3 py-2 text-[length:var(--font-size-body)] font-medium transition-colors",
+              isActive
+                ? "bg-primary/10 text-primary"
+                : "text-foreground hover:bg-muted"
+            )}
+          >
+            <item.icon className="h-4 w-4" />
+            {item.name}
+          </Link>
+        );
+      })}
 
       {!previewActive && (
         <button
@@ -220,29 +252,29 @@ export function AdminSettingsMenu({
         disabled={landingLoading || landingSaving}
         className="flex min-h-[var(--tap-target-min)] w-full items-center gap-2 px-3 py-2 text-[length:var(--font-size-body)] font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
       >
-        {landing === "nucleus" ? (
-          <Orbit className="h-4 w-4 text-emerald-400" />
-        ) : (
-          <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
-        )}
-        <span className="flex-1 text-left">
-          Land on {landing === "nucleus" ? "Nucleus" : "Dashboard"}
-        </span>
+        <LayoutDashboard
+          className={cn(
+            "h-4 w-4",
+            landing === "dashboard" ? "text-emerald-400" : "text-muted-foreground"
+          )}
+        />
+        <span className="flex-1 text-left">Land on Dashboard</span>
         {landingSaving ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
         ) : (
           <span
-            className={
-              "inline-flex h-5 w-9 items-center rounded-full transition " +
-              (landing === "nucleus" ? "bg-emerald-500/80" : "bg-muted")
-            }
-            aria-hidden
+            role="switch"
+            aria-checked={landing === "dashboard"}
+            className={cn(
+              "inline-flex h-5 w-9 items-center rounded-full transition",
+              landing === "dashboard" ? "bg-emerald-500/80" : "bg-muted"
+            )}
           >
             <span
-              className={
-                "inline-block h-3.5 w-3.5 transform rounded-full bg-white transition " +
-                (landing === "nucleus" ? "translate-x-5" : "translate-x-1")
-              }
+              className={cn(
+                "inline-block h-3.5 w-3.5 transform rounded-full bg-white transition",
+                landing === "dashboard" ? "translate-x-5" : "translate-x-1"
+              )}
             />
           </span>
         )}
@@ -266,15 +298,15 @@ export function AdminOverlayHost({
 }) {
   if (!open) return null;
   return (
-    <NucleusProvider>
-      <NucleusOverlay onClose={onClose} />
-    </NucleusProvider>
+    <CommandProvider>
+      <CommandOverlay onClose={onClose} />
+    </CommandProvider>
   );
 }
 
-function NucleusOverlay({ onClose }: { onClose: () => void }) {
+function CommandOverlay({ onClose }: { onClose: () => void }) {
   const router = useRouter();
-  const { activeModule, openModule, close: closeModule } = useNucleus();
+  const { activeModule, openModule, close: closeModule } = useCommand();
 
   const visibleModules = useMemo(() => [...ALL_MODULE_KEYS] as string[], []);
 
@@ -302,7 +334,7 @@ function NucleusOverlay({ onClose }: { onClose: () => void }) {
         >
           <span className="text-lg">×</span>
         </button>
-        <OrbitalNucleus
+        <OrbitalCommand
           visibleModules={visibleModules}
           onModuleClick={handleModuleClick}
           mode="admin"

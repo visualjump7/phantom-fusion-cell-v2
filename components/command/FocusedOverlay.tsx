@@ -15,7 +15,7 @@
 import { useEffect, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, X } from "lucide-react";
-import { useNucleus } from "./NucleusContext";
+import { useCommand } from "./CommandContext";
 
 export interface FocusedOverlayProps {
   open: boolean;
@@ -36,7 +36,7 @@ export function FocusedOverlay({
   children,
   allowInternalBack = true,
 }: FocusedOverlayProps) {
-  const { canGoBack, pop, navStack } = useNucleus();
+  const { canGoBack, pop, navStack } = useCommand();
 
   // Escape to close
   useEffect(() => {

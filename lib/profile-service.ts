@@ -3,11 +3,11 @@ import { supabase } from "@/lib/supabase";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
 
-export type DefaultLanding = "dashboard" | "nucleus";
+export type DefaultLanding = "dashboard" | "command";
 
 /**
  * Returns the per-admin landing preference. New admins default to the
- * Nucleus; anyone who explicitly sets "dashboard" in Settings keeps that.
+ * Command view; anyone who explicitly sets "dashboard" in Settings keeps that.
  * The column's CHECK constraint guarantees values are one of the two.
  */
 export async function getDefaultLanding(userId: string): Promise<DefaultLanding> {
@@ -19,16 +19,16 @@ export async function getDefaultLanding(userId: string): Promise<DefaultLanding>
 
   if (error || !data) {
     if (error) console.error("[getDefaultLanding]", error);
-    return "nucleus";
+    return "command";
   }
 
-  // Only an explicit "dashboard" overrides the nucleus default.
-  return data.default_landing === "dashboard" ? "dashboard" : "nucleus";
+  // Only an explicit "dashboard" overrides the Command default.
+  return data.default_landing === "dashboard" ? "dashboard" : "command";
 }
 
 /**
  * Persists the admin's landing preference. Enforced at the DB layer by the
- * CHECK (default_landing IN ('dashboard','nucleus')) constraint.
+ * CHECK (default_landing IN ('dashboard','command')) constraint.
  */
 export async function setDefaultLanding(
   userId: string,
