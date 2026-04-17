@@ -12,6 +12,10 @@ export interface ClientContextValue {
   accentColor: string;
   status: string;
   isLoading: boolean;
+  /** Let consumers (e.g. an inline rename form) update the displayed
+   *  client name after persisting to the DB, so the banner and any
+   *  heading using clientName refresh instantly without a route reload. */
+  setClientName: (name: string) => void;
 }
 
 export const ClientContext = createContext<ClientContextValue | null>(null);
@@ -58,7 +62,9 @@ export function ClientContextProvider({ orgId, children }: ClientContextProvider
   }, [orgId]);
 
   return (
-    <ClientContext.Provider value={{ orgId, clientName, accentColor, status, isLoading }}>
+    <ClientContext.Provider
+      value={{ orgId, clientName, accentColor, status, isLoading, setClientName }}
+    >
       {children}
     </ClientContext.Provider>
   );

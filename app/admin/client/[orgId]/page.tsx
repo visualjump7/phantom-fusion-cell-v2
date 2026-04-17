@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Building2, Receipt, MessageSquare, Upload, ChevronRight, Loader2, Trash2, FileText, Users, Tag, Globe, Sparkles,
+  Pencil, Check, X as XIcon,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,9 +23,14 @@ import { hasPermission } from "@/lib/permissions";
 const db = supabase as any;
 
 export default function WorkspaceDashboard() {
-  const { orgId, clientName } = useClientContext();
+  const { orgId, clientName, setClientName } = useClientContext();
   const { activePrincipal, clearActivePrincipal } = useActivePrincipal();
   const { role, isAdmin } = useRole();
+  const canEditName = isAdmin;
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+  const [savingName, setSavingName] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
   const canUpload = hasPermission(role, "uploadBudgets");
   const canDelete = hasPermission(role, "deletePrincipal");
   const router = useRouter();
@@ -77,6 +83,39 @@ export default function WorkspaceDashboard() {
     );
   }
 
+  function startEditName() {
+    setNameDraft(clientName);
+    setNameError(null);
+    setIsEditingName(true);
+  }
+
+  function cancelEditName() {
+    setIsEditingName(false);
+    setNameError(null);
+  }
+
+  async function saveName() {
+    const trimmed = nameDraft.trim();
+    if (!trimmed) {
+      setNameError("Name can't be empty.");
+      return;
+    }
+    if (trimmed === clientName) {
+      setIsEditingName(false);
+      return;
+    }
+    setSavingName(true);
+    setNameError(null);
+    const res = await updateClientProfile(orgId, { display_name: trimmed });
+    setSavingName(false);
+    if (!res.success) {
+      setNameError(res.error ?? "Couldn't save the new name.");
+      return;
+    }
+    setClientName(trimmed);
+    setIsEditingName(false);
+  }
+
   const quickLinks = [
     { name: "Projects", href: `/admin/client/${orgId}/projects`, icon: Building2, stat: `${projectsCount} projects` },
     { name: "Bills", href: `/admin/client/${orgId}/bills`, icon: Receipt, stat: `${billSummary?.upcomingCount || 0} pending` },
@@ -90,7 +129,69 @@ export default function WorkspaceDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">{clientName}&apos;s Workspace</h1>
+        {isEditingName ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              autoFocus
+              value={nameDraft}
+              onChange={(e) => setNameDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  saveName();
+                } else if (e.key === "Escape") {
+                  e.preventDefault();
+                  cancelEditName();
+                }
+              }}
+              disabled={savingName}
+              aria-label="Principal name"
+              className="min-w-[16rem] rounded-md border border-border bg-background px-3 py-1.5 text-2xl font-bold text-foreground focus:border-primary focus:outline-none disabled:opacity-60"
+            />
+            <Button
+              size="sm"
+              onClick={saveName}
+              disabled={savingName}
+              className="gap-1"
+            >
+              {savingName ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Check className="h-4 w-4" />
+              )}
+              Save
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={cancelEditName}
+              disabled={savingName}
+              className="gap-1"
+            >
+              <XIcon className="h-4 w-4" />
+              Cancel
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-foreground">
+              {clientName}&apos;s Workspace
+            </h1>
+            {canEditName && (
+              <button
+                type="button"
+                onClick={startEditName}
+                aria-label="Rename principal"
+                className="rounded-md p-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        )}
+        {nameError && (
+          <p className="mt-2 text-sm text-red-400">{nameError}</p>
+        )}
         <p className="mt-1 text-sm text-muted-foreground">
           Manage projects, bills, alerts, and budgets for this principal.
         </p>
