@@ -12,7 +12,7 @@
  *
  * Route list mirrors the filtering logic in components/Navbar.tsx so the
  * same role rules apply (delegates see a narrow subset, executives get the
- * Daily Brief entry, staff also see the Command Center + Budget Editor
+ * Daily Brief entry, staff also see the Admin + Budget Editor
  * admin entries).
  *
  * Navigation side effects: closes the active Command overlay (via
@@ -74,7 +74,7 @@ const mainNavItems: NavItem[] = [
 ];
 
 const adminNavItems: NavItem[] = [
-  { name: "Command Center", href: "/admin", icon: ShieldCheck },
+  { name: "Admin", href: "/admin", icon: ShieldCheck },
   { name: "Budget Editor", href: "/budget-editor", icon: FileSpreadsheet },
 ];
 

@@ -152,7 +152,7 @@ export default function OnboardPrincipalPage() {
             A confirmation email has been sent to <strong>{principalEmail}</strong> with a link to sign in.
           </p>
           <div className="mt-6 flex items-center justify-center gap-3">
-            <Button variant="outline" onClick={() => router.push("/admin")}>Back to Command Center</Button>
+            <Button variant="outline" onClick={() => router.push("/admin")}>Back to Admin</Button>
             <Button onClick={() => router.push(`/admin/client/${done.orgId}`)}>
               Open workspace <ArrowRight className="ml-1 h-4 w-4" />
             </Button>

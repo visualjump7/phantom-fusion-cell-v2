@@ -60,7 +60,7 @@ export default function CommandCenterPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Command Center</h1>
+        <h1 className="text-2xl font-bold text-foreground">Admin</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Overview across all principals. Select a workspace to manage.
         </p>

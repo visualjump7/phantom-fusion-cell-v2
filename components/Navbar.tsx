@@ -54,7 +54,7 @@ const mainNavItems: NavItem[] = [
 ];
 
 const adminNavItems: NavItem[] = [
-  { name: "Command Center", href: "/admin", icon: ShieldCheck },
+  { name: "Admin", href: "/admin", icon: ShieldCheck },
   { name: "Budget Editor", href: "/budget-editor", icon: FileSpreadsheet },
 ];
 

@@ -168,7 +168,7 @@ function UploadPageContent() {
   const handleImport = async () => {
     if (!parseResult || parseResult.lineItems.length === 0 || !selectedAssetId) return;
     if (!activeOrgId) {
-      setError("No active organization. Open the Command Center and select a principal first.");
+      setError("No active organization. Open Admin and select a principal first.");
       return;
     }
     setStep("importing"); setImportProgress(0); setError(null);

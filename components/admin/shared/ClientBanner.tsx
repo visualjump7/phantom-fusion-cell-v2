@@ -56,7 +56,7 @@ export function ClientBanner() {
           className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Command Center
+          Admin
         </Link>
         <span className="text-muted-foreground">/</span>
         <div className="flex items-center gap-2">

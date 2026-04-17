@@ -208,7 +208,7 @@ export default function OnboardPage() {
             {displayName || name} has been onboarded successfully.
           </p>
           <div className="mt-6 flex gap-3">
-            <Button variant="outline" onClick={() => router.push("/admin")}>Back to Command Center</Button>
+            <Button variant="outline" onClick={() => router.push("/admin")}>Back to Admin</Button>
             {newOrgId && <Button onClick={() => router.push(`/admin/client/${newOrgId}`)}>Open Workspace</Button>}
           </div>
         </CardContent></Card>

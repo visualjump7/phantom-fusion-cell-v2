@@ -452,14 +452,14 @@ export default function ImmersiveGlobePage() {
       <div className="fixed inset-0 flex flex-col items-center justify-center gap-4 bg-black px-6 text-center">
         <p className="max-w-md text-sm text-white/70">
           No organization is linked to this session. Open{" "}
-          <span className="font-medium text-white">Command Center</span>, select a principal, or ensure your account is a member of an organization.
+          <span className="font-medium text-white">Admin</span>, select a principal, or ensure your account is a member of an organization.
         </p>
         <button
           type="button"
           onClick={() => router.push("/admin")}
           className="rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white hover:bg-white/20"
         >
-          Go to Command Center
+          Go to Admin
         </button>
         <button
           type="button"

@@ -51,7 +51,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 )}
               >
                 <LayoutDashboard className="h-4 w-4" />
-                Command Center
+                Admin
               </Link>
 
               {/* Team nav — admin only */}
