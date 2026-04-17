@@ -15,9 +15,11 @@ import {
   Brief,
 } from "@/lib/brief-service";
 import { useEffectiveOrgId } from "@/lib/use-active-principal";
+import { useInsideCommand } from "@/components/command/CommandContext";
 
 export default function BriefPage() {
   const { orgId, isLoading: orgLoading } = useEffectiveOrgId();
+  const embedded = useInsideCommand();
   const [brief, setBrief] = useState<Brief | null>(null);
   const [liveData, setLiveData] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -56,7 +58,7 @@ export default function BriefPage() {
   if (orgLoading || isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
+        {!embedded && <Navbar />}
         <div className="flex min-h-[60vh] items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -67,7 +69,7 @@ export default function BriefPage() {
   if (!brief) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
+        {!embedded && <Navbar />}
         <div className="mx-auto max-w-[680px] px-4 py-16 text-center">
           <p className="text-lg text-muted-foreground">No brief available</p>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -80,7 +82,7 @@ export default function BriefPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      {!embedded && <Navbar />}
       <motion.main
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}

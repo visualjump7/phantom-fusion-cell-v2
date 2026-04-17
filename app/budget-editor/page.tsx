@@ -34,6 +34,7 @@ import {
 import { Navbar } from "@/components/Navbar";
 import { useRole } from "@/lib/use-role";
 import { useScopedOrgId, useEffectiveOrgId } from "@/lib/use-active-principal";
+import { useInsideCommand } from "@/components/command/CommandContext";
 import {
   fetchAssetsWithBudgetStatus,
   type BudgetLibraryData,
@@ -62,6 +63,7 @@ const SECTION_ORDER: CategoryKey[] = ["business", "family", "personal", "other"]
 export default function BudgetEditorLibraryPage() {
   const router = useRouter();
   const { role, isLoading: roleLoading, isPrincipalSide } = useRole();
+  const embedded = useInsideCommand();
   const { scopedOrgId, isLoading: scopedLoading } = useScopedOrgId();
   const { orgId: effectiveOrgId, isLoading: effectiveLoading } =
     useEffectiveOrgId();
@@ -112,7 +114,7 @@ export default function BudgetEditorLibraryPage() {
   if (roleLoading || !orgResolved) {
     return (
       <div className="min-h-screen bg-black">
-        <Navbar />
+        {!embedded && <Navbar />}
         <div className="flex items-center justify-center py-24">
           <Loader2 className="h-8 w-8 animate-spin text-white/40" />
         </div>
@@ -128,7 +130,7 @@ export default function BudgetEditorLibraryPage() {
   if (!libraryOrgId) {
     return (
       <div className="min-h-screen bg-black">
-        <Navbar />
+        {!embedded && <Navbar />}
         <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
           <p className="text-sm text-white/60">
             No organization is linked to this session. Open the Command
@@ -158,7 +160,7 @@ export default function BudgetEditorLibraryPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <Navbar />
+      {!embedded && <Navbar />}
 
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}

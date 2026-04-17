@@ -16,6 +16,7 @@ import { useEffect, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, X } from "lucide-react";
 import { useCommand } from "./CommandContext";
+import { OverlayNavMenu } from "./OverlayNavMenu";
 
 export interface FocusedOverlayProps {
   open: boolean;
@@ -97,6 +98,7 @@ export function FocusedOverlay({
             {/* Header */}
             <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-3 md:px-6 md:py-4">
               <div className="flex items-center gap-3">
+                <OverlayNavMenu />
                 {showBack && (
                   <button
                     type="button"

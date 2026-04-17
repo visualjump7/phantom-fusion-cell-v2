@@ -12,6 +12,7 @@ import { TransactionFeed } from "@/components/cashflow/TransactionFeed";
 import { CashFlowData, generateDemoCashFlowData } from "@/lib/cashflow";
 import { useThemePreferences } from "@/components/ThemeProvider";
 import { useScopedOrgId } from "@/lib/use-active-principal";
+import { useInsideCommand } from "@/components/command/CommandContext";
 
 type ViewTab = "calendar" | "chart" | "monthly" | "transactions";
 
@@ -29,6 +30,7 @@ export default function CashFlowPage() {
   const [error, setError] = useState<string | null>(null);
   const { theme } = useThemePreferences();
   const { scopedOrgId } = useScopedOrgId();
+  const embedded = useInsideCommand();
 
   useEffect(() => {
     async function loadData() {
@@ -69,7 +71,7 @@ export default function CashFlowPage() {
         <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
       </div>
 
-      <Navbar />
+      {!embedded && <Navbar />}
 
       <div className={(theme === "light" || theme === "hybrid") ? "section-dark" : ""}>
         <motion.div

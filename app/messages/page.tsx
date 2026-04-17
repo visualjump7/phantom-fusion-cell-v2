@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRole } from "@/lib/use-role";
+import { useInsideCommand } from "@/components/command/CommandContext";
 import { useThemePreferences } from "@/components/ThemeProvider";
 import { useEffectiveOrgId, useScopedOrgId } from "@/lib/use-active-principal";
 import {
@@ -33,6 +34,7 @@ export default function MessagesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
   const { isAdmin, isExecutive, isDelegate } = useRole();
+  const embedded = useInsideCommand();
   const { assetIds: delegateAssetIds, isLoading: delegateLoading } = useDelegateAccess();
   const { density } = useThemePreferences();
   const { scopedOrgId } = useScopedOrgId();
@@ -326,7 +328,7 @@ export default function MessagesPage() {
       <div className="fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
       </div>
-      <Navbar />
+      {!embedded && <Navbar />}
       <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-3">

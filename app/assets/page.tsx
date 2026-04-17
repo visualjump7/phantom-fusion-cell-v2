@@ -18,6 +18,7 @@ import { useRole } from "@/lib/use-role";
 import { useEffectiveOrgId, useScopedOrgId } from "@/lib/use-active-principal";
 import { useDelegateAccess } from "@/lib/use-delegate-access";
 import { useAllowedCategories } from "@/lib/use-allowed-categories";
+import { useInsideCommand } from "@/components/command/CommandContext";
 
 interface Asset {
   id: string;
@@ -44,6 +45,7 @@ export default function AssetsPage() {
   const { orgId: effectiveOrgId } = useEffectiveOrgId();
   const { allowedCategories } = useAllowedCategories(scopedOrgId);
   const visibleCategoryOptions = CATEGORY_OPTIONS.filter((o) => allowedCategories.includes(o.value));
+  const embedded = useInsideCommand();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
@@ -205,7 +207,7 @@ export default function AssetsPage() {
       <div className="fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
       </div>
-      <Navbar />
+      {!embedded && <Navbar />}
       <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }} className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }} className="mb-8 flex items-center justify-between">

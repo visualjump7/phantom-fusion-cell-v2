@@ -99,6 +99,17 @@ export function useCommand(): CommandContextValue {
 }
 
 /**
+ * True when the caller is rendered inside a <CommandProvider> (i.e. inside
+ * the Command overlay). Safe to call anywhere — returns false outside the
+ * provider rather than throwing. Used by standalone pages that also get
+ * embedded via module-content wrappers (Alerts, Cash Flow, Projects,
+ * Budgets, Daily Brief) to suppress the top-level Navbar when embedded.
+ */
+export function useInsideCommand(): boolean {
+  return useContext(CommandContext) !== null;
+}
+
+/**
  * Convenience hook for modules to drive their own in-module navigation.
  * Returns push/pop scoped to the current module's nav stack and the
  * current top entry.
