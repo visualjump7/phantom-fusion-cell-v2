@@ -30,9 +30,9 @@ export function TravelMap({ events, selectedEventId, onSelectEvent }: TravelMapP
   const [loaded, setLoaded] = useState(false);
   const [groundRoutes, setGroundRoutes] = useState<GeoJSON.FeatureCollection>(EMPTY_FC);
 
-  const arcsGeo = flightArcsGeoJSON(events, selectedEventId);
+  const arcsGeo = flightArcsGeoJSON(events, selectedEventId ?? undefined);
   const airportsGeo = airportDotsGeoJSON(events);
-  const pinsGeo = locationPinsGeoJSON(events, selectedEventId);
+  const pinsGeo = locationPinsGeoJSON(events, selectedEventId ?? undefined);
 
   // Fetch driving routes for ground transport events
   useEffect(() => {

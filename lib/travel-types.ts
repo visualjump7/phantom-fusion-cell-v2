@@ -1,7 +1,15 @@
 /** Fusion Cell — Travel module type definitions (v2)
  *  Universal itinerary events: flights, ground transport, hotels, reservations. */
 
-import type { Airport } from "./airports";
+/** Airport reference shape — matches the entries in lib/airports.ts AIRPORTS. */
+export interface Airport {
+  code: string;
+  name: string;
+  city: string;
+  country: string;
+  lat: number;
+  lng: number;
+}
 
 export type EventType = "flight" | "ground" | "hotel" | "reservation";
 export type EventStatus = "upcoming" | "in-progress" | "completed";

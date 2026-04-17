@@ -12,8 +12,9 @@
  * correctly across polls.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-import ical from "node-ical";
+// node-ical transitively pulls packages that touch BigInt at module-init,
+// which breaks Next.js' static page-data collection. Lazy-require it inside
+// the function so the server bundle only loads it at request time.
 
 export interface ParsedEvent {
   uid: string;
@@ -57,6 +58,8 @@ export async function fetchAndParseICS(
   const { lookbackDays = 30, lookaheadDays = 90, timeoutMs = 10_000 } = options;
 
   const text = await fetchText(url, timeoutMs);
+  // Lazy import — see note above the (removed) top-level import.
+  const ical = await import("node-ical");
   // node-ical's async wrapper; cast to any because the library's TS types
   // are loose.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

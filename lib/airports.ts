@@ -4,6 +4,10 @@
 
 import type { Airport } from "./travel-types";
 
+// Re-export so callers already pointing at @/lib/airports for the Airport
+// type continue to resolve (the canonical definition lives in travel-types).
+export type { Airport };
+
 export const AIRPORTS: Airport[] = [
   // North America
   { code: "JFK", name: "John F. Kennedy International", city: "New York", country: "US", lat: 40.6413, lng: -73.7781 },
