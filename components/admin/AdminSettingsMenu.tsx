@@ -210,7 +210,7 @@ export function AdminSettingsMenu({
           className="flex min-h-[var(--tap-target-min)] w-full items-center gap-2 px-3 py-2 text-[length:var(--font-size-body)] font-medium text-foreground transition-colors hover:bg-muted"
         >
           <CircleDot className="h-4 w-4 text-emerald-400" />
-          Open Nucleus
+          Open Command Panel
         </button>
       )}
 
