@@ -27,7 +27,7 @@ import {
   useActivePrincipal,
   useEffectiveOrgId,
 } from "@/lib/use-active-principal";
-import { createBrief } from "@/lib/brief-service";
+import { createBrief, deleteBrief } from "@/lib/brief-service";
 import { ClientPicker } from "./ClientPicker";
 import { BriefList } from "./BriefList";
 import { MiniComposer } from "./MiniComposer";
@@ -76,6 +76,20 @@ export function DailyBriefWorkspace() {
   const handleSelectFromList = (briefId: string) => {
     setSelectedBriefId(briefId);
     setView("edit");
+  };
+
+  const handleDeleteFromList = async (briefId: string) => {
+    const ok = await deleteBrief(briefId);
+    if (!ok) return;
+    // If we just deleted the brief currently open in the composer, drop
+    // the selection and bounce back to the list view (we're already there
+    // when delete is triggered from the row, but defensive in case we
+    // later wire deletion from elsewhere).
+    if (briefId === selectedBriefId) {
+      setSelectedBriefId(null);
+      setView("list");
+    }
+    refreshList();
   };
 
   const handleBackToList = () => {
@@ -161,6 +175,7 @@ export function DailyBriefWorkspace() {
             orgId={orgId}
             selectedBriefId={selectedBriefId}
             onSelect={handleSelectFromList}
+            onDelete={handleDeleteFromList}
             refreshKey={listRefreshKey}
           />
         )}

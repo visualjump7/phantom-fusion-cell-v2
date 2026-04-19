@@ -26,6 +26,11 @@ import { fetchMessages } from "@/lib/message-service";
 import { SearchBar } from "@/components/search/SearchBar";
 import { CreateActionFAB } from "@/components/command/CreateActionFAB";
 import { BackgroundGlobe } from "@/components/command/BackgroundGlobe";
+import { PrincipalSummary } from "@/components/command/PrincipalSummary";
+import {
+  getVisibleSummaryCardsForPrincipal,
+  type SummaryCardKey,
+} from "@/lib/principal-summary-service";
 
 export default function CommandPage() {
   return (
@@ -46,6 +51,9 @@ function CommandPageInner() {
   const [loading, setLoading] = useState(true);
   const [badges, setBadges] = useState<Record<string, number>>({});
   const [searchOpen, setSearchOpen] = useState(false);
+  // Summary cards to render below the orbital ring (principals only).
+  // Empty array = nothing renders. Staff users never fetch this.
+  const [summaryCards, setSummaryCards] = useState<SummaryCardKey[]>([]);
 
   const isAdminSide = useMemo(
     () => ["admin", "owner", "manager"].includes((role ?? "").toLowerCase()),
@@ -121,6 +129,35 @@ function CommandPageInner() {
     };
   }, [effectiveOrgForQuery]);
 
+  // Load principal-facing summary cards. Only fetch for principals (and
+  // preview mode where we're acting as one) — staff never see these, so
+  // don't hit the DB for them.
+  useEffect(() => {
+    if (!effectiveOrgForQuery || !effectiveUserId) {
+      setSummaryCards([]);
+      return;
+    }
+    const isPrincipalView =
+      preview.active ||
+      effectiveRole === "executive" ||
+      effectiveRole === "delegate";
+    if (!isPrincipalView) {
+      setSummaryCards([]);
+      return;
+    }
+    let cancelled = false;
+    getVisibleSummaryCardsForPrincipal(effectiveOrgForQuery, effectiveUserId)
+      .then((keys) => {
+        if (!cancelled) setSummaryCards(keys);
+      })
+      .catch(() => {
+        if (!cancelled) setSummaryCards([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [effectiveOrgForQuery, effectiveUserId, effectiveRole, preview.active]);
+
   function handleModuleClick(key: ModuleKey) {
     const meta = MODULE_METADATA[key];
     if (!meta) return;
@@ -145,12 +182,13 @@ function CommandPageInner() {
   return (
     <>
       <BackgroundGlobe />
+      {/* Text wordmark — matches the dashboard Navbar so branding is
+          consistent across pages. Kept pointer-events-none so clicks pass
+          through to the orbital UI behind it. */}
       <div className="pointer-events-none fixed inset-x-0 top-0 z-40 flex justify-center pt-6">
-        <img
-          src="https://phantom-presenter-assets.s3.us-east-1.amazonaws.com/Fusion+Cell+Logo.png"
-          alt="Fusion Cell"
-          className="h-12 w-auto"
-        />
+        <span className="text-2xl font-bold text-foreground">
+          Fusion <span className="text-primary">Cell</span>
+        </span>
       </div>
       <OrbitalCommand
         visibleModules={visibleModules}
@@ -160,11 +198,34 @@ function CommandPageInner() {
         centerLogoSrc="/phantom-wings.svg"
         mode={preview.active ? "preview" : effectiveIsAdminSide ? "admin" : "principal"}
       />
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center pb-6">
-        <span className="text-sm tracking-wide text-muted-foreground">
-          your world simplified
-        </span>
-      </div>
+
+      {/* Principal-only summary section — renders below the orbital ring
+          when the admin has turned on any summary cards for this principal.
+          If none are configured or the user is staff, this is a no-op. */}
+      {effectiveOrgForQuery && summaryCards.length > 0 && (
+        <PrincipalSummary
+          orgId={effectiveOrgForQuery}
+          visibleCards={summaryCards}
+        />
+      )}
+
+      {/* Bottom tagline. When summary cards exist we let it sit at the end
+          of the scroll (not fixed) so it doesn't float over the cards.
+          When no summary cards, it stays pinned to the viewport bottom as
+          a branding anchor. */}
+      {summaryCards.length === 0 ? (
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center pb-6">
+          <span className="text-sm tracking-wide text-muted-foreground">
+            Your world simplified.
+          </span>
+        </div>
+      ) : (
+        <div className="flex justify-center pb-8">
+          <span className="text-sm tracking-wide text-muted-foreground">
+            Your world simplified.
+          </span>
+        </div>
+      )}
       <FocusedOverlay
         open={!!activeModule}
         onClose={close}

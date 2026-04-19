@@ -24,6 +24,13 @@ import {
   setModuleVisibility,
   type ModuleConfigRow,
 } from "@/lib/module-visibility-service";
+import {
+  SUMMARY_CARDS,
+  getSummaryConfigForPrincipal,
+  setSummaryCardVisibility,
+  type SummaryCardKey,
+  type SummaryConfigRow,
+} from "@/lib/principal-summary-service";
 import { MODULE_METADATA } from "@/lib/module-metadata";
 import { ALL_MODULE_KEYS, isRequiredModule, type ModuleKey } from "@/lib/modules";
 import { usePreview } from "@/lib/preview-context";
@@ -47,9 +54,11 @@ export default function PrincipalExperiencePage() {
   const [principals, setPrincipals] = useState<PrincipalRow[]>([]);
   const [selectedPrincipalId, setSelectedPrincipalId] = useState<string | null>(null);
   const [config, setConfig] = useState<ModuleConfigRow[]>([]);
+  const [summaryConfig, setSummaryConfig] = useState<SummaryConfigRow[]>([]);
   const [loadingPrincipals, setLoadingPrincipals] = useState(true);
   const [loadingConfig, setLoadingConfig] = useState(false);
   const [saving, setSaving] = useState<Record<string, boolean>>({});
+  const [savingSummary, setSavingSummary] = useState<Record<string, boolean>>({});
 
   // Load principals for this org
   useEffect(() => {
@@ -116,6 +125,58 @@ export default function PrincipalExperiencePage() {
     config.forEach((r) => map.set(r.module_key, r));
     return map;
   }, [config]);
+
+  // Load summary-card config in parallel with module config. Shares the
+  // same loading state since we show both sections together and a single
+  // spinner is simpler than interleaving two.
+  useEffect(() => {
+    if (!orgId || !selectedPrincipalId) {
+      setSummaryConfig([]);
+      return;
+    }
+    let cancelled = false;
+    getSummaryConfigForPrincipal(orgId, selectedPrincipalId)
+      .then((rows) => {
+        if (!cancelled) setSummaryConfig(rows);
+      })
+      .catch(() => {
+        /* leave summaryConfig empty — UI renders defaults-off */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [orgId, selectedPrincipalId]);
+
+  const summaryByKey = useMemo(() => {
+    const map = new Map<string, SummaryConfigRow>();
+    summaryConfig.forEach((r) => map.set(r.card_key, r));
+    return map;
+  }, [summaryConfig]);
+
+  async function handleSummaryToggle(cardKey: SummaryCardKey, next: boolean) {
+    if (!selectedPrincipalId) return;
+    // Optimistic
+    setSummaryConfig((prev) =>
+      prev.map((r) => (r.card_key === cardKey ? { ...r, is_visible: next } : r))
+    );
+    setSavingSummary((s) => ({ ...s, [cardKey]: true }));
+
+    const res = await setSummaryCardVisibility(
+      orgId,
+      selectedPrincipalId,
+      cardKey,
+      next
+    );
+    setSavingSummary((s) => ({ ...s, [cardKey]: false }));
+
+    if (!res.success) {
+      setSummaryConfig((prev) =>
+        prev.map((r) =>
+          r.card_key === cardKey ? { ...r, is_visible: !next } : r
+        )
+      );
+    }
+  }
 
   async function handleToggle(moduleKey: ModuleKey, next: boolean) {
     if (!selectedPrincipalId) return;
@@ -309,6 +370,79 @@ export default function PrincipalExperiencePage() {
           })}
         </div>
       )}
+
+      {/* ─── Summary cards (below the orbital ring) ────────────────────
+          These show for principals ONLY, underneath the orbital command
+          ring. Defaults-off — the principal sees nothing until the admin
+          turns cards on here. Click-through opens the corresponding
+          orbital module overlay. */}
+      <div className="mt-10">
+        <div className="mb-3">
+          <h2 className="text-lg font-semibold tracking-tight">
+            Summary cards
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Quick-glance cards that appear <strong>below</strong> the
+            orbital ring on this principal&apos;s command page. Redundant
+            with the ring on purpose — lets them scroll to check status
+            without opening an overlay. All off by default.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {SUMMARY_CARDS.map((card) => {
+            const row = summaryByKey.get(card.key);
+            const isOn = row?.is_visible ?? false;
+            const isSavingCard = savingSummary[card.key];
+            return (
+              <Card
+                key={card.key}
+                className={
+                  "border-border bg-card/60 transition " +
+                  (isOn ? "" : "opacity-70")
+                }
+              >
+                <CardContent className="flex items-start justify-between gap-3 p-4">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-foreground">
+                      {card.label}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {card.description}
+                    </p>
+                  </div>
+
+                  <label
+                    className={
+                      "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition " +
+                      (isOn ? "bg-emerald-500/80" : "bg-muted") +
+                      (blocked ? " opacity-60" : " cursor-pointer")
+                    }
+                  >
+                    <input
+                      type="checkbox"
+                      className="sr-only"
+                      checked={isOn}
+                      disabled={blocked || isSavingCard}
+                      onChange={(e) => {
+                        guardClick(() =>
+                          handleSummaryToggle(card.key, e.target.checked)
+                        )();
+                      }}
+                    />
+                    <span
+                      className={
+                        "inline-block h-4 w-4 transform rounded-full bg-white transition " +
+                        (isOn ? "translate-x-6" : "translate-x-1")
+                      }
+                    />
+                  </label>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

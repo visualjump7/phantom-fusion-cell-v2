@@ -1,10 +1,18 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { FileUp, Loader2 } from "lucide-react";
+import { FileUp, Loader2, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TipTapEditor } from "./TipTapEditor";
-import { BriefBlock, CashFlowBlockData, BillBlockData, ProjectsBlockData, DecisionsBlockData, CalendarBlockData } from "@/lib/brief-service";
+import {
+  BriefBlock,
+  CashFlowBlockData,
+  BillBlockData,
+  ProjectsBlockData,
+  DecisionsBlockData,
+  ScheduleBlockData,
+  ScheduleManualItem,
+} from "@/lib/brief-service";
 import { formatCurrency } from "@/lib/utils";
 
 interface BriefBlockEditorProps {
@@ -235,17 +243,35 @@ export function BriefBlockEditor({ block, liveData, orgId, onUpdate }: BriefBloc
     );
   }
 
-  // Calendar block — merged agenda (bills + external ICS + decisions + travel)
-  if (block.type === "calendar") {
+  // Schedule block — internal agenda (bills + decisions + travel) plus
+  // staff-typed ad-hoc agenda items.
+  if (block.type === "schedule") {
     const daysAhead = block.config?.days_ahead || 7;
-    const dataKey = `calendar_${daysAhead}`;
-    const data = liveData[dataKey] as CalendarBlockData | undefined;
+    const dataKey = `schedule_${daysAhead}`;
+    const data = liveData[dataKey] as ScheduleBlockData | undefined;
+    const items: ScheduleManualItem[] = Array.isArray(block.config?.items)
+      ? (block.config.items as ScheduleManualItem[])
+      : [];
+
+    const addItem = (item: ScheduleManualItem) => {
+      onUpdate({
+        config: { ...block.config, items: [...items, item] },
+      });
+    };
+    const removeItem = (id: string) => {
+      onUpdate({
+        config: {
+          ...block.config,
+          items: items.filter((it) => it.id !== id),
+        },
+      });
+    };
 
     return (
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <label className="text-xs text-muted-foreground">
-            Show events in next:
+            Show items in next:
           </label>
           <select
             value={daysAhead}
@@ -261,11 +287,14 @@ export function BriefBlockEditor({ block, liveData, orgId, onUpdate }: BriefBloc
             <option value={30}>30 days</option>
           </select>
         </div>
+
+        {/* Auto-pulled preview */}
         {data ? (
           <div className="rounded-lg bg-muted/30 p-3">
             <p className="text-sm font-medium text-foreground">
-              {data.events.length} event{data.events.length !== 1 ? "s" : ""}{" "}
-              over the next {data.daysAhead} days
+              From your data: {data.events.length} item
+              {data.events.length !== 1 ? "s" : ""} in the next {data.daysAhead}{" "}
+              days
             </p>
             {data.events.length > 0 && (
               <div className="mt-2 space-y-1">
@@ -311,6 +340,15 @@ export function BriefBlockEditor({ block, liveData, orgId, onUpdate }: BriefBloc
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           </div>
         )}
+
+        {/* Ad-hoc agenda items — staff-typed entries (e.g. "Call with CFO
+            Thursday 10am"). Stored in block.config.items (JSONB). */}
+        <ScheduleManualItemsEditor
+          items={items}
+          onAdd={addItem}
+          onRemove={removeItem}
+        />
+
         <div>
           <label className="text-xs text-muted-foreground">
             Commentary (optional)
@@ -369,4 +407,115 @@ export function BriefBlockEditor({ block, liveData, orgId, onUpdate }: BriefBloc
   }
 
   return null;
+}
+
+/**
+ * Inline editor for ad-hoc Schedule items. Lets staff type meeting / call
+ * lines that don't exist in any other system. Stored on the block's
+ * `config.items` array; parent owns persistence via `onUpdate`.
+ */
+function ScheduleManualItemsEditor({
+  items,
+  onAdd,
+  onRemove,
+}: {
+  items: ScheduleManualItem[];
+  onAdd: (item: ScheduleManualItem) => void;
+  onRemove: (id: string) => void;
+}) {
+  const [title, setTitle] = useState("");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+
+  const canAdd = title.trim().length > 0 && date.length > 0;
+
+  const handleAdd = () => {
+    if (!canAdd) return;
+    onAdd({
+      id:
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      title: title.trim(),
+      date,
+      time: time || undefined,
+    });
+    setTitle("");
+    setDate("");
+    setTime("");
+  };
+
+  return (
+    <div className="rounded-lg border border-border bg-background/40 p-3">
+      <p className="text-xs font-medium text-foreground">Agenda items</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">
+        Add meetings, calls, or anything else that should appear on this
+        brief&apos;s schedule but isn&apos;t in another system yet.
+      </p>
+
+      {items.length > 0 && (
+        <ul className="mt-2 space-y-1">
+          {items.map((it) => (
+            <li
+              key={it.id}
+              className="flex items-center justify-between gap-2 rounded-md bg-muted/30 px-2 py-1.5 text-xs"
+            >
+              <span className="flex min-w-0 flex-1 items-center gap-2">
+                <span
+                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400"
+                  aria-hidden
+                />
+                <span className="min-w-0 flex-1 truncate text-foreground">
+                  {it.title}
+                </span>
+              </span>
+              <span className="shrink-0 text-muted-foreground">
+                {it.date}
+                {it.time ? ` · ${it.time}` : ""}
+              </span>
+              <button
+                type="button"
+                onClick={() => onRemove(it.id)}
+                aria-label={`Remove ${it.title}`}
+                className="shrink-0 rounded p-0.5 text-muted-foreground/60 transition-colors hover:bg-red-500/10 hover:text-red-400"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Title (e.g. Call with CFO)"
+          className="min-w-0 flex-1 rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-primary"
+        />
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className="rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground outline-none focus:border-primary"
+        />
+        <input
+          type="time"
+          value={time}
+          onChange={(e) => setTime(e.target.value)}
+          className="rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground outline-none focus:border-primary"
+        />
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={handleAdd}
+          disabled={!canAdd}
+        >
+          <Plus className="mr-1 h-3.5 w-3.5" /> Add
+        </Button>
+      </div>
+    </div>
+  );
 }

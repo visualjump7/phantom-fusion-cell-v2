@@ -15,8 +15,9 @@ import type {
   BillBlockData,
   ProjectsBlockData,
   DecisionsBlockData,
-  CalendarBlockData,
-  CalendarEventRow,
+  ScheduleBlockData,
+  ScheduleEventRow,
+  ScheduleManualItem,
 } from "@/lib/brief-service";
 
 // ============================================
@@ -312,16 +313,58 @@ function ContentBlock({ block, liveData }: { block: BriefBlock; liveData: Record
     );
   }
 
-  // Calendar — merged agenda grouped by day.
-  if (block.type === "calendar") {
+  // Schedule — internal agenda + ad-hoc items, grouped by day.
+  if (block.type === "schedule") {
     const daysAhead = block.config?.days_ahead || 7;
-    const data = liveData[`calendar_${daysAhead}`] as
-      | CalendarBlockData
+    const data = liveData[`schedule_${daysAhead}`] as
+      | ScheduleBlockData
       | undefined;
-    if (!data) return null;
 
-    const byDay = new Map<string, CalendarEventRow[]>();
-    for (const ev of data.events) {
+    // Merge auto-pulled events with manual items from block.config.items.
+    const manualItems: ScheduleManualItem[] = Array.isArray(
+      block.config?.items
+    )
+      ? (block.config.items as ScheduleManualItem[])
+      : [];
+    const windowStart = new Date();
+    windowStart.setHours(0, 0, 0, 0);
+    const windowEnd = new Date(windowStart);
+    windowEnd.setDate(windowEnd.getDate() + daysAhead);
+
+    const manualRows: ScheduleEventRow[] = manualItems
+      .map((it): ScheduleEventRow | null => {
+        const [y, m, d] = it.date.split("-").map((n) => parseInt(n, 10));
+        if (!y || !m || !d) return null;
+        const start = it.time
+          ? (() => {
+              const [hh, mm] = it.time.split(":").map((n) => parseInt(n, 10));
+              return new Date(y, m - 1, d, hh || 0, mm || 0);
+            })()
+          : new Date(y, m - 1, d);
+        if (start < windowStart || start >= windowEnd) return null;
+        return {
+          id: `man:${it.id}`,
+          title: it.title,
+          start_iso: start.toISOString(),
+          end_iso: null,
+          is_all_day: !it.time,
+          source: "manual",
+          source_label: "Manual",
+          color: "#a1a1aa",
+        };
+      })
+      .filter((r): r is ScheduleEventRow => r !== null);
+
+    const allRows: ScheduleEventRow[] = [
+      ...(data?.events ?? []),
+      ...manualRows,
+    ].sort(
+      (a, b) =>
+        new Date(a.start_iso).getTime() - new Date(b.start_iso).getTime()
+    );
+
+    const byDay = new Map<string, ScheduleEventRow[]>();
+    for (const ev of allRows) {
       const d = new Date(ev.start_iso);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
         2,
@@ -345,7 +388,7 @@ function ContentBlock({ block, liveData }: { block: BriefBlock; liveData: Record
       });
     };
 
-    const formatEventTime = (ev: CalendarEventRow) => {
+    const formatEventTime = (ev: ScheduleEventRow) => {
       if (ev.is_all_day) return "All day";
       const start = new Date(ev.start_iso);
       const startLabel = start.toLocaleTimeString("en-US", {
@@ -364,11 +407,11 @@ function ContentBlock({ block, liveData }: { block: BriefBlock; liveData: Record
     return (
       <View style={contentStyles.blockCard} wrap={false}>
         <Text style={contentStyles.blockTitle}>
-          Next {data.daysAhead} Days ({data.events.length})
+          Next {daysAhead} Days ({allRows.length})
         </Text>
-        {data.events.length === 0 ? (
+        {allRows.length === 0 ? (
           <Text style={{ fontSize: 9, color: "#888888" }}>
-            No events scheduled in this window.
+            Nothing scheduled in this window.
           </Text>
         ) : (
           days.map(([key, events]) => (

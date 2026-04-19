@@ -10,8 +10,9 @@ import {
   BillBlockData,
   ProjectsBlockData,
   DecisionsBlockData,
-  CalendarBlockData,
-  CalendarEventRow,
+  ScheduleBlockData,
+  ScheduleEventRow,
+  ScheduleManualItem,
 } from "@/lib/brief-service";
 
 interface BriefReaderViewProps {
@@ -323,18 +324,61 @@ function ReaderBlock({
     );
   }
 
-  // Calendar — merged agenda (bills + external ICS feeds + decisions + travel),
-  // grouped by calendar day for readability.
-  if (block.type === "calendar") {
+  // Schedule — internal agenda (bills + decisions + travel) merged with
+  // staff-typed ad-hoc items from block.config.items, grouped by day.
+  if (block.type === "schedule") {
     const daysAhead = block.config?.days_ahead || 7;
-    const dataKey = `calendar_${daysAhead}`;
-    const data = liveData[dataKey] as CalendarBlockData | undefined;
-    if (!data) return null;
+    const dataKey = `schedule_${daysAhead}`;
+    const data = liveData[dataKey] as ScheduleBlockData | undefined;
+
+    // Manual items live on the block itself (JSONB), filter to window.
+    const manualItems: ScheduleManualItem[] = Array.isArray(
+      block.config?.items
+    )
+      ? (block.config.items as ScheduleManualItem[])
+      : [];
+    const windowStart = new Date();
+    windowStart.setHours(0, 0, 0, 0);
+    const windowEnd = new Date(windowStart);
+    windowEnd.setDate(windowEnd.getDate() + daysAhead);
+
+    const manualRows: ScheduleEventRow[] = manualItems
+      .map((it): ScheduleEventRow | null => {
+        // Construct the start ISO. For timed items combine date + time.
+        const [y, m, d] = it.date.split("-").map((n) => parseInt(n, 10));
+        if (!y || !m || !d) return null;
+        const start = it.time
+          ? (() => {
+              const [hh, mm] = it.time.split(":").map((n) => parseInt(n, 10));
+              return new Date(y, m - 1, d, hh || 0, mm || 0);
+            })()
+          : new Date(y, m - 1, d);
+        if (start < windowStart || start >= windowEnd) return null;
+        return {
+          id: `man:${it.id}`,
+          title: it.title,
+          start_iso: start.toISOString(),
+          end_iso: null,
+          is_all_day: !it.time,
+          source: "manual",
+          source_label: "Manual",
+          color: "#a1a1aa", // neutral zinc-400 for manual items
+        };
+      })
+      .filter((r): r is ScheduleEventRow => r !== null);
+
+    const allRows: ScheduleEventRow[] = [
+      ...(data?.events ?? []),
+      ...manualRows,
+    ].sort(
+      (a, b) =>
+        new Date(a.start_iso).getTime() - new Date(b.start_iso).getTime()
+    );
 
     // Group events by local YYYY-MM-DD so "today / tomorrow / …" reads
-    // naturally and all-day events cluster with timed ones on the same day.
-    const byDay = new Map<string, CalendarEventRow[]>();
-    for (const ev of data.events) {
+    // naturally and all-day items cluster with timed ones on the same day.
+    const byDay = new Map<string, ScheduleEventRow[]>();
+    for (const ev of allRows) {
       const d = new Date(ev.start_iso);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
         2,
@@ -358,7 +402,7 @@ function ReaderBlock({
       });
     };
 
-    const formatEventTime = (ev: CalendarEventRow) => {
+    const formatEventTime = (ev: ScheduleEventRow) => {
       if (ev.is_all_day) return "All day";
       const start = new Date(ev.start_iso);
       const startLabel = start.toLocaleTimeString("en-US", {
@@ -377,11 +421,11 @@ function ReaderBlock({
     return (
       <section className="rounded-xl border border-border bg-card/40 p-6">
         <h2 className="font-serif text-lg font-semibold text-foreground">
-          Next {data.daysAhead} Days ({data.events.length})
+          Next {daysAhead} Days ({allRows.length})
         </h2>
-        {data.events.length === 0 ? (
+        {allRows.length === 0 ? (
           <p className="mt-3 text-sm text-muted-foreground">
-            No events scheduled in this window.
+            Nothing scheduled in this window.
           </p>
         ) : (
           <div className="mt-4 space-y-5">

@@ -61,9 +61,14 @@ import {
   fetchUpcomingBillsData,
   fetchProjectsSnapshot,
   fetchPendingDecisions,
-  fetchCalendarData,
+  fetchScheduleData,
   type Brief,
   type BriefBlock,
+  type CashFlowBlockData,
+  type BillBlockData,
+  type ProjectsBlockData,
+  type DecisionsBlockData,
+  type ScheduleBlockData,
 } from "@/lib/brief-service";
 import { useRole } from "@/lib/use-role";
 
@@ -86,7 +91,7 @@ const BLOCK_TYPES = [
   { type: "text", label: "Text", icon: Type, desc: "Rich text commentary" },
   { type: "cashflow", label: "Cash Flow", icon: DollarSign, desc: "Monthly summary" },
   { type: "bills", label: "Upcoming Bills", icon: Receipt, desc: "Bills due soon" },
-  { type: "calendar", label: "Calendar", icon: CalendarDays, desc: "Bills + external events" },
+  { type: "schedule", label: "Schedule", icon: CalendarDays, desc: "Bills + decisions + travel + manual items" },
   { type: "projects", label: "Projects", icon: Building2, desc: "Projects snapshot" },
   { type: "decisions", label: "Decisions", icon: AlertTriangle, desc: "Pending decisions" },
 ] as const;
@@ -110,6 +115,11 @@ export function MiniComposer({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showBlockPicker, setShowBlockPicker] = useState(false);
+  // Inline banner for user-visible problems: add-block errors (e.g. DB CHECK
+  // constraint on `type`) and partial live-data failures (e.g. calendar
+  // tables not yet migrated). Kept as a single array so both surface in
+  // the same space above the blocks.
+  const [errors, setErrors] = useState<string[]>([]);
   const pickerRef = useRef<HTMLDivElement>(null);
 
   // Load brief + blocks
@@ -120,8 +130,51 @@ export function MiniComposer({
     setLoading(false);
   }, [briefId]);
 
-  // Load live data (same shape as admin composer)
+  // Load live data. Every fetcher is wrapped in its own .catch() with a
+  // JSON-safe fallback so one failure (e.g. calendar tables not yet
+  // migrated on this env) doesn't reject the whole Promise.all and leave
+  // every data block showing its loading spinner forever. Any fetcher
+  // that fell back gets its label pushed onto `errors` so the UI can
+  // explain why that block is empty.
   const loadLiveData = useCallback(async () => {
+    const failed: string[] = [];
+    const guard = <T,>(label: string, fallback: T) =>
+      (p: Promise<T>): Promise<T> =>
+        p.catch((err) => {
+          console.error(`[MiniComposer] ${label} failed`, err);
+          failed.push(label);
+          return fallback;
+        });
+
+    const now = new Date();
+    const cashflowFallback: CashFlowBlockData = {
+      month: now.toLocaleString("default", { month: "long" }),
+      year: now.getFullYear(),
+      cashIn: 0,
+      cashOut: 0,
+      net: 0,
+      paidCount: 0,
+      pendingCount: 0,
+    };
+    const billsFallback = (d: number): BillBlockData => ({
+      bills: [],
+      total: 0,
+      daysAhead: d,
+    });
+    const projectsFallback: ProjectsBlockData = {
+      projects: [],
+      totalValue: 0,
+      category: null,
+    };
+    const decisionsFallback: DecisionsBlockData = {
+      decisions: [],
+      count: 0,
+    };
+    const scheduleFallback = (d: number): ScheduleBlockData => ({
+      events: [],
+      daysAhead: d,
+    });
+
     const [
       cashflow,
       bills7,
@@ -129,19 +182,19 @@ export function MiniComposer({
       bills30,
       projects,
       decisions,
-      calendar7,
-      calendar14,
-      calendar30,
+      schedule7,
+      schedule14,
+      schedule30,
     ] = await Promise.all([
-      fetchCashFlowData(orgId),
-      fetchUpcomingBillsData(orgId, 7),
-      fetchUpcomingBillsData(orgId, 14),
-      fetchUpcomingBillsData(orgId, 30),
-      fetchProjectsSnapshot(orgId),
-      fetchPendingDecisions(orgId),
-      fetchCalendarData(orgId, 7),
-      fetchCalendarData(orgId, 14),
-      fetchCalendarData(orgId, 30),
+      guard("Cash flow", cashflowFallback)(fetchCashFlowData(orgId)),
+      guard("Bills (7d)", billsFallback(7))(fetchUpcomingBillsData(orgId, 7)),
+      guard("Bills (14d)", billsFallback(14))(fetchUpcomingBillsData(orgId, 14)),
+      guard("Bills (30d)", billsFallback(30))(fetchUpcomingBillsData(orgId, 30)),
+      guard("Projects", projectsFallback)(fetchProjectsSnapshot(orgId)),
+      guard("Decisions", decisionsFallback)(fetchPendingDecisions(orgId)),
+      guard("Schedule (7d)", scheduleFallback(7))(fetchScheduleData(orgId, 7)),
+      guard("Schedule (14d)", scheduleFallback(14))(fetchScheduleData(orgId, 14)),
+      guard("Schedule (30d)", scheduleFallback(30))(fetchScheduleData(orgId, 30)),
     ]);
     setLiveData({
       cashflow,
@@ -150,10 +203,16 @@ export function MiniComposer({
       bills_30: bills30,
       projects,
       decisions,
-      calendar_7: calendar7,
-      calendar_14: calendar14,
-      calendar_30: calendar30,
+      schedule_7: schedule7,
+      schedule_14: schedule14,
+      schedule_30: schedule30,
     });
+    if (failed.length > 0) {
+      setErrors((prev) => [
+        ...prev,
+        `Couldn't load: ${failed.join(", ")}. Those blocks will show empty.`,
+      ]);
+    }
   }, [orgId]);
 
   useEffect(() => {
@@ -195,13 +254,24 @@ export function MiniComposer({
     const defaultConfig: Record<string, unknown> = {};
     if (type === "bills") defaultConfig.days_ahead = 7;
     if (type === "projects") defaultConfig.category = "all";
-    if (type === "calendar") defaultConfig.days_ahead = 7;
+    if (type === "schedule") {
+      defaultConfig.days_ahead = 7;
+      defaultConfig.items = [];
+    }
 
-    const block = await addBlock(briefId, type, position, defaultConfig);
-    if (block) {
+    // addBlock now returns { block, error } — unwrap and surface failures
+    // instead of silently pushing the wrapper object into brief.blocks
+    // (which would leave the new block with no .id/.type and render empty).
+    const result = await addBlock(briefId, type, position, defaultConfig);
+    if (result.error) {
+      setErrors((prev) => [
+        ...prev,
+        `Couldn't add ${type} block: ${result.error}`,
+      ]);
+    } else if (result.block) {
       setBrief({
         ...brief,
-        blocks: [...(brief.blocks || []), block],
+        blocks: [...(brief.blocks || []), result.block],
       });
     }
     setShowBlockPicker(false);
@@ -396,6 +466,32 @@ export function MiniComposer({
           </div>
         </CardContent>
       </Card>
+
+      {/* Inline error banner — shows add-block failures and any live-data
+          fetchers that fell back to empty. Dismissible; re-populates if
+          another error occurs. */}
+      {errors.length > 0 && (
+        <div
+          role="alert"
+          className="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-200"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <ul className="space-y-1">
+              {errors.map((msg, i) => (
+                <li key={i}>{msg}</li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              onClick={() => setErrors([])}
+              className="shrink-0 text-red-300/80 hover:text-red-200"
+              aria-label="Dismiss errors"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Cover-page settings (collapsible — matches admin composer) */}
       <CoverPageSettings

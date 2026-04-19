@@ -9,7 +9,6 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import {
   Plane,
@@ -25,7 +24,14 @@ import {
   X,
   Trash2,
   Send,
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
 } from "lucide-react";
+import { TravelMap } from "@/components/travel/TravelMap";
+import { legsToEvents } from "@/lib/travel-adapter";
+import { EVENT_META, type EventType } from "@/lib/travel-types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -214,99 +220,72 @@ function TripDetailView({
   guardClick: <T extends (...args: any[]) => any>(handler: T) => T;
   blocked: boolean;
 }) {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<mapboxgl.Map | null>(null);
   const [showAddLeg, setShowAddLeg] = useState(false);
 
-  const pinned = useMemo(
-    () =>
-      itinerary.legs
-        .filter(
-          (l) =>
-            l.departure_lat !== null &&
-            l.departure_lng !== null &&
-            !Number.isNaN(l.departure_lat!) &&
-            !Number.isNaN(l.departure_lng!)
-        )
-        .map((l) => ({
-          id: l.id,
-          label: l.departure_location || l.provider || l.leg_type,
-          lat: l.departure_lat!,
-          lng: l.departure_lng!,
-        })),
+  // Build once per itinerary — feeds the shared TravelMap component, which
+  // already knows how to color-code by event type (flight/ground/hotel/
+  // reservation via EVENT_META), draw great-circle flight arcs, and fetch
+  // driving routes via Mapbox Directions for ground legs.
+  const events = useMemo(
+    () => legsToEvents(itinerary.legs, itinerary.id),
     [itinerary]
   );
 
+  // Currently-highlighted leg. Drives both the map (flyTo + dim/selected
+  // styling) and the timeline (visual highlight). Null = show the whole trip.
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+
+  // Playback: when isPlaying, we step selectedEventId through events in order.
+  // 2.8s per leg gives TravelMap's 1.5s flyTo animation time to settle before
+  // the next jump.
+  const [isPlaying, setIsPlaying] = useState(false);
+  const STEP_MS = 2800;
+
+  const playIndex = useMemo(() => {
+    if (!selectedEventId) return -1;
+    return events.findIndex((e) => e.id === selectedEventId);
+  }, [selectedEventId, events]);
+
   useEffect(() => {
-    if (!mapContainer.current) return;
-    const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-    if (!token) {
-      console.warn("[travel] NEXT_PUBLIC_MAPBOX_TOKEN missing");
+    if (!isPlaying) return;
+    if (events.length === 0) {
+      setIsPlaying(false);
       return;
     }
-    mapboxgl.accessToken = token;
+    // If nothing is selected when play starts, begin from the first leg.
+    if (playIndex < 0) {
+      setSelectedEventId(events[0].id);
+      return;
+    }
+    const next = playIndex + 1;
+    if (next >= events.length) {
+      setIsPlaying(false);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setSelectedEventId(events[next].id);
+    }, STEP_MS);
+    return () => clearTimeout(timer);
+  }, [isPlaying, playIndex, events]);
 
-    // Pick a reasonable default center
-    const center: [number, number] =
-      pinned.length > 0 ? [pinned[0].lng, pinned[0].lat] : [-40, 40];
-
-    const map = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: "mapbox://styles/mapbox/dark-v11",
-      center,
-      zoom: 2.5,
-      attributionControl: false,
-    });
-    mapRef.current = map;
-
-    map.on("load", () => {
-      if (pinned.length === 0) return;
-
-      const bounds = new mapboxgl.LngLatBounds();
-      for (const p of pinned) {
-        const el = document.createElement("div");
-        el.style.cssText =
-          "width:14px;height:14px;border-radius:9999px;background:#4ADE80;box-shadow:0 0 12px rgba(74,222,128,0.6);border:2px solid #0f172a;";
-        new mapboxgl.Marker({ element: el, anchor: "center" })
-          .setLngLat([p.lng, p.lat])
-          .setPopup(new mapboxgl.Popup({ offset: 12 }).setText(p.label))
-          .addTo(map);
-        bounds.extend([p.lng, p.lat]);
-      }
-
-      if (pinned.length >= 2) {
-        map.addSource("route", {
-          type: "geojson",
-          data: {
-            type: "Feature",
-            properties: {},
-            geometry: {
-              type: "LineString",
-              coordinates: pinned.map((p) => [p.lng, p.lat]),
-            },
-          },
-        });
-        map.addLayer({
-          id: "route-line",
-          type: "line",
-          source: "route",
-          paint: {
-            "line-color": "#4ADE80",
-            "line-opacity": 0.65,
-            "line-width": 2,
-            "line-dasharray": [0.5, 1.5],
-          },
-        });
-      }
-
-      map.fitBounds(bounds, { padding: 60, maxZoom: 6, animate: false });
-    });
-
-    return () => {
-      map.remove();
-      mapRef.current = null;
-    };
-  }, [pinned]);
+  const handlePlayPause = () => {
+    if (events.length === 0) return;
+    setIsPlaying((v) => !v);
+  };
+  const handlePrev = () => {
+    if (events.length === 0) return;
+    const i = playIndex < 0 ? 0 : Math.max(0, playIndex - 1);
+    setSelectedEventId(events[i].id);
+  };
+  const handleNext = () => {
+    if (events.length === 0) return;
+    const i = playIndex < 0 ? 0 : Math.min(events.length - 1, playIndex + 1);
+    setSelectedEventId(events[i].id);
+  };
+  const handleClearSelection = () => {
+    setIsPlaying(false);
+    setSelectedEventId(null);
+  };
 
   return (
     <div className="flex h-full flex-col">
@@ -353,7 +332,120 @@ function TripDetailView({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div ref={mapContainer} className="h-[280px] w-full bg-black md:h-[360px]" />
+        {/* Interactive map: flight arcs (green), driving routes (blue),
+            hotel pins (amber), reservation pins (violet). Selecting a leg
+            (here or in the timeline below) flies the map to that leg and
+            highlights it. */}
+        <div className="h-[280px] w-full bg-black md:h-[360px]">
+          <TravelMap
+            events={events}
+            selectedEventId={selectedEventId}
+            onSelectEvent={setSelectedEventId}
+          />
+        </div>
+
+        {/* Playback bar — plays the journey leg-by-leg so you can watch
+            the map trace the route (DAL → PHX → hotel → site → back). */}
+        {events.length > 0 && (
+          <div className="border-t border-white/5 bg-black/60 px-4 py-2">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handlePrev}
+                  aria-label="Previous leg"
+                  className="h-8 w-8 text-white/70 hover:text-white"
+                >
+                  <SkipBack className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handlePlayPause}
+                  aria-label={isPlaying ? "Pause journey" : "Play journey"}
+                  className="h-8 w-8 text-emerald-300 hover:text-emerald-200"
+                >
+                  {isPlaying ? (
+                    <Pause className="h-4 w-4" />
+                  ) : (
+                    <Play className="h-4 w-4" />
+                  )}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleNext}
+                  aria-label="Next leg"
+                  className="h-8 w-8 text-white/70 hover:text-white"
+                >
+                  <SkipForward className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="flex-1 text-xs text-white/60">
+                {selectedEventId ? (
+                  <>
+                    Leg {playIndex + 1} of {events.length}
+                    {(() => {
+                      const ev = events[playIndex];
+                      if (!ev) return null;
+                      const meta = EVENT_META[ev.type as EventType];
+                      return (
+                        <span className="ml-2 inline-flex items-center gap-1.5">
+                          <span
+                            className="h-1.5 w-1.5 rounded-full"
+                            style={{ backgroundColor: meta.color }}
+                            aria-hidden
+                          />
+                          <span className="uppercase tracking-wide text-white/50">
+                            {meta.label}
+                          </span>
+                        </span>
+                      );
+                    })()}
+                  </>
+                ) : (
+                  <>Showing whole trip · {events.length} legs</>
+                )}
+              </div>
+
+              {selectedEventId && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClearSelection}
+                  className="h-7 text-xs text-white/60 hover:text-white"
+                >
+                  Show all
+                </Button>
+              )}
+            </div>
+
+            {/* Thin per-leg progress strip — each segment's width is fixed
+                and its color matches its event type. The active leg gets
+                full opacity, others dim. Clickable. */}
+            <div className="mt-2 flex h-1.5 gap-[2px] overflow-hidden rounded-full">
+              {events.map((ev, i) => {
+                const meta = EVENT_META[ev.type as EventType];
+                const active = i === playIndex;
+                return (
+                  <button
+                    key={ev.id}
+                    type="button"
+                    aria-label={`Jump to ${meta.label} leg ${i + 1}`}
+                    onClick={() => setSelectedEventId(ev.id)}
+                    className="min-w-0 flex-1 transition-opacity"
+                    style={{
+                      backgroundColor: meta.color,
+                      opacity: active ? 1 : 0.35,
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="p-4">
           <h4 className="mb-3 text-xs font-medium uppercase tracking-wide text-white/50">
@@ -368,12 +460,43 @@ function TripDetailView({
               {itinerary.legs.map((leg) => {
                 const Icon = LEG_ICONS[leg.leg_type] ?? MapPin;
                 const legDocs = itinerary.documents.filter((d) => d.leg_id === leg.id);
+                const isActive = leg.id === selectedEventId;
+                // Type-colored bullet matching the map pin for this leg —
+                // gives the list a visual key to the map. Flight→green,
+                // ground→blue, hotel→amber, restaurant/meeting→violet.
+                const typeColor =
+                  leg.leg_type === "flight"
+                    ? EVENT_META.flight.color
+                    : leg.leg_type === "ground"
+                    ? EVENT_META.ground.color
+                    : leg.leg_type === "hotel"
+                    ? EVENT_META.hotel.color
+                    : EVENT_META.reservation.color;
                 return (
                   <li key={leg.id}>
-                    <Card className="border-white/10 bg-white/[0.02]">
+                    <Card
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setSelectedEventId(leg.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setSelectedEventId(leg.id);
+                        }
+                      }}
+                      className={`cursor-pointer border-white/10 bg-white/[0.02] transition-colors hover:border-emerald-400/40 hover:bg-white/[0.05] ${
+                        isActive ? "border-emerald-400/60 bg-emerald-500/10" : ""
+                      }`}
+                    >
                       <CardContent className="p-3">
                         <div className="flex items-start gap-3">
-                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-300">
+                          <span
+                            className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+                            style={{
+                              backgroundColor: `${typeColor}22`,
+                              color: typeColor,
+                            }}
+                          >
                             <Icon className="h-4 w-4" />
                           </span>
                           <div className="min-w-0 flex-1">

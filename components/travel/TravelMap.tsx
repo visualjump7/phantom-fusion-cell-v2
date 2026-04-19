@@ -30,7 +30,57 @@ export function TravelMap({ events, selectedEventId, onSelectEvent }: TravelMapP
   const [loaded, setLoaded] = useState(false);
   const [groundRoutes, setGroundRoutes] = useState<GeoJSON.FeatureCollection>(EMPTY_FC);
 
-  const arcsGeo = flightArcsGeoJSON(events, selectedEventId ?? undefined);
+  // Progress 0..1 for drawing the selected flight arc. We ramp from 0 → 1
+  // via requestAnimationFrame whenever a flight leg becomes selected, so
+  // the arc visibly "flies in" from the departure airport rather than
+  // popping in at full length.
+  const [arcProgress, setArcProgress] = useState(1);
+  const arcRafRef = useRef<number | null>(null);
+
+  const selectedEvent = selectedEventId
+    ? events.find((e) => e.id === selectedEventId)
+    : null;
+  const isFlightSelected = selectedEvent?.type === "flight";
+
+  useEffect(() => {
+    // Cancel any in-flight animation before we start another.
+    if (arcRafRef.current !== null) {
+      cancelAnimationFrame(arcRafRef.current);
+      arcRafRef.current = null;
+    }
+    if (!isFlightSelected) {
+      setArcProgress(1);
+      return;
+    }
+    // Animate 0 → 1 over 1.4s, slightly easing out so the plane appears
+    // to decelerate as it reaches the destination.
+    const DURATION = 1400;
+    const start = performance.now();
+    setArcProgress(0);
+    const step = (now: number) => {
+      const t = Math.min(1, (now - start) / DURATION);
+      const eased = 1 - Math.pow(1 - t, 2); // easeOutQuad
+      setArcProgress(eased);
+      if (t < 1) {
+        arcRafRef.current = requestAnimationFrame(step);
+      } else {
+        arcRafRef.current = null;
+      }
+    };
+    arcRafRef.current = requestAnimationFrame(step);
+    return () => {
+      if (arcRafRef.current !== null) {
+        cancelAnimationFrame(arcRafRef.current);
+        arcRafRef.current = null;
+      }
+    };
+  }, [selectedEventId, isFlightSelected]);
+
+  const arcsGeo = flightArcsGeoJSON(
+    events,
+    selectedEventId ?? undefined,
+    arcProgress
+  );
   const airportsGeo = airportDotsGeoJSON(events);
   const pinsGeo = locationPinsGeoJSON(events, selectedEventId ?? undefined);
 
@@ -112,20 +162,52 @@ export function TravelMap({ events, selectedEventId, onSelectEvent }: TravelMapP
         attributionControl={false}
         reuseMaps
       >
-        {/* Flight arcs */}
+        {/* Flight arcs — arched (not great-circle), with a soft glow
+            underlay and an animated "drawing" effect on the selected leg. */}
         <Source id="flight-arcs" type="geojson" data={arcsGeo}>
+          {/* Glow underlay — wide and translucent, makes the arc feel
+              illuminated against the dark map. */}
+          <Layer
+            id="arcs-glow"
+            type="line"
+            paint={{
+              "line-color": EVENT_META.flight.color,
+              "line-opacity": [
+                "case",
+                ["==", ["get", "selected"], true],
+                0.35,
+                0.12,
+              ],
+              "line-width": [
+                "case",
+                ["==", ["get", "selected"], true],
+                10,
+                5,
+              ],
+              "line-blur": 6,
+            }}
+            layout={{ "line-cap": "round", "line-join": "round" }}
+          />
           <Layer
             id="arcs-dim"
             type="line"
             filter={["!=", ["get", "selected"], true]}
-            paint={{ "line-color": EVENT_META.flight.color, "line-opacity": 0.25, "line-width": 1.5 }}
+            paint={{
+              "line-color": EVENT_META.flight.color,
+              "line-opacity": 0.55,
+              "line-width": 2,
+            }}
             layout={{ "line-cap": "round", "line-join": "round" }}
           />
           <Layer
             id="arcs-selected"
             type="line"
             filter={["==", ["get", "selected"], true]}
-            paint={{ "line-color": EVENT_META.flight.color, "line-opacity": 0.8, "line-width": 3 }}
+            paint={{
+              "line-color": EVENT_META.flight.color,
+              "line-opacity": 0.95,
+              "line-width": 3.5,
+            }}
             layout={{ "line-cap": "round", "line-join": "round" }}
           />
         </Source>

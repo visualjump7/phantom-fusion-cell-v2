@@ -11,13 +11,16 @@
  */
 
 import { useEffect, useState } from "react";
-import { Loader2, FileText } from "lucide-react";
+import { Loader2, FileText, Trash2 } from "lucide-react";
 import { fetchBriefs, type Brief } from "@/lib/brief-service";
 
 interface BriefListProps {
   orgId: string | null;
   selectedBriefId: string | null;
   onSelect: (briefId: string) => void;
+  /** Optional — when provided, each row gets a trash button that calls
+      this with the brief's id. Parent owns the actual delete + refresh. */
+  onDelete?: (briefId: string) => void;
   /** Bump to force re-fetch (e.g. after creating a new brief). */
   refreshKey?: number;
 }
@@ -44,6 +47,7 @@ export function BriefList({
   orgId,
   selectedBriefId,
   onSelect,
+  onDelete,
   refreshKey = 0,
 }: BriefListProps) {
   const [briefs, setBriefs] = useState<Brief[]>([]);
@@ -102,15 +106,16 @@ export function BriefList({
         const selected = b.id === selectedBriefId;
         const pill = STATUS_PILL[b.status] || STATUS_PILL.draft;
         return (
-          <li key={b.id}>
+          <li
+            key={b.id}
+            className={`group flex items-center gap-1 transition-colors ${
+              selected ? "bg-primary/10" : "hover:bg-muted/60"
+            }`}
+          >
             <button
               type="button"
               onClick={() => onSelect(b.id)}
-              className={`flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition-colors ${
-                selected
-                  ? "bg-primary/10"
-                  : "hover:bg-muted/60"
-              }`}
+              className="flex flex-1 items-center justify-between gap-3 px-3 py-2.5 text-left"
             >
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">
@@ -126,6 +131,26 @@ export function BriefList({
                 {b.status}
               </span>
             </button>
+            {onDelete && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (
+                    confirm(
+                      `Delete "${b.title || "Untitled brief"}"? This cannot be undone.`
+                    )
+                  ) {
+                    onDelete(b.id);
+                  }
+                }}
+                aria-label={`Delete ${b.title || "brief"}`}
+                title="Delete brief"
+                className="mr-2 rounded-md p-1.5 text-muted-foreground/60 transition-colors hover:bg-red-500/10 hover:text-red-400"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
           </li>
         );
       })}

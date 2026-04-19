@@ -56,14 +56,12 @@ export default function LoginPage() {
           className="mb-8 text-center"
         >
           <div className="mx-auto mb-4">
-            <img
-              src="https://phantom-presenter-assets.s3.us-east-1.amazonaws.com/Fusion+Cell+Logo.png"
-              alt="Fusion Cell"
-              className="mx-auto h-16 w-auto"
-            />
+            <span className="text-4xl font-bold text-foreground">
+              Fusion <span className="text-primary">Cell</span>
+            </span>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Executive Financial Command Center
+            Your world simplified.
           </p>
         </motion.div>
 

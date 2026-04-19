@@ -15,8 +15,13 @@ import {
   fetchUpcomingBillsData,
   fetchProjectsSnapshot,
   fetchPendingDecisions,
-  fetchCalendarData,
+  fetchScheduleData,
   Brief,
+  type CashFlowBlockData,
+  type BillBlockData,
+  type ProjectsBlockData,
+  type DecisionsBlockData,
+  type ScheduleBlockData,
 } from "@/lib/brief-service";
 import { useEffectiveOrgId } from "@/lib/use-active-principal";
 import { useRole } from "@/lib/use-role";
@@ -46,28 +51,73 @@ export default function BriefPage() {
       );
 
       if (latest) {
-        // Only fetch calendar windows actually used by blocks on this brief.
-        const calendarWindows = new Set<number>();
+        // Only fetch schedule windows actually used by blocks on this brief.
+        const scheduleWindows = new Set<number>();
         for (const b of latest.blocks || []) {
-          if (b.type === "calendar") {
-            calendarWindows.add(Number(b.config?.days_ahead) || 7);
+          if (b.type === "schedule") {
+            scheduleWindows.add(Number(b.config?.days_ahead) || 7);
           }
         }
 
-        const [cashflow, bills7, bills14, bills30, projects, decisions, ...calendarArr] =
+        // Per-fetcher guard so one failure doesn't reject everything.
+        const guard = <T,>(label: string, fallback: T) =>
+          (p: Promise<T>): Promise<T> =>
+            p.catch((err) => {
+              console.error(`[brief reader] ${label} failed`, err);
+              return fallback;
+            });
+
+        const now = new Date();
+        const cashflowFallback: CashFlowBlockData = {
+          month: now.toLocaleString("default", { month: "long" }),
+          year: now.getFullYear(),
+          cashIn: 0,
+          cashOut: 0,
+          net: 0,
+          paidCount: 0,
+          pendingCount: 0,
+        };
+        const billsFallback = (d: number): BillBlockData => ({
+          bills: [],
+          total: 0,
+          daysAhead: d,
+        });
+        const projectsFallback: ProjectsBlockData = {
+          projects: [],
+          totalValue: 0,
+          category: null,
+        };
+        const decisionsFallback: DecisionsBlockData = {
+          decisions: [],
+          count: 0,
+        };
+        const scheduleFallback = (d: number): ScheduleBlockData => ({
+          events: [],
+          daysAhead: d,
+        });
+
+        const [cashflow, bills7, bills14, bills30, projects, decisions, ...scheduleArr] =
           await Promise.all([
-            fetchCashFlowData(orgId!),
-            fetchUpcomingBillsData(orgId!, 7),
-            fetchUpcomingBillsData(orgId!, 14),
-            fetchUpcomingBillsData(orgId!, 30),
-            fetchProjectsSnapshot(orgId!),
-            fetchPendingDecisions(orgId!),
-            ...Array.from(calendarWindows).map((d) =>
-              fetchCalendarData(orgId!, d)
+            guard("Cash flow", cashflowFallback)(fetchCashFlowData(orgId!)),
+            guard("Bills (7d)", billsFallback(7))(
+              fetchUpcomingBillsData(orgId!, 7)
+            ),
+            guard("Bills (14d)", billsFallback(14))(
+              fetchUpcomingBillsData(orgId!, 14)
+            ),
+            guard("Bills (30d)", billsFallback(30))(
+              fetchUpcomingBillsData(orgId!, 30)
+            ),
+            guard("Projects", projectsFallback)(fetchProjectsSnapshot(orgId!)),
+            guard("Decisions", decisionsFallback)(fetchPendingDecisions(orgId!)),
+            ...Array.from(scheduleWindows).map((d) =>
+              guard(`Schedule (${d}d)`, scheduleFallback(d))(
+                fetchScheduleData(orgId!, d)
+              )
             ),
           ]);
-        const calendarEntries = Array.from(calendarWindows).map(
-          (d, i) => [`calendar_${d}`, calendarArr[i]] as const
+        const scheduleEntries = Array.from(scheduleWindows).map(
+          (d, i) => [`schedule_${d}`, scheduleArr[i]] as const
         );
         setLiveData({
           cashflow,
@@ -76,7 +126,7 @@ export default function BriefPage() {
           bills_30: bills30,
           projects,
           decisions,
-          ...Object.fromEntries(calendarEntries),
+          ...Object.fromEntries(scheduleEntries),
         });
       }
       setIsLoading(false);

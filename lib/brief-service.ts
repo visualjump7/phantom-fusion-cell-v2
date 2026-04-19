@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import { fetchAllEvents } from "./calendar-service";
+import { fetchSystemEvents } from "./calendar-system";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
@@ -39,7 +39,7 @@ export interface BriefBlock {
     | "projects"
     | "decisions"
     | "document"
-    | "calendar";
+    | "schedule";
   position: number;
   content_html: string | null;
   config: Record<string, any>;
@@ -94,31 +94,48 @@ export interface DecisionsBlockData {
 }
 
 /**
- * Unified agenda for the Calendar block: external ICS feeds (Apple, Google,
- * Outlook) + system events (bills due, decision deadlines, travel legs),
- * normalized into a flat, JSON-serializable shape so it can live inside
- * liveData and travel through the PDF pipeline without Date reconstruction.
+ * Unified agenda for the Schedule block. Internal data only — bills due,
+ * pending decisions with due dates, travel legs. Each event is normalized
+ * into a flat JSON-serializable shape so it can live inside liveData and
+ * travel through the PDF pipeline without Date reconstruction.
+ *
+ * Staff-authored ad-hoc items (e.g. "Call with CFO Thursday 10am") are
+ * stored separately on the block itself — see `ScheduleManualItem`. They
+ * live in `block.config.items` (JSONB) and are merged into the agenda at
+ * render time, not here.
  *
  * Start/end are ISO strings (`start_iso`, `end_iso`). Callers that need
  * Date objects can `new Date(...)` on render.
  */
-export interface CalendarBlockData {
-  events: CalendarEventRow[];
+export interface ScheduleBlockData {
+  events: ScheduleEventRow[];
   daysAhead: number;
 }
 
-export interface CalendarEventRow {
+export interface ScheduleEventRow {
   id: string;
   title: string;
   start_iso: string;
   end_iso: string | null;
   is_all_day: boolean;
-  source: "external" | "system";
-  // For "system" events: which system lane. For "external": undefined.
+  source: "system" | "manual";
+  // For "system" events: which system lane. For "manual": undefined.
   source_kind?: "cashflow" | "decision" | "travel";
-  source_label: string; // e.g. "iCloud", "Bills", "Decisions", "Travel"
+  source_label: string; // e.g. "Bills", "Decisions", "Travel", "Manual"
   color: string; // hex
   location?: string | null;
+}
+
+/**
+ * Staff-typed agenda entry stored on a schedule block's `config.items`.
+ * No new DB column — `brief_blocks.config` is JSONB. IDs are generated
+ * client-side with `crypto.randomUUID()` so React list keys are stable.
+ */
+export interface ScheduleManualItem {
+  id: string;
+  title: string;
+  date: string; // "YYYY-MM-DD"
+  time?: string; // "HH:MM" — optional; when absent, item renders as all-day
 }
 
 // ============================================
@@ -465,36 +482,25 @@ export async function fetchProjectsSnapshot(
 }
 
 /**
- * Fetch a merged-agenda window for the Calendar block.
- *
- * Combines:
- *   - External ICS events from `calendar_events_cache` (Apple, Google,
- *     Outlook feeds the admin has subscribed this org to)
- *   - System events from `calendar-system.ts` (bills due, pending decision
- *     deadlines, travel legs)
+ * Fetch a merged-agenda window for the Schedule block. Internal data only —
+ * pulls from `calendar-system.ts` (bills due, pending decision deadlines,
+ * travel legs). External ICS feeds are intentionally NOT consulted here;
+ * staff add their own one-off meeting entries via `ScheduleManualItem`,
+ * which live on the block itself and are merged at render time.
  *
  * Window: today 00:00 → today + daysAhead, in local time. Events are
  * sorted ascending by start.
- *
- * Pass `principalId` null when the brief isn't scoped to a specific
- * principal — the admin-side brief composer scope is org-wide.
  */
-export async function fetchCalendarData(
+export async function fetchScheduleData(
   orgId: string,
-  daysAhead: number,
-  principalId: string | null = null
-): Promise<CalendarBlockData> {
+  daysAhead: number
+): Promise<ScheduleBlockData> {
   const start = new Date();
   start.setHours(0, 0, 0, 0);
   const end = new Date(start);
   end.setDate(end.getDate() + daysAhead);
 
-  const { external, system } = await fetchAllEvents(
-    orgId,
-    principalId,
-    start,
-    end
-  );
+  const system = await fetchSystemEvents(orgId, start, end);
 
   const SYSTEM_LABEL: Record<"cashflow" | "decision" | "travel", string> = {
     cashflow: "Bills",
@@ -502,34 +508,19 @@ export async function fetchCalendarData(
     travel: "Travel",
   };
 
-  const rows: CalendarEventRow[] = [
-    ...external.map(
-      (e): CalendarEventRow => ({
-        id: `ext:${e.id}`,
-        title: e.title,
-        start_iso: e.start.toISOString(),
-        end_iso: e.end ? e.end.toISOString() : null,
-        is_all_day: e.isAllDay,
-        source: "external",
-        source_label: e.sourceLabel,
-        color: e.sourceColor,
-        location: e.location,
-      })
-    ),
-    ...system.map(
-      (e): CalendarEventRow => ({
-        id: `sys:${e.id}`,
-        title: e.title,
-        start_iso: e.start.toISOString(),
-        end_iso: e.end ? e.end.toISOString() : null,
-        is_all_day: false,
-        source: "system",
-        source_kind: e.sourceKind,
-        source_label: SYSTEM_LABEL[e.sourceKind] ?? e.sourceKind,
-        color: e.color,
-      })
-    ),
-  ];
+  const rows: ScheduleEventRow[] = system.map(
+    (e): ScheduleEventRow => ({
+      id: `sys:${e.id}`,
+      title: e.title,
+      start_iso: e.start.toISOString(),
+      end_iso: e.end ? e.end.toISOString() : null,
+      is_all_day: false,
+      source: "system",
+      source_kind: e.sourceKind,
+      source_label: SYSTEM_LABEL[e.sourceKind] ?? e.sourceKind,
+      color: e.color,
+    })
+  );
 
   rows.sort(
     (a, b) => new Date(a.start_iso).getTime() - new Date(b.start_iso).getTime()

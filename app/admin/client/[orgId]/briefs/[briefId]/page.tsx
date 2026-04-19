@@ -41,13 +41,14 @@ import {
   fetchUpcomingBillsData,
   fetchProjectsSnapshot,
   fetchPendingDecisions,
-  fetchCalendarData,
+  fetchScheduleData,
   Brief,
   BriefBlock,
   CashFlowBlockData,
   BillBlockData,
   ProjectsBlockData,
   DecisionsBlockData,
+  ScheduleBlockData,
 } from "@/lib/brief-service";
 import { BriefBlockEditor } from "@/components/brief/BriefBlockEditor";
 import { BriefPreview } from "@/components/brief/BriefPreview";
@@ -74,6 +75,44 @@ export default function BriefComposerPage() {
   }, [briefId]);
 
   const loadLiveData = useCallback(async () => {
+    // Guard every fetcher so one failure (e.g. missing calendar tables)
+    // doesn't reject the Promise.all and blank out every data block.
+    const guard = <T,>(label: string, fallback: T) =>
+      (p: Promise<T>): Promise<T> =>
+        p.catch((err) => {
+          console.error(`[brief composer] ${label} failed`, err);
+          return fallback;
+        });
+
+    const now = new Date();
+    const cashflowFallback: CashFlowBlockData = {
+      month: now.toLocaleString("default", { month: "long" }),
+      year: now.getFullYear(),
+      cashIn: 0,
+      cashOut: 0,
+      net: 0,
+      paidCount: 0,
+      pendingCount: 0,
+    };
+    const billsFallback = (d: number): BillBlockData => ({
+      bills: [],
+      total: 0,
+      daysAhead: d,
+    });
+    const projectsFallback: ProjectsBlockData = {
+      projects: [],
+      totalValue: 0,
+      category: null,
+    };
+    const decisionsFallback: DecisionsBlockData = {
+      decisions: [],
+      count: 0,
+    };
+    const scheduleFallback = (d: number): ScheduleBlockData => ({
+      events: [],
+      daysAhead: d,
+    });
+
     const [
       cashflow,
       bills7,
@@ -81,19 +120,19 @@ export default function BriefComposerPage() {
       bills30,
       projects,
       decisions,
-      calendar7,
-      calendar14,
-      calendar30,
+      schedule7,
+      schedule14,
+      schedule30,
     ] = await Promise.all([
-      fetchCashFlowData(orgId),
-      fetchUpcomingBillsData(orgId, 7),
-      fetchUpcomingBillsData(orgId, 14),
-      fetchUpcomingBillsData(orgId, 30),
-      fetchProjectsSnapshot(orgId),
-      fetchPendingDecisions(orgId),
-      fetchCalendarData(orgId, 7),
-      fetchCalendarData(orgId, 14),
-      fetchCalendarData(orgId, 30),
+      guard("Cash flow", cashflowFallback)(fetchCashFlowData(orgId)),
+      guard("Bills (7d)", billsFallback(7))(fetchUpcomingBillsData(orgId, 7)),
+      guard("Bills (14d)", billsFallback(14))(fetchUpcomingBillsData(orgId, 14)),
+      guard("Bills (30d)", billsFallback(30))(fetchUpcomingBillsData(orgId, 30)),
+      guard("Projects", projectsFallback)(fetchProjectsSnapshot(orgId)),
+      guard("Decisions", decisionsFallback)(fetchPendingDecisions(orgId)),
+      guard("Schedule (7d)", scheduleFallback(7))(fetchScheduleData(orgId, 7)),
+      guard("Schedule (14d)", scheduleFallback(14))(fetchScheduleData(orgId, 14)),
+      guard("Schedule (30d)", scheduleFallback(30))(fetchScheduleData(orgId, 30)),
     ]);
     setLiveData({
       cashflow,
@@ -102,9 +141,9 @@ export default function BriefComposerPage() {
       bills_30: bills30,
       projects,
       decisions,
-      calendar_7: calendar7,
-      calendar_14: calendar14,
-      calendar_30: calendar30,
+      schedule_7: schedule7,
+      schedule_14: schedule14,
+      schedule_30: schedule30,
     });
   }, [orgId]);
 
@@ -131,11 +170,18 @@ export default function BriefComposerPage() {
     const defaultConfig: Record<string, any> = {};
     if (type === "bills") defaultConfig.days_ahead = 7;
     if (type === "projects") defaultConfig.category = "all";
-    if (type === "calendar") defaultConfig.days_ahead = 7;
+    if (type === "schedule") {
+      defaultConfig.days_ahead = 7;
+      defaultConfig.items = [];
+    }
 
-    const block = await addBlock(briefId, type, position, defaultConfig);
-    if (block && brief.blocks) {
-      setBrief({ ...brief, blocks: [...brief.blocks, block] });
+    // addBlock returns { block, error } — unwrap so we push the actual
+    // BriefBlock into local state, not the wrapper object.
+    const result = await addBlock(briefId, type, position, defaultConfig);
+    if (result.error) {
+      console.error("[brief composer] add block failed:", result.error);
+    } else if (result.block && brief.blocks) {
+      setBrief({ ...brief, blocks: [...brief.blocks, result.block] });
     }
     setShowBlockPicker(false);
   };
@@ -235,7 +281,7 @@ export default function BriefComposerPage() {
     { type: "text", label: "Text Block", icon: Type, desc: "Rich text commentary" },
     { type: "cashflow", label: "Cash Flow", icon: DollarSign, desc: "Monthly cash flow summary" },
     { type: "bills", label: "Upcoming Bills", icon: Receipt, desc: "Bills due soon" },
-    { type: "calendar", label: "Calendar", icon: CalendarDays, desc: "Bills + external events" },
+    { type: "schedule", label: "Schedule", icon: CalendarDays, desc: "Bills + decisions + travel + manual items" },
     { type: "projects", label: "Projects", icon: Building2, desc: "Projects snapshot" },
     { type: "decisions", label: "Decisions", icon: AlertTriangle, desc: "Pending decisions" },
     { type: "document", label: "Document", icon: FileUp, desc: "Upload .docx file" },

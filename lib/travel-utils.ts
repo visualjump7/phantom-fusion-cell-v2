@@ -45,26 +45,97 @@ export function greatCirclePoints(
   return points;
 }
 
+/**
+ * Arched flight-path curve for the map.
+ *
+ * Takes the real great-circle path and bends it upward (in screen-space
+ * latitude) with a sine bump so short hops like DAL→AUS or DAL→PHX read
+ * as a proper flight arc rather than a flat line. Long-haul routes keep
+ * the natural great-circle curvature because the bump is proportional to
+ * distance but soft-capped so it doesn't distort transcontinental flights.
+ *
+ * The bump is applied perpendicular to the straight lat/lng interpolation
+ * line, always lifting NORTH (positive lat) so the arc visually reads as
+ * "up" on a standard map orientation. For truly polar routes this would
+ * look odd, but our demo data is continental-to-Caribbean so it's fine.
+ *
+ * Not geographically accurate — purely visual.
+ */
+export function flightArcPoints(
+  from: Airport,
+  to: Airport,
+  numPoints = 64
+): [number, number][] {
+  // Approximate distance in degrees of latitude — good enough for sizing
+  // the bump. Caps at 40° so a DAL→Paris flight still arches a reasonable
+  // amount, not a grotesque bulge.
+  const dLat = to.lat - from.lat;
+  const dLng = to.lng - from.lng;
+  const rawDist = Math.sqrt(dLat * dLat + dLng * dLng);
+  const dist = Math.min(rawDist, 40);
+
+  // Short hop (<5°): modest bump. Continental (5-25°): a proper arch.
+  // Long-haul (>25°): softer, scaled by sqrt so it doesn't blow up.
+  const bumpDeg =
+    dist < 5
+      ? dist * 0.35
+      : dist < 25
+      ? 1.75 + (dist - 5) * 0.25
+      : 6.75 + Math.sqrt(dist - 25) * 1.2;
+
+  const points: [number, number][] = [];
+  for (let i = 0; i <= numPoints; i++) {
+    const t = i / numPoints;
+    // Straight-line lng/lat interpolation as the baseline.
+    const lng = from.lng + dLng * t;
+    const lat = from.lat + dLat * t;
+    // sin(πt) peaks at t=0.5, zero at the endpoints. Always lift north.
+    const lift = Math.sin(t * Math.PI) * bumpDeg;
+    points.push([lng, lat + lift]);
+  }
+  return points;
+}
+
 // ── GeoJSON builders ────────────────────────────────────────────
 
-/** Flight arcs as GeoJSON LineStrings. */
+/**
+ * Flight arcs as GeoJSON LineStrings.
+ *
+ * Uses `flightArcPoints` (arched) instead of bare great-circle so even
+ * short continental hops render as visible arcs on a flat map. Each
+ * flight carries an `arcProgress` 0..1 property; normally set to 1 (full
+ * length). Callers can override it for a specific flight to animate the
+ * arc drawing — we truncate the coordinate array to `progress * length`
+ * and the map redraws when the GeoJSON changes.
+ */
 export function flightArcsGeoJSON(
   events: ItineraryEvent[],
-  selectedId?: string
+  selectedId?: string,
+  selectedProgress = 1
 ): GeoJSON.FeatureCollection {
   const flights = events.filter(
     (e) => e.type === "flight" && e.departureAirport && e.arrivalAirport
   );
   return {
     type: "FeatureCollection",
-    features: flights.map((e) => ({
-      type: "Feature" as const,
-      properties: { id: e.id, selected: e.id === selectedId },
-      geometry: {
-        type: "LineString" as const,
-        coordinates: greatCirclePoints(e.departureAirport!, e.arrivalAirport!),
-      },
-    })),
+    features: flights.map((e) => {
+      const full = flightArcPoints(e.departureAirport!, e.arrivalAirport!);
+      const isSelected = e.id === selectedId;
+      // Animated draw on the selected flight: truncate to the current
+      // progress. Keep at least 2 points so Mapbox still renders a line.
+      const coords =
+        isSelected && selectedProgress < 1
+          ? full.slice(0, Math.max(2, Math.ceil(full.length * selectedProgress)))
+          : full;
+      return {
+        type: "Feature" as const,
+        properties: { id: e.id, selected: isSelected },
+        geometry: {
+          type: "LineString" as const,
+          coordinates: coords,
+        },
+      };
+    }),
   };
 }
 
