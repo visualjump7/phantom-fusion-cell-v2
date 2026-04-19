@@ -15,6 +15,7 @@ import {
   fetchUpcomingBillsData,
   fetchProjectsSnapshot,
   fetchPendingDecisions,
+  fetchCalendarData,
   Brief,
 } from "@/lib/brief-service";
 import { useEffectiveOrgId } from "@/lib/use-active-principal";
@@ -45,7 +46,15 @@ export default function BriefPage() {
       );
 
       if (latest) {
-        const [cashflow, bills7, bills14, bills30, projects, decisions] =
+        // Only fetch calendar windows actually used by blocks on this brief.
+        const calendarWindows = new Set<number>();
+        for (const b of latest.blocks || []) {
+          if (b.type === "calendar") {
+            calendarWindows.add(Number(b.config?.days_ahead) || 7);
+          }
+        }
+
+        const [cashflow, bills7, bills14, bills30, projects, decisions, ...calendarArr] =
           await Promise.all([
             fetchCashFlowData(orgId!),
             fetchUpcomingBillsData(orgId!, 7),
@@ -53,7 +62,13 @@ export default function BriefPage() {
             fetchUpcomingBillsData(orgId!, 30),
             fetchProjectsSnapshot(orgId!),
             fetchPendingDecisions(orgId!),
+            ...Array.from(calendarWindows).map((d) =>
+              fetchCalendarData(orgId!, d)
+            ),
           ]);
+        const calendarEntries = Array.from(calendarWindows).map(
+          (d, i) => [`calendar_${d}`, calendarArr[i]] as const
+        );
         setLiveData({
           cashflow,
           bills_7: bills7,
@@ -61,6 +76,7 @@ export default function BriefPage() {
           bills_30: bills30,
           projects,
           decisions,
+          ...Object.fromEntries(calendarEntries),
         });
       }
       setIsLoading(false);

@@ -21,6 +21,7 @@ import {
   Type,
   GripVertical,
   Download,
+  CalendarDays,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ import {
   fetchUpcomingBillsData,
   fetchProjectsSnapshot,
   fetchPendingDecisions,
+  fetchCalendarData,
   Brief,
   BriefBlock,
   CashFlowBlockData,
@@ -72,13 +74,26 @@ export default function BriefComposerPage() {
   }, [briefId]);
 
   const loadLiveData = useCallback(async () => {
-    const [cashflow, bills7, bills14, bills30, projects, decisions] = await Promise.all([
+    const [
+      cashflow,
+      bills7,
+      bills14,
+      bills30,
+      projects,
+      decisions,
+      calendar7,
+      calendar14,
+      calendar30,
+    ] = await Promise.all([
       fetchCashFlowData(orgId),
       fetchUpcomingBillsData(orgId, 7),
       fetchUpcomingBillsData(orgId, 14),
       fetchUpcomingBillsData(orgId, 30),
       fetchProjectsSnapshot(orgId),
       fetchPendingDecisions(orgId),
+      fetchCalendarData(orgId, 7),
+      fetchCalendarData(orgId, 14),
+      fetchCalendarData(orgId, 30),
     ]);
     setLiveData({
       cashflow,
@@ -87,6 +102,9 @@ export default function BriefComposerPage() {
       bills_30: bills30,
       projects,
       decisions,
+      calendar_7: calendar7,
+      calendar_14: calendar14,
+      calendar_30: calendar30,
     });
   }, [orgId]);
 
@@ -113,6 +131,7 @@ export default function BriefComposerPage() {
     const defaultConfig: Record<string, any> = {};
     if (type === "bills") defaultConfig.days_ahead = 7;
     if (type === "projects") defaultConfig.category = "all";
+    if (type === "calendar") defaultConfig.days_ahead = 7;
 
     const block = await addBlock(briefId, type, position, defaultConfig);
     if (block && brief.blocks) {
@@ -216,6 +235,7 @@ export default function BriefComposerPage() {
     { type: "text", label: "Text Block", icon: Type, desc: "Rich text commentary" },
     { type: "cashflow", label: "Cash Flow", icon: DollarSign, desc: "Monthly cash flow summary" },
     { type: "bills", label: "Upcoming Bills", icon: Receipt, desc: "Bills due soon" },
+    { type: "calendar", label: "Calendar", icon: CalendarDays, desc: "Bills + external events" },
     { type: "projects", label: "Projects", icon: Building2, desc: "Projects snapshot" },
     { type: "decisions", label: "Decisions", icon: AlertTriangle, desc: "Pending decisions" },
     { type: "document", label: "Document", icon: FileUp, desc: "Upload .docx file" },

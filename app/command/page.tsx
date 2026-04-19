@@ -25,6 +25,7 @@ import { WelcomeOverlay } from "@/components/command/WelcomeOverlay";
 import { fetchMessages } from "@/lib/message-service";
 import { SearchBar } from "@/components/search/SearchBar";
 import { CreateActionFAB } from "@/components/command/CreateActionFAB";
+import { BackgroundGlobe } from "@/components/command/BackgroundGlobe";
 
 export default function CommandPage() {
   return (
@@ -143,13 +144,27 @@ function CommandPageInner() {
 
   return (
     <>
+      <BackgroundGlobe />
+      <div className="pointer-events-none fixed inset-x-0 top-0 z-40 flex justify-center pt-6">
+        <img
+          src="https://phantom-presenter-assets.s3.us-east-1.amazonaws.com/Fusion+Cell+Logo.png"
+          alt="Fusion Cell"
+          className="h-12 w-auto"
+        />
+      </div>
       <OrbitalCommand
         visibleModules={visibleModules}
         onModuleClick={handleModuleClick}
         onOrbClick={() => setSearchOpen(true)}
         badges={badges}
+        centerLogoSrc="/phantom-wings.svg"
         mode={preview.active ? "preview" : effectiveIsAdminSide ? "admin" : "principal"}
       />
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center pb-6">
+        <span className="text-sm tracking-wide text-muted-foreground">
+          your world simplified
+        </span>
+      </div>
       <FocusedOverlay
         open={!!activeModule}
         onClose={close}

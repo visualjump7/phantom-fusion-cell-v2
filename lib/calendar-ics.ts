@@ -33,11 +33,17 @@ export interface FetchAndParseOptions {
   timeoutMs?: number;
 }
 
+import { normalizeIcsUrl } from "@/lib/calendar-url";
+
+// Re-export for callers that already imported it from this module.
+export { normalizeIcsUrl };
+
 async function fetchText(url: string, timeoutMs: number): Promise<string> {
+  const normalized = normalizeIcsUrl(url);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(url, {
+    const res = await fetch(normalized, {
       signal: controller.signal,
       redirect: "follow",
       headers: { Accept: "text/calendar, */*;q=0.1" },

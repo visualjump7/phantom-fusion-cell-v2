@@ -13,6 +13,7 @@ import type {
   ProjectsBlockData,
   DecisionsBlockData,
 } from "@/lib/brief-service";
+import { fetchCalendarData } from "@/lib/brief-service";
 
 export async function POST(request: Request) {
   const cookieStore = cookies();
@@ -187,10 +188,27 @@ export async function POST(request: Request) {
 
   const decisions: DecisionsBlockData = { decisions: pendingDecisions, count: pendingDecisions.length };
 
+  // Calendar — only fetch the windows actually used by calendar blocks to
+  // avoid an unnecessary triple-fetch when the brief has no calendar block.
+  const calendarWindows = new Set<number>();
+  for (const b of brief.blocks || []) {
+    if (b.type === "calendar") {
+      const days = Number(b.config?.days_ahead) || 7;
+      calendarWindows.add(days);
+    }
+  }
+  const calendarEntries = await Promise.all(
+    Array.from(calendarWindows).map(async (days) => {
+      const cal = await fetchCalendarData(orgId, days);
+      return [`calendar_${days}`, cal] as const;
+    })
+  );
+
   const liveData: Record<string, any> = {
     cashflow,
     bills_7: bills7, bills_14: bills14, bills_30: bills30,
     projects, decisions,
+    ...Object.fromEntries(calendarEntries),
   };
 
   // Render PDF

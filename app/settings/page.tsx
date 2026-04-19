@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Settings, User, Lock, Sun, Moon, Contrast, Loader2, CheckCircle, MonitorSmartphone,
-  AlertCircle,
+  AlertCircle, Palette,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,8 @@ import {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
+
+type SettingsTab = "profile" | "theme";
 
 export default function SettingsPage() {
   const { role, userName, userEmail, userId, isStaff } = useRole();
@@ -42,6 +45,9 @@ export default function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSavingPassword, setIsSavingPassword] = useState(false);
   const [passwordMsg, setPasswordMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // Tabs
+  const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
 
   useEffect(() => {
     async function loadProfile() {
@@ -133,7 +139,38 @@ export default function SettingsPage() {
           </div>
         </motion.div>
 
+        <div className="mb-6 flex gap-1 rounded-xl border border-border bg-card/60 p-1">
+          <button
+            type="button"
+            onClick={() => setActiveTab("profile")}
+            className={cn(
+              "flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+              activeTab === "profile"
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
+          >
+            <User className="h-4 w-4" />
+            Profile
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("theme")}
+            className={cn(
+              "flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+              activeTab === "theme"
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
+          >
+            <Palette className="h-4 w-4" />
+            Theme
+          </button>
+        </div>
+
         <div className="space-y-6">
+          {activeTab === "profile" && (
+            <>
           {/* ═══ PROFILE ═══ */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
           <Card className="border-border bg-card/60">
@@ -220,9 +257,63 @@ export default function SettingsPage() {
           </Card>
           </motion.div>
 
+          {isStaff && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
+            <Card className="border-border bg-card/60">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-2">
+                  <MonitorSmartphone className="h-4 w-4 text-primary" />
+                  <CardTitle className="text-base">Default Landing</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="mb-3 text-xs text-muted-foreground">
+                  Where you land after logging in. Dashboard is the full admin view; Command is the principal-first orbital view.
+                </p>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <button
+                    onClick={() => handleDefaultLandingChange("dashboard")}
+                    disabled={savingLanding}
+                    className={`relative rounded-xl border-2 p-4 text-left transition-all disabled:opacity-60 ${
+                      defaultLanding === "dashboard" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                    }`}
+                  >
+                    <p className="text-sm font-semibold text-foreground">Dashboard</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Full-chrome admin workspace (default).</p>
+                    {defaultLanding === "dashboard" && (
+                      <div className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
+                        <CheckCircle className="h-3 w-3 text-primary-foreground" />
+                      </div>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleDefaultLandingChange("command")}
+                    disabled={savingLanding}
+                    className={`relative rounded-xl border-2 p-4 text-left transition-all disabled:opacity-60 ${
+                      defaultLanding === "command" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                    }`}
+                  >
+                    <p className="text-sm font-semibold text-foreground">Command</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Orbital entry point with focused overlays.</p>
+                    {defaultLanding === "command" && (
+                      <div className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
+                        <CheckCircle className="h-3 w-3 text-primary-foreground" />
+                      </div>
+                    )}
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+          )}
+            </>
+          )}
+
+          {activeTab === "theme" && (
+            <>
           {/* ═══ APPEARANCE ═══ */}
           {!isDelegate && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
           <Card className="border-border bg-card/60">
             <CardHeader className="pb-4">
               <div className="flex items-center gap-2">
@@ -328,55 +419,7 @@ export default function SettingsPage() {
           </Card>
           </motion.div>
           )}
-
-          {isStaff && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
-            <Card className="border-border bg-card/60">
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-2">
-                  <MonitorSmartphone className="h-4 w-4 text-primary" />
-                  <CardTitle className="text-base">Default Landing</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="mb-3 text-xs text-muted-foreground">
-                  Where you land after logging in. Dashboard is the full admin view; Command is the principal-first orbital view.
-                </p>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <button
-                    onClick={() => handleDefaultLandingChange("dashboard")}
-                    disabled={savingLanding}
-                    className={`relative rounded-xl border-2 p-4 text-left transition-all disabled:opacity-60 ${
-                      defaultLanding === "dashboard" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
-                    }`}
-                  >
-                    <p className="text-sm font-semibold text-foreground">Dashboard</p>
-                    <p className="mt-1 text-xs text-muted-foreground">Full-chrome admin workspace (default).</p>
-                    {defaultLanding === "dashboard" && (
-                      <div className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
-                        <CheckCircle className="h-3 w-3 text-primary-foreground" />
-                      </div>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => handleDefaultLandingChange("command")}
-                    disabled={savingLanding}
-                    className={`relative rounded-xl border-2 p-4 text-left transition-all disabled:opacity-60 ${
-                      defaultLanding === "command" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
-                    }`}
-                  >
-                    <p className="text-sm font-semibold text-foreground">Command</p>
-                    <p className="mt-1 text-xs text-muted-foreground">Orbital entry point with focused overlays.</p>
-                    {defaultLanding === "command" && (
-                      <div className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
-                        <CheckCircle className="h-3 w-3 text-primary-foreground" />
-                      </div>
-                    )}
-                  </button>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+            </>
           )}
         </div>
       </motion.main>

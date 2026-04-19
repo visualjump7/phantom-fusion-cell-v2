@@ -15,6 +15,8 @@ import type {
   BillBlockData,
   ProjectsBlockData,
   DecisionsBlockData,
+  CalendarBlockData,
+  CalendarEventRow,
 } from "@/lib/brief-service";
 
 // ============================================
@@ -306,6 +308,122 @@ function ContentBlock({ block, liveData }: { block: BriefBlock; liveData: Record
           ))
         )}
         {block.commentary && <Text style={contentStyles.blockCommentary}>{block.commentary}</Text>}
+      </View>
+    );
+  }
+
+  // Calendar — merged agenda grouped by day.
+  if (block.type === "calendar") {
+    const daysAhead = block.config?.days_ahead || 7;
+    const data = liveData[`calendar_${daysAhead}`] as
+      | CalendarBlockData
+      | undefined;
+    if (!data) return null;
+
+    const byDay = new Map<string, CalendarEventRow[]>();
+    for (const ev of data.events) {
+      const d = new Date(ev.start_iso);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+        2,
+        "0"
+      )}-${String(d.getDate()).padStart(2, "0")}`;
+      const bucket = byDay.get(key) ?? [];
+      bucket.push(ev);
+      byDay.set(key, bucket);
+    }
+    const days = Array.from(byDay.entries()).sort(([a], [b]) =>
+      a.localeCompare(b)
+    );
+
+    const formatDayHeading = (key: string) => {
+      const [y, m, d] = key.split("-").map((n) => parseInt(n, 10));
+      const date = new Date(y, m - 1, d);
+      return date.toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "short",
+        day: "numeric",
+      });
+    };
+
+    const formatEventTime = (ev: CalendarEventRow) => {
+      if (ev.is_all_day) return "All day";
+      const start = new Date(ev.start_iso);
+      const startLabel = start.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+      });
+      if (!ev.end_iso) return startLabel;
+      const end = new Date(ev.end_iso);
+      const endLabel = end.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+      });
+      return `${startLabel} – ${endLabel}`;
+    };
+
+    return (
+      <View style={contentStyles.blockCard} wrap={false}>
+        <Text style={contentStyles.blockTitle}>
+          Next {data.daysAhead} Days ({data.events.length})
+        </Text>
+        {data.events.length === 0 ? (
+          <Text style={{ fontSize: 9, color: "#888888" }}>
+            No events scheduled in this window.
+          </Text>
+        ) : (
+          days.map(([key, events]) => (
+            <View key={key} style={{ marginBottom: 8 }}>
+              <Text
+                style={{
+                  fontSize: 8,
+                  fontWeight: "bold",
+                  color: "#666666",
+                  textTransform: "uppercase" as const,
+                  letterSpacing: 0.5,
+                  marginBottom: 4,
+                }}
+              >
+                {formatDayHeading(key)}
+              </Text>
+              {events.map((ev) => (
+                <View
+                  key={ev.id}
+                  style={{
+                    flexDirection: "row" as const,
+                    paddingVertical: 4,
+                    borderBottomWidth: 1,
+                    borderBottomColor: "#eeeeee",
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 3,
+                      backgroundColor: ev.color,
+                      marginTop: 4,
+                      marginRight: 6,
+                    }}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 10, color: "#333333" }}>
+                      {ev.title}
+                    </Text>
+                    <Text
+                      style={{ fontSize: 8, color: "#888888", marginTop: 2 }}
+                    >
+                      {formatEventTime(ev)} · {ev.source_label}
+                      {ev.location ? ` · ${ev.location}` : ""}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          ))
+        )}
+        {block.commentary && (
+          <Text style={contentStyles.blockCommentary}>{block.commentary}</Text>
+        )}
       </View>
     );
   }

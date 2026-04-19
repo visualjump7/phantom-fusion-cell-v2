@@ -10,6 +10,8 @@ import {
   BillBlockData,
   ProjectsBlockData,
   DecisionsBlockData,
+  CalendarBlockData,
+  CalendarEventRow,
 } from "@/lib/brief-service";
 
 interface BriefReaderViewProps {
@@ -307,6 +309,111 @@ function ReaderBlock({
                   >
                     View
                   </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        {block.commentary && (
+          <p className="mt-4 border-t border-border pt-4 text-[15px] leading-relaxed text-muted-foreground italic">
+            {block.commentary}
+          </p>
+        )}
+      </section>
+    );
+  }
+
+  // Calendar — merged agenda (bills + external ICS feeds + decisions + travel),
+  // grouped by calendar day for readability.
+  if (block.type === "calendar") {
+    const daysAhead = block.config?.days_ahead || 7;
+    const dataKey = `calendar_${daysAhead}`;
+    const data = liveData[dataKey] as CalendarBlockData | undefined;
+    if (!data) return null;
+
+    // Group events by local YYYY-MM-DD so "today / tomorrow / …" reads
+    // naturally and all-day events cluster with timed ones on the same day.
+    const byDay = new Map<string, CalendarEventRow[]>();
+    for (const ev of data.events) {
+      const d = new Date(ev.start_iso);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+        2,
+        "0"
+      )}-${String(d.getDate()).padStart(2, "0")}`;
+      const bucket = byDay.get(key) ?? [];
+      bucket.push(ev);
+      byDay.set(key, bucket);
+    }
+    const days = Array.from(byDay.entries()).sort(([a], [b]) =>
+      a.localeCompare(b)
+    );
+
+    const formatDayHeading = (key: string) => {
+      const [y, m, d] = key.split("-").map((n) => parseInt(n, 10));
+      const date = new Date(y, m - 1, d);
+      return date.toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "short",
+        day: "numeric",
+      });
+    };
+
+    const formatEventTime = (ev: CalendarEventRow) => {
+      if (ev.is_all_day) return "All day";
+      const start = new Date(ev.start_iso);
+      const startLabel = start.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+      });
+      if (!ev.end_iso) return startLabel;
+      const end = new Date(ev.end_iso);
+      const endLabel = end.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+      });
+      return `${startLabel} – ${endLabel}`;
+    };
+
+    return (
+      <section className="rounded-xl border border-border bg-card/40 p-6">
+        <h2 className="font-serif text-lg font-semibold text-foreground">
+          Next {data.daysAhead} Days ({data.events.length})
+        </h2>
+        {data.events.length === 0 ? (
+          <p className="mt-3 text-sm text-muted-foreground">
+            No events scheduled in this window.
+          </p>
+        ) : (
+          <div className="mt-4 space-y-5">
+            {days.map(([key, events]) => (
+              <div key={key}>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {formatDayHeading(key)}
+                </p>
+                <div className="mt-2 divide-y divide-border">
+                  {events.map((ev) => (
+                    <div
+                      key={ev.id}
+                      className="flex items-start justify-between gap-3 py-2.5"
+                    >
+                      <div className="flex min-w-0 items-start gap-3">
+                        <span
+                          className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+                          style={{ backgroundColor: ev.color }}
+                          aria-hidden
+                        />
+                        <div className="min-w-0">
+                          <p className="text-[15px] font-medium text-foreground">
+                            {ev.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatEventTime(ev)} · {ev.source_label}
+                            {ev.location ? ` · ${ev.location}` : ""}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}

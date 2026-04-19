@@ -5,6 +5,7 @@
 
 import { supabase } from "@/lib/supabase";
 import { fetchSystemEvents, type SystemEvent } from "@/lib/calendar-system";
+import { normalizeIcsUrl } from "@/lib/calendar-url";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
@@ -135,7 +136,7 @@ export async function createCalendarSource(input: {
       principal_id: input.principal_id,
       label: input.label,
       provider_hint: input.provider_hint,
-      ics_url: input.ics_url,
+      ics_url: normalizeIcsUrl(input.ics_url),
       color: input.color || "#60A5FA",
     })
     .select("id")
@@ -148,7 +149,10 @@ export async function updateCalendarSource(
   id: string,
   patch: Partial<{ label: string; color: string; ics_url: string; is_active: boolean; provider_hint: string }>
 ): Promise<{ success: boolean; error?: string }> {
-  const { error } = await db.from("calendar_sources").update(patch).eq("id", id);
+  const normalized = patch.ics_url
+    ? { ...patch, ics_url: normalizeIcsUrl(patch.ics_url) }
+    : patch;
+  const { error } = await db.from("calendar_sources").update(normalized).eq("id", id);
   if (error) return { success: false, error: error.message };
   return { success: true };
 }

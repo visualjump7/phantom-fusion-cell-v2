@@ -79,7 +79,7 @@ export function OrbitalCommand({
 
   return (
     <div
-      className="relative flex min-h-[100dvh] w-full items-center justify-center overflow-hidden bg-black"
+      className="relative flex min-h-[100dvh] w-full items-center justify-center overflow-hidden"
       data-nucleus-mode={mode}
     >
       {/* Ambient glow */}
@@ -425,17 +425,54 @@ function CenterOrb({
         whileHover={{ scale: 1.04 }}
         whileTap={{ scale: 0.97 }}
       >
-        {centerLogoSrc && (
-          <Image
-            src={centerLogoSrc}
-            alt="Fusion Cell"
-            width={compact ? 40 : 56}
-            height={compact ? 40 : 56}
-            className="relative opacity-95"
-          />
-        )}
         {/* No icon by default — the orb itself is the affordance. */}
       </motion.button>
+
+      {/* Brand wings — sits ABOVE the orb so the orb pulses behind it.
+          The wings themselves pulse on their own slower cadence: most of the
+          time they hold a soft inner glow, then briefly flare brighter with
+          a wider halo that extends outside the nucleus. pointer-events-none
+          keeps the orb clickable through the graphic. */}
+      {centerLogoSrc && (
+        <motion.div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 select-none"
+          animate={
+            reduce
+              ? undefined
+              : {
+                  // Two flares per cycle so the brightening reads as
+                  // intermittent, not a steady oscillation.
+                  filter: [
+                    "drop-shadow(0 0 8px rgba(74,222,128,0.4)) drop-shadow(0 0 16px rgba(74,222,128,0.15))",
+                    "drop-shadow(0 0 18px rgba(74,222,128,0.95)) drop-shadow(0 0 42px rgba(74,222,128,0.6))",
+                    "drop-shadow(0 0 8px rgba(74,222,128,0.4)) drop-shadow(0 0 16px rgba(74,222,128,0.15))",
+                    "drop-shadow(0 0 8px rgba(74,222,128,0.4)) drop-shadow(0 0 16px rgba(74,222,128,0.15))",
+                  ],
+                  opacity: [0.85, 1, 0.85, 0.85],
+                }
+          }
+          transition={{
+            duration: 5.5,
+            times: [0, 0.15, 0.3, 1],
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+          style={{
+            filter: "drop-shadow(0 0 8px rgba(74,222,128,0.4))",
+          }}
+        >
+          <Image
+            src={centerLogoSrc}
+            alt=""
+            aria-hidden
+            width={compact ? 180 : 300}
+            height={compact ? 180 : 300}
+            priority
+            className="block select-none"
+          />
+        </motion.div>
+      )}
     </div>
   );
 }

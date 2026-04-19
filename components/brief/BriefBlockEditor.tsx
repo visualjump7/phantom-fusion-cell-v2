@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { FileUp, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TipTapEditor } from "./TipTapEditor";
-import { BriefBlock, CashFlowBlockData, BillBlockData, ProjectsBlockData, DecisionsBlockData } from "@/lib/brief-service";
+import { BriefBlock, CashFlowBlockData, BillBlockData, ProjectsBlockData, DecisionsBlockData, CalendarBlockData } from "@/lib/brief-service";
 import { formatCurrency } from "@/lib/utils";
 
 interface BriefBlockEditorProps {
@@ -223,6 +223,98 @@ export function BriefBlockEditor({ block, liveData, orgId, onUpdate }: BriefBloc
         )}
         <div>
           <label className="text-xs text-muted-foreground">Commentary (optional)</label>
+          <textarea
+            value={block.commentary || ""}
+            onChange={(e) => onUpdate({ commentary: e.target.value })}
+            placeholder="Add a note below this data..."
+            rows={2}
+            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary"
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Calendar block — merged agenda (bills + external ICS + decisions + travel)
+  if (block.type === "calendar") {
+    const daysAhead = block.config?.days_ahead || 7;
+    const dataKey = `calendar_${daysAhead}`;
+    const data = liveData[dataKey] as CalendarBlockData | undefined;
+
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-muted-foreground">
+            Show events in next:
+          </label>
+          <select
+            value={daysAhead}
+            onChange={(e) =>
+              onUpdate({
+                config: { ...block.config, days_ahead: Number(e.target.value) },
+              })
+            }
+            className="rounded-md border border-border bg-background px-2 py-1 text-sm text-foreground"
+          >
+            <option value={7}>7 days</option>
+            <option value={14}>14 days</option>
+            <option value={30}>30 days</option>
+          </select>
+        </div>
+        {data ? (
+          <div className="rounded-lg bg-muted/30 p-3">
+            <p className="text-sm font-medium text-foreground">
+              {data.events.length} event{data.events.length !== 1 ? "s" : ""}{" "}
+              over the next {data.daysAhead} days
+            </p>
+            {data.events.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {data.events.slice(0, 5).map((ev) => {
+                  const when = new Date(ev.start_iso);
+                  const whenLabel = ev.is_all_day
+                    ? when.toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                      })
+                    : when.toLocaleString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      });
+                  return (
+                    <div
+                      key={ev.id}
+                      className="flex items-center justify-between gap-2 text-xs text-muted-foreground"
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span
+                          className="h-1.5 w-1.5 shrink-0 rounded-full"
+                          style={{ backgroundColor: ev.color }}
+                        />
+                        <span className="truncate">{ev.title}</span>
+                      </span>
+                      <span className="shrink-0">{whenLabel}</span>
+                    </div>
+                  );
+                })}
+                {data.events.length > 5 && (
+                  <p className="text-xs text-muted-foreground">
+                    + {data.events.length - 5} more
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-lg bg-muted/30 p-3">
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          </div>
+        )}
+        <div>
+          <label className="text-xs text-muted-foreground">
+            Commentary (optional)
+          </label>
           <textarea
             value={block.commentary || ""}
             onChange={(e) => onUpdate({ commentary: e.target.value })}

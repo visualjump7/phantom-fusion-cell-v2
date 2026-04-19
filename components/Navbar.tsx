@@ -174,7 +174,7 @@ export function Navbar() {
                     className="flex min-h-[var(--tap-target-min)] items-center gap-2 px-3 py-2 text-[length:var(--font-size-body)] font-medium text-foreground hover:bg-muted transition-colors"
                   >
                     <Settings className="h-4 w-4" />
-                    All Settings
+                    Menu
                   </Link>
                   <div className="my-1 border-t border-border" />
                   <button

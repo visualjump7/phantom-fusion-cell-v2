@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { fetchAllEvents } from "./calendar-service";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
@@ -31,7 +32,14 @@ export interface Brief {
 export interface BriefBlock {
   id: string;
   brief_id: string;
-  type: "text" | "cashflow" | "bills" | "projects" | "decisions" | "document";
+  type:
+    | "text"
+    | "cashflow"
+    | "bills"
+    | "projects"
+    | "decisions"
+    | "document"
+    | "calendar";
   position: number;
   content_html: string | null;
   config: Record<string, any>;
@@ -83,6 +91,34 @@ export interface DecisionsBlockData {
     created_at: string;
   }[];
   count: number;
+}
+
+/**
+ * Unified agenda for the Calendar block: external ICS feeds (Apple, Google,
+ * Outlook) + system events (bills due, decision deadlines, travel legs),
+ * normalized into a flat, JSON-serializable shape so it can live inside
+ * liveData and travel through the PDF pipeline without Date reconstruction.
+ *
+ * Start/end are ISO strings (`start_iso`, `end_iso`). Callers that need
+ * Date objects can `new Date(...)` on render.
+ */
+export interface CalendarBlockData {
+  events: CalendarEventRow[];
+  daysAhead: number;
+}
+
+export interface CalendarEventRow {
+  id: string;
+  title: string;
+  start_iso: string;
+  end_iso: string | null;
+  is_all_day: boolean;
+  source: "external" | "system";
+  // For "system" events: which system lane. For "external": undefined.
+  source_kind?: "cashflow" | "decision" | "travel";
+  source_label: string; // e.g. "iCloud", "Bills", "Decisions", "Travel"
+  color: string; // hex
+  location?: string | null;
 }
 
 // ============================================
@@ -254,12 +290,17 @@ export async function deleteBrief(briefId: string): Promise<boolean> {
 // Block Operations
 // ============================================
 
+export interface AddBlockResult {
+  block: BriefBlock | null;
+  error: string | null;
+}
+
 export async function addBlock(
   briefId: string,
   type: string,
   position: number,
   config?: object
-): Promise<BriefBlock | null> {
+): Promise<AddBlockResult> {
   const { data, error } = await db
     .from("brief_blocks")
     .insert({
@@ -273,9 +314,12 @@ export async function addBlock(
 
   if (error) {
     console.error("Error adding block:", error);
-    return null;
+    // CHECK-constraint violations (e.g. unknown type) come back from
+    // PostgREST as code 23514 with a useful message — pass it through so
+    // the UI can show "calendar block type not allowed by db" etc.
+    return { block: null, error: error.message || "Failed to add block" };
   }
-  return data;
+  return { block: data, error: null };
 }
 
 export async function updateBlock(
@@ -418,6 +462,80 @@ export async function fetchProjectsSnapshot(
   );
 
   return { projects, totalValue, category: category || null };
+}
+
+/**
+ * Fetch a merged-agenda window for the Calendar block.
+ *
+ * Combines:
+ *   - External ICS events from `calendar_events_cache` (Apple, Google,
+ *     Outlook feeds the admin has subscribed this org to)
+ *   - System events from `calendar-system.ts` (bills due, pending decision
+ *     deadlines, travel legs)
+ *
+ * Window: today 00:00 → today + daysAhead, in local time. Events are
+ * sorted ascending by start.
+ *
+ * Pass `principalId` null when the brief isn't scoped to a specific
+ * principal — the admin-side brief composer scope is org-wide.
+ */
+export async function fetchCalendarData(
+  orgId: string,
+  daysAhead: number,
+  principalId: string | null = null
+): Promise<CalendarBlockData> {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + daysAhead);
+
+  const { external, system } = await fetchAllEvents(
+    orgId,
+    principalId,
+    start,
+    end
+  );
+
+  const SYSTEM_LABEL: Record<"cashflow" | "decision" | "travel", string> = {
+    cashflow: "Bills",
+    decision: "Decisions",
+    travel: "Travel",
+  };
+
+  const rows: CalendarEventRow[] = [
+    ...external.map(
+      (e): CalendarEventRow => ({
+        id: `ext:${e.id}`,
+        title: e.title,
+        start_iso: e.start.toISOString(),
+        end_iso: e.end ? e.end.toISOString() : null,
+        is_all_day: e.isAllDay,
+        source: "external",
+        source_label: e.sourceLabel,
+        color: e.sourceColor,
+        location: e.location,
+      })
+    ),
+    ...system.map(
+      (e): CalendarEventRow => ({
+        id: `sys:${e.id}`,
+        title: e.title,
+        start_iso: e.start.toISOString(),
+        end_iso: e.end ? e.end.toISOString() : null,
+        is_all_day: false,
+        source: "system",
+        source_kind: e.sourceKind,
+        source_label: SYSTEM_LABEL[e.sourceKind] ?? e.sourceKind,
+        color: e.color,
+      })
+    ),
+  ];
+
+  rows.sort(
+    (a, b) => new Date(a.start_iso).getTime() - new Date(b.start_iso).getTime()
+  );
+
+  return { events: rows, daysAhead };
 }
 
 export async function fetchPendingDecisions(orgId: string): Promise<DecisionsBlockData> {
