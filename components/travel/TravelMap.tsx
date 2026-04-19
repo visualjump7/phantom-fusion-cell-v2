@@ -37,6 +37,34 @@ export function TravelMap({ events, selectedEventId, onSelectEvent }: TravelMapP
   const [arcProgress, setArcProgress] = useState(1);
   const arcRafRef = useRef<number | null>(null);
 
+  // Marching-ants dash animation — phase 0..1 cycled by setInterval and
+  // fed into line-dasharray so the dashes appear to travel along the
+  // flight path. Gives flights a visible "in motion" feel without
+  // implying actual earth curvature (user explicitly wanted straight
+  // lines, not arcs).
+  const [dashPhase, setDashPhase] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => {
+      setDashPhase((p) => (p + 1) % 8);
+    }, 80);
+    return () => clearInterval(id);
+  }, []);
+  // Two 4-step dash offsets, one for selected (brighter / longer) and
+  // one for dim (subtler). Each cycle shifts the dash pattern forward so
+  // it reads as flow.
+  const dashSeq: [number, number, number][] = [
+    [0, 4, 3],
+    [0.5, 4, 2.5],
+    [1, 4, 2],
+    [1.5, 4, 1.5],
+    [2, 4, 1],
+    [2.5, 4, 0.5],
+    [3, 4, 0],
+    [3, 4, 0],
+  ];
+  const selectedDash = dashSeq[dashPhase % dashSeq.length];
+  const dimDash = dashSeq[(dashPhase + 2) % dashSeq.length];
+
   const selectedEvent = selectedEventId
     ? events.find((e) => e.id === selectedEventId)
     : null;
@@ -162,11 +190,14 @@ export function TravelMap({ events, selectedEventId, onSelectEvent }: TravelMapP
         attributionControl={false}
         reuseMaps
       >
-        {/* Flight arcs — arched (not great-circle), with a soft glow
-            underlay and an animated "drawing" effect on the selected leg. */}
+        {/* Flight arcs — straight lines with animated marching-ants dashes.
+            Glow underlay is continuous (solid) for ambient presence; the
+            main line on top uses a dashed pattern that shifts forward each
+            tick (~80ms) so the dashes crawl from departure toward arrival. */}
         <Source id="flight-arcs" type="geojson" data={arcsGeo}>
-          {/* Glow underlay — wide and translucent, makes the arc feel
-              illuminated against the dark map. */}
+          {/* Glow underlay — soft solid line behind the dashes, provides
+              the "illuminated against dark" feel without pulling attention
+              from the moving dashes. */}
           <Layer
             id="arcs-glow"
             type="line"
@@ -175,8 +206,8 @@ export function TravelMap({ events, selectedEventId, onSelectEvent }: TravelMapP
               "line-opacity": [
                 "case",
                 ["==", ["get", "selected"], true],
-                0.35,
-                0.12,
+                0.25,
+                0.1,
               ],
               "line-width": [
                 "case",
@@ -194,10 +225,11 @@ export function TravelMap({ events, selectedEventId, onSelectEvent }: TravelMapP
             filter={["!=", ["get", "selected"], true]}
             paint={{
               "line-color": EVENT_META.flight.color,
-              "line-opacity": 0.55,
+              "line-opacity": 0.6,
               "line-width": 2,
+              "line-dasharray": dimDash,
             }}
-            layout={{ "line-cap": "round", "line-join": "round" }}
+            layout={{ "line-cap": "butt", "line-join": "round" }}
           />
           <Layer
             id="arcs-selected"
@@ -206,9 +238,10 @@ export function TravelMap({ events, selectedEventId, onSelectEvent }: TravelMapP
             paint={{
               "line-color": EVENT_META.flight.color,
               "line-opacity": 0.95,
-              "line-width": 3.5,
+              "line-width": 3,
+              "line-dasharray": selectedDash,
             }}
-            layout={{ "line-cap": "round", "line-join": "round" }}
+            layout={{ "line-cap": "butt", "line-join": "round" }}
           />
         </Source>
 
