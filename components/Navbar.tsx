@@ -162,7 +162,7 @@ export function Navbar() {
                 <motion.div
                   initial={{ opacity: 0, y: -4 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="absolute right-0 top-full mt-1 min-w-[220px] rounded-lg border border-border bg-card py-1 shadow-lg"
+                  className="absolute right-0 top-full mt-1 min-w-[180px] sm:min-w-[220px] max-w-[calc(100vw-16px)] rounded-lg border border-border bg-card py-1 shadow-lg"
                 >
                   <AdminSettingsMenu
                     onOpenNucleus={() => setNucleusOverlayOpen(true)}
@@ -174,7 +174,7 @@ export function Navbar() {
                     className="flex min-h-[var(--tap-target-min)] items-center gap-2 px-3 py-2 text-[length:var(--font-size-body)] font-medium text-foreground hover:bg-muted transition-colors"
                   >
                     <Settings className="h-4 w-4" />
-                    Menu
+                    System Settings
                   </Link>
                   <div className="my-1 border-t border-border" />
                   <button

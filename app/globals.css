@@ -239,6 +239,36 @@
     --cal-cell-gap: 4px;
   }
 
+  /* ================================================================
+     LAYER 2.1: MOBILE OVERRIDES
+     Comfort density is tuned for large monitors — on phones the 34px
+     titles and 64px tap targets collapse the layout. Scale down at
+     the md breakpoint. Compact already fits, so only comfort needs this.
+     ================================================================ */
+  @media (max-width: 768px) {
+    [data-density="comfort"] {
+      --font-size-page-title: 24px;
+      --font-size-section-header: 20px;
+      --font-size-body: 16px;
+      --font-size-data: 16px;
+      --font-size-caption: 13px;
+      --font-size-button: 16px;
+      --tap-target-min: 48px;
+      --button-height: 48px;
+      --card-padding: 20px;
+      --gap: 16px;
+      --table-row-height: 48px;
+      --table-cell-padding-x: 12px;
+      --table-cell-padding-y: 10px;
+      --decision-button-gap: 16px;
+    }
+  }
+
+  /* BottomNavBar height — 60px normally, 44px in short landscape. */
+  @media (orientation: landscape) and (max-height: 500px) {
+    :root { --bn-h: 44px; }
+  }
+
   * {
     @apply border-border;
   }
@@ -540,6 +570,20 @@ html[data-density="comfort"] .density-table tbody tr:nth-child(even) {
 .asset-card-stroke-default:hover {
   --stroke-color: rgba(156, 163, 175, 0.9);
   animation: asset-stroke-glow 1.4s ease-in-out infinite;
+}
+
+/* Mobile: downscale the glow so it doesn't dwarf narrow cards. */
+@keyframes asset-stroke-glow-sm {
+  0%, 100% { box-shadow: 0 0 0 1px var(--stroke-color); }
+  50%      { box-shadow: 0 0 8px 2px var(--stroke-color); }
+}
+@media (max-width: 640px) {
+  .asset-card-stroke.asset-card-stroke-emerald:hover,
+  .asset-card-stroke.asset-card-stroke-blue:hover,
+  .asset-card-stroke.asset-card-stroke-violet:hover,
+  .asset-card-stroke-default:hover {
+    animation: asset-stroke-glow-sm 1.4s ease-in-out infinite;
+  }
 }
 
 /* ================================================================

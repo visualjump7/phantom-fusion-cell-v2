@@ -85,14 +85,14 @@ export function AddPersonnelModal({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center"
+        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
       >
         <div className="absolute inset-0 bg-black/60" onClick={onClose} />
         <motion.div
           initial={{ scale: 0.95 }}
           animate={{ scale: 1 }}
           exit={{ scale: 0.95 }}
-          className="relative w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-xl"
+          className="relative w-full max-w-lg max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl"
         >
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-foreground">

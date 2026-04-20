@@ -26,6 +26,7 @@ import {
   Loader2,
   ShieldCheck,
   FileSpreadsheet,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRole } from "@/lib/use-role";
@@ -56,6 +57,19 @@ interface PrincipalOption {
   accent: string;
 }
 
+type AdminNavItem = { name: string; href: string; icon: LucideIcon };
+
+const ADMIN_TOP_NAV: AdminNavItem = {
+  name: "Admin",
+  href: "/admin",
+  icon: ShieldCheck,
+};
+const ADMIN_BOTTOM_NAV: AdminNavItem = {
+  name: "Budget Editor",
+  href: "/budget-editor",
+  icon: FileSpreadsheet,
+};
+
 // ============================================
 // <AdminSettingsMenu /> — items rendered inside the Navbar settings panel
 // ============================================
@@ -71,14 +85,6 @@ export function AdminSettingsMenu({
   const pathname = usePathname();
   const { isStaff, userId } = useRole();
   const { enterPreview, active: previewActive } = usePreview();
-
-  const adminNavItems = useMemo(
-    () => [
-      { name: "Admin", href: "/admin", icon: ShieldCheck },
-      { name: "Budget Editor", href: "/budget-editor", icon: FileSpreadsheet },
-    ],
-    []
-  );
 
   const [principals, setPrincipals] = useState<PrincipalOption[]>([]);
   const [loadingPrincipals, setLoadingPrincipals] = useState(true);
@@ -174,45 +180,32 @@ export function AdminSettingsMenu({
 
   if (!isStaff) return null;
 
+  const renderAdminNavLink = (nav: AdminNavItem) => {
+    const isActive = pathname ? pathname.startsWith(nav.href) : false;
+    return (
+      <Link
+        href={nav.href}
+        onClick={onRequestClose}
+        className={cn(
+          "flex min-h-[var(--tap-target-min)] items-center gap-2 px-3 py-2 text-[length:var(--font-size-body)] font-medium transition-colors",
+          isActive
+            ? "bg-primary/10 text-primary"
+            : "text-foreground hover:bg-muted"
+        )}
+      >
+        <nav.icon className="h-4 w-4" />
+        {nav.name}
+      </Link>
+    );
+  };
+
   return (
     <>
       <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         Admin
       </div>
 
-      {adminNavItems.map((item) => {
-        const isActive = pathname ? pathname.startsWith(item.href) : false;
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={onRequestClose}
-            className={cn(
-              "flex min-h-[var(--tap-target-min)] items-center gap-2 px-3 py-2 text-[length:var(--font-size-body)] font-medium transition-colors",
-              isActive
-                ? "bg-primary/10 text-primary"
-                : "text-foreground hover:bg-muted"
-            )}
-          >
-            <item.icon className="h-4 w-4" />
-            {item.name}
-          </Link>
-        );
-      })}
-
-      {!previewActive && (
-        <button
-          type="button"
-          onClick={() => {
-            onRequestClose();
-            onOpenNucleus();
-          }}
-          className="flex min-h-[var(--tap-target-min)] w-full items-center gap-2 px-3 py-2 text-[length:var(--font-size-body)] font-medium text-foreground transition-colors hover:bg-muted"
-        >
-          <CircleDot className="h-4 w-4 text-emerald-400" />
-          Open Command Panel
-        </button>
-      )}
+      {renderAdminNavLink(ADMIN_TOP_NAV)}
 
       {!previewActive && (
         <button
@@ -223,7 +216,9 @@ export function AdminSettingsMenu({
         >
           <Eye className="h-4 w-4 text-emerald-400" />
           <span className="flex-1 text-left">View as Principal</span>
-          {principals.length > 1 && <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+          {principals.length > 1 && (
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+          )}
         </button>
       )}
 
@@ -244,6 +239,20 @@ export function AdminSettingsMenu({
             </button>
           ))}
         </div>
+      )}
+
+      {!previewActive && (
+        <button
+          type="button"
+          onClick={() => {
+            onRequestClose();
+            onOpenNucleus();
+          }}
+          className="flex min-h-[var(--tap-target-min)] w-full items-center gap-2 px-3 py-2 text-[length:var(--font-size-body)] font-medium text-foreground transition-colors hover:bg-muted"
+        >
+          <CircleDot className="h-4 w-4 text-emerald-400" />
+          Open Command Panel
+        </button>
       )}
 
       <button
@@ -279,6 +288,8 @@ export function AdminSettingsMenu({
           </span>
         )}
       </button>
+
+      {renderAdminNavLink(ADMIN_BOTTOM_NAV)}
 
       <div className="my-1 border-t border-border" />
     </>

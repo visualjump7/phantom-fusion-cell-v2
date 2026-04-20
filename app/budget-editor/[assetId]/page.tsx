@@ -466,12 +466,12 @@ export default function BudgetSpreadsheetEditorPage() {
         </div>
       )}
 
-      {/* Spreadsheet */}
+      {/* Spreadsheet — description column is sticky-left so horizontal scroll stays legible on mobile. */}
       <div className="overflow-x-auto pb-12">
-        <table className="w-full min-w-[1400px] border-collapse text-[13px]">
+        <table className="w-full min-w-[980px] md:min-w-[1400px] border-collapse text-[13px]">
           <thead>
             <tr className="sticky top-[57px] z-40 bg-[#0a0a0a]">
-              <th className="sticky left-0 z-[41] w-[280px] border-b border-[#1a1a1a] bg-[#0a0a0a] px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider text-white/50">
+              <th className="sticky left-0 z-[41] w-[180px] md:w-[280px] border-b border-[#1a1a1a] bg-[#0a0a0a] px-3 md:px-4 py-2.5 text-left text-[11px] font-medium uppercase tracking-wider text-white/50">
                 Description
               </th>
               <th className="w-[50px] border-b border-[#1a1a1a] px-1.5 py-2.5 text-center text-[11px] font-medium uppercase tracking-wider text-white/50">
@@ -480,12 +480,12 @@ export default function BudgetSpreadsheetEditorPage() {
               {MONTHS.map((m) => (
                 <th
                   key={m}
-                  className="min-w-[85px] border-b border-[#1a1a1a] px-3 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-white/50"
+                  className="min-w-[64px] md:min-w-[85px] border-b border-[#1a1a1a] px-2 md:px-3 py-2.5 text-right text-[11px] font-medium uppercase tracking-wider text-white/50"
                 >
                   {MONTH_LABELS[m]}
                 </th>
               ))}
-              <th className="min-w-[100px] border-b border-[#1a1a1a] px-4 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wider text-[#4ade80]">
+              <th className="min-w-[92px] md:min-w-[100px] border-b border-[#1a1a1a] px-3 md:px-4 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wider text-[#4ade80]">
                 Annual
               </th>
             </tr>
@@ -726,7 +726,7 @@ function LineItemRow({
 }) {
   return (
     <tr className="border-b border-[#111111] hover:bg-[#080808]">
-      <td className="sticky left-0 z-10 max-w-[280px] truncate whitespace-nowrap bg-black py-2 pl-10 pr-4 text-[13px] text-white/70">
+      <td className="sticky left-0 z-10 max-w-[180px] md:max-w-[280px] truncate whitespace-nowrap bg-black py-2 pl-8 md:pl-10 pr-3 md:pr-4 text-[13px] text-white/70">
         {item.description}
       </td>
       <td className="px-1.5 py-2 text-center">

@@ -566,11 +566,12 @@ export default function AssetDetailPage() {
                     <table className="density-table">
                       <thead>
                         <tr>
-                          <th className="sticky-first-col min-w-[240px]">Bill</th>
-                          <th className="min-w-[140px]">Due date</th>
-                          <th className="min-w-[150px]">Status</th>
-                          <th className="min-w-[150px]">Category</th>
-                          <th className="text-right min-w-[150px]">Amount</th>
+                          <th className="sticky-first-col min-w-[160px] md:min-w-[240px]">Bill</th>
+                          <th className="min-w-[110px] md:min-w-[140px]">Due date</th>
+                          <th className="min-w-[110px] md:min-w-[150px]">Status</th>
+                          {/* Category is secondary info — hide on mobile to let the 4 primary columns breathe. */}
+                          <th className="hidden md:table-cell min-w-[150px]">Category</th>
+                          <th className="text-right min-w-[110px] md:min-w-[150px]">Amount</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -586,7 +587,7 @@ export default function AssetDetailPage() {
                                   {isPending ? "Pending" : "Paid"}
                                 </span>
                               </td>
-                              <td className="text-[length:var(--font-size-body)] text-foreground">{bill.category || "—"}</td>
+                              <td className="hidden md:table-cell text-[length:var(--font-size-body)] text-foreground">{bill.category || "—"}</td>
                               <td className={`number-cell ${isPending ? "text-foreground" : "text-muted-foreground line-through"}`}>
                                 {formatCentsToDisplay(bill.amount_cents)}
                               </td>

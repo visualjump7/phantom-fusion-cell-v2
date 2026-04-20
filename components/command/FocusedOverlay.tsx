@@ -99,8 +99,8 @@ export function FocusedOverlay({
               transition={{ duration: 0.25, ease: "easeOut" }}
               onClick={(e) => e.stopPropagation()}
             >
-            {/* Header */}
-            <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-3 md:px-6 md:py-4">
+            {/* Header — extra top padding on mobile to clear notch/status bar. */}
+            <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-3 md:px-6 md:pt-4 md:pb-4">
               <div className="flex items-center gap-3">
                 <button
                   type="button"
@@ -117,8 +117,8 @@ export function FocusedOverlay({
               <OverlayNavMenu align="right" />
             </div>
 
-            {/* Body — scrollable */}
-            <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
+            {/* Body — scrollable. Bottom safe-area on mobile keeps content above home indicator. */}
+            <div className="min-h-0 flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)] md:pb-0">{children}</div>
             </motion.div>
           </div>
         </motion.div>

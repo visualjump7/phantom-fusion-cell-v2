@@ -43,7 +43,8 @@ export function BottomNavBar() {
       aria-label="Primary"
       className="fixed bottom-0 left-0 right-0 z-50 flex md:hidden"
       style={{
-        height: "calc(60px + env(safe-area-inset-bottom))",
+        // --bn-h drops to 44px in landscape-short viewports (see globals.css).
+        height: "calc(var(--bn-h, 60px) + env(safe-area-inset-bottom))",
         paddingBottom: "env(safe-area-inset-bottom)",
         backgroundColor: "#0a0a0a",
         borderTop: "1px solid #222222",

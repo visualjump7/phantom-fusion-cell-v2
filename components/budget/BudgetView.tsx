@@ -380,21 +380,21 @@ export function BudgetView({ assetId }: BudgetViewProps) {
                               transition={{ duration: 0.2 }}
                               className="overflow-hidden"
                             >
-                              <div className="ml-6 mb-2 density-table-wrap">
+                              <div className="ml-2 md:ml-6 mb-2 density-table-wrap">
                                 <table className="density-table">
                                   <thead>
                                     <tr>
-                                      <th className="sticky-first-col min-w-[220px]">Line Item</th>
+                                      <th className="sticky-first-col min-w-[140px] md:min-w-[220px]">Line Item</th>
                                       {MONTHS.map((m) => (
-                                        <th key={m} className="text-right min-w-[90px]">{m}</th>
+                                        <th key={m} className="text-right min-w-[64px] md:min-w-[90px]">{m}</th>
                                       ))}
-                                      <th className="text-right min-w-[120px]">Total</th>
+                                      <th className="text-right min-w-[96px] md:min-w-[120px]">Total</th>
                                     </tr>
                                   </thead>
                                   <tbody>
                                     {group.items.map((item) => (
                                       <tr key={item.id} className="hover:bg-muted/10">
-                                        <td className="sticky-first-col font-medium text-foreground truncate max-w-[220px] text-cell" title={item.description}>
+                                        <td className="sticky-first-col font-medium text-foreground truncate max-w-[140px] md:max-w-[220px] text-cell" title={item.description}>
                                           {item.description}
                                         </td>
                                         {MONTH_KEYS.map((key) => (

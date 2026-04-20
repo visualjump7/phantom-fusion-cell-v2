@@ -110,7 +110,7 @@ export function GlobalClientBanner() {
             </button>
 
             {dropdownOpen && (
-              <div className="absolute left-0 top-full z-50 mt-2 min-w-[220px] rounded-lg border border-border bg-card py-1 shadow-lg">
+              <div className="absolute left-0 top-full z-50 mt-2 min-w-[180px] sm:min-w-[220px] max-w-[calc(100vw-16px)] rounded-lg border border-border bg-card py-1 shadow-lg">
                 {isAdmin && (
                   <button
                     onClick={() => { clearActivePrincipal(); setDropdownOpen(false); }}

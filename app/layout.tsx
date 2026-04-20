@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -15,6 +15,12 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Fusion Cell",
   description: "Executive financial command center",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({
@@ -36,7 +42,7 @@ export default async function RootLayout({
         )}
       </head>
       <body
-        className={`${inter.className} pb-[calc(60px+env(safe-area-inset-bottom))] md:pb-0`}
+        className={`${inter.className} pb-[calc(var(--bn-h,60px)+env(safe-area-inset-bottom))] md:pb-0`}
       >
         <ThemeProvider initialTheme={theme} initialDensity={density}>
           <MapModeProvider>

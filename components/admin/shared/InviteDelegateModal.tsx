@@ -120,7 +120,7 @@ export function InviteDelegateModal({ orgId, grantedBy, onClose, onSuccess }: In
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-xl max-h-[90vh] overflow-y-auto"
+        className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-xl max-h-[calc(100dvh-2rem)] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
