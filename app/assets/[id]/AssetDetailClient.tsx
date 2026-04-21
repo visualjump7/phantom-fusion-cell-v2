@@ -273,30 +273,32 @@ export default function AssetDetailPage() {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="mb-6 flex flex-wrap gap-1 rounded-lg bg-muted/30 p-1">
-          {(["overview", "budget", "bills", "messages", "detail"] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`flex min-h-[var(--tap-target-min)] items-center gap-2 rounded-md px-4 py-2 text-[length:var(--font-size-body)] font-medium capitalize transition-colors ${
-                activeTab === tab ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {tab === "detail" && <Building2 className="h-4 w-4" />}
-              {tab === "budget" && <TrendingUp className="h-4 w-4" />}
-              {tab === "overview" && <DollarSign className="h-4 w-4" />}
-              {tab === "bills" && <Calendar className="h-4 w-4" />}
-              {tab === "messages" && <MessageSquare className="h-4 w-4" />}
-              {tab === "messages" ? "Alerts" : tab === "detail" ? "Project Details" : tab}
-              {tab === "bills" && pendingBills.length > 0 && (
-                <Badge variant="secondary" className="ml-1 text-[10px]">{pendingBills.length}</Badge>
-              )}
-              {tab === "messages" && messages.length > 0 && (
-                <Badge variant="secondary" className="ml-1 text-[10px]">{messages.length}</Badge>
-              )}
-            </button>
-          ))}
+        {/* Tabs — horizontal scroll on narrow viewports so 5 tabs don't wrap to 2-3 tall rows. */}
+        <div className="-mx-3 mb-6 overflow-x-auto sm:mx-0">
+          <div className="mx-3 flex gap-1 rounded-lg bg-muted/30 p-1 sm:mx-0 sm:flex-wrap">
+            {(["overview", "budget", "bills", "messages", "detail"] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex min-h-[var(--tap-target-min)] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-2 text-[length:var(--font-size-body)] font-medium capitalize transition-colors sm:gap-2 sm:px-4 ${
+                  activeTab === tab ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {tab === "detail" && <Building2 className="h-4 w-4" />}
+                {tab === "budget" && <TrendingUp className="h-4 w-4" />}
+                {tab === "overview" && <DollarSign className="h-4 w-4" />}
+                {tab === "bills" && <Calendar className="h-4 w-4" />}
+                {tab === "messages" && <MessageSquare className="h-4 w-4" />}
+                {tab === "messages" ? "Alerts" : tab === "detail" ? "Details" : tab}
+                {tab === "bills" && pendingBills.length > 0 && (
+                  <Badge variant="secondary" className="ml-1 text-[10px]">{pendingBills.length}</Badge>
+                )}
+                {tab === "messages" && messages.length > 0 && (
+                  <Badge variant="secondary" className="ml-1 text-[10px]">{messages.length}</Badge>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* ═══ DETAIL TAB ═══ */}

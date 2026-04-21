@@ -126,20 +126,23 @@ export default function CashFlowPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             >
-              <div className="flex gap-2 border-b border-border pb-4">
-                {VIEW_TABS.map((tab) => (
-                  <button
-                    key={tab.value}
-                    onClick={() => handleViewChange(tab.value)}
-                    className={`rounded-lg px-4 py-2 text-[length:var(--font-size-body)] font-medium transition-colors ${
-                      activeView === tab.value
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
+              {/* Tab row — horizontal scroll on narrow viewports so pills never wrap. */}
+              <div className="-mx-4 overflow-x-auto border-b border-border pb-4 sm:mx-0 sm:overflow-visible">
+                <div className="flex gap-2 px-4 sm:px-0">
+                  {VIEW_TABS.map((tab) => (
+                    <button
+                      key={tab.value}
+                      onClick={() => handleViewChange(tab.value)}
+                      className={`shrink-0 whitespace-nowrap rounded-lg px-4 py-2 text-[length:var(--font-size-body)] font-medium transition-colors ${
+                        activeView === tab.value
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </motion.div>
 

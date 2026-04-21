@@ -194,7 +194,7 @@ export function BillDrawer({
                       </div>
 
                       {/* Amount + Actions */}
-                      <div className="ml-4 text-right">
+                      <div className="ml-2 text-right sm:ml-4">
                         <p
                           className={`text-lg font-bold ${
                             bill.status === "paid"

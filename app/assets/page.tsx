@@ -321,7 +321,7 @@ export default function AssetsPage() {
 
                   {/* Context Menu */}
                   {isAdmin && openMenuId === asset.id && (
-                    <div className="absolute right-2 top-12 z-10 min-w-[160px] rounded-lg border border-border bg-card shadow-lg py-1">
+                    <div className="absolute right-2 top-12 z-10 w-[180px] max-w-[calc(100vw-1rem)] rounded-lg border border-border bg-card shadow-lg py-1">
                       <button
                         onClick={(e) => { e.preventDefault(); openEditModal(asset); }}
                         className="flex w-full items-center gap-2 px-3 py-1.5 text-[length:var(--font-size-caption)] text-foreground hover:bg-muted"
@@ -362,7 +362,7 @@ export default function AssetsPage() {
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-xl"
+              className="w-full max-w-lg max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-border bg-card p-6 shadow-xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6">

@@ -83,7 +83,7 @@ function BriefBlockPreview({
         <h3 className="text-sm font-semibold text-foreground">
           Cash Flow — {data.month} {data.year}
         </h3>
-        <div className="mt-3 grid grid-cols-3 gap-4">
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
           <div>
             <p className="text-xs text-muted-foreground">Paid out</p>
             <p className="text-lg font-bold text-red-400">

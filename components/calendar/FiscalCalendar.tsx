@@ -277,12 +277,12 @@ export function FiscalCalendar({
         </div>
       )}
 
-      {/* Calendar Grid */}
+      {/* Calendar Grid — hidden on <sm where 7-column cells would be ~53px wide. */}
       {!isLoading && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="overflow-hidden rounded-xl border border-border bg-card/60 backdrop-blur-sm"
+          className="hidden overflow-hidden rounded-xl border border-border bg-card/60 backdrop-blur-sm sm:block"
         >
           {/* Day Headers */}
           <div className="grid grid-cols-7 border-b border-border">
@@ -378,8 +378,88 @@ export function FiscalCalendar({
         </motion.div>
       )}
 
-      {/* Legend */}
-      <div className="mt-4 flex items-center justify-end gap-4 text-[length:var(--font-size-caption)] text-muted-foreground">
+      {/* Mobile list — one row per day that has bills this month.
+          Tap a row to open the same BillDrawer used by the desktop grid. */}
+      {!isLoading && (
+        <div className="space-y-2 sm:hidden">
+          {(() => {
+            const monthEntries = calendarDays.filter(
+              ({ date, isCurrentMonth }) =>
+                isCurrentMonth && (billsByDate[formatDateKey(date)]?.length ?? 0) > 0
+            );
+            if (monthEntries.length === 0) {
+              return (
+                <div className="rounded-xl border border-border bg-card/60 px-4 py-8 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    No bills in {MONTH_NAMES[currentDate.getMonth()]}
+                  </p>
+                </div>
+              );
+            }
+            return monthEntries.map(({ date }) => {
+              const dateKey = formatDateKey(date);
+              const dayBills = billsByDate[dateKey] || [];
+              const dayTotal = dailyTotals[dateKey] || 0;
+              const today = isToday(date);
+              const hasPending = dayBills.some((b) => b.status === "pending");
+              const overdue = isOverdue(dateKey) && hasPending;
+              const isSelected = selectedDate === dateKey;
+              return (
+                <button
+                  key={dateKey}
+                  onClick={() => setSelectedDate(dateKey)}
+                  className={`flex w-full items-center gap-3 rounded-xl border border-border bg-card/60 px-3 py-3 text-left transition-colors hover:bg-muted/30 ${
+                    isSelected ? "ring-2 ring-primary" : ""
+                  } ${overdue ? "border-red-500/40" : ""}`}
+                >
+                  <div className="flex w-10 shrink-0 flex-col items-center">
+                    <span className="text-[10px] font-medium uppercase text-muted-foreground">
+                      {DAYS_OF_WEEK[date.getDay()]}
+                    </span>
+                    <span
+                      className={`text-lg font-semibold ${today ? "text-primary" : "text-foreground"}`}
+                    >
+                      {date.getDate()}
+                    </span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      {hasPending ? (
+                        <AlertTriangle
+                          className="h-3.5 w-3.5"
+                          style={{ color: "var(--color-warning)" }}
+                        />
+                      ) : (
+                        <CheckCircle
+                          className="h-3.5 w-3.5"
+                          style={{ color: "var(--color-success)" }}
+                        />
+                      )}
+                      <span
+                        className="text-sm font-bold"
+                        style={{
+                          color: hasPending
+                            ? "var(--color-warning)"
+                            : "var(--color-success)",
+                        }}
+                      >
+                        {formatCentsToDisplay(dayTotal)}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-muted-foreground">
+                      {dayBills.length} bill{dayBills.length !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                </button>
+              );
+            });
+          })()}
+        </div>
+      )}
+
+      {/* Legend — desktop only; the mobile list already shows each day's status inline. */}
+      <div className="mt-4 hidden items-center justify-end gap-4 text-[length:var(--font-size-caption)] text-muted-foreground sm:flex">
         <span>Cash Outflow:</span>
         <div className="flex items-center gap-1">
           <div className="h-3 w-3 rounded bg-amber-500/20" />

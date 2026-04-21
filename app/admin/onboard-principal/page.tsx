@@ -166,8 +166,8 @@ export default function OnboardPrincipalPage() {
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="mx-auto max-w-3xl px-4 py-8">
-        {/* Stepper */}
-        <ol className="mb-8 flex items-center gap-2 text-xs text-muted-foreground">
+        {/* Stepper — wraps on narrow viewports so the 5 steps don't cause horizontal scroll. */}
+        <ol className="mb-8 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-muted-foreground">
           {STEPS.map((s, i) => {
             const done = i < idx;
             const active = i === idx;

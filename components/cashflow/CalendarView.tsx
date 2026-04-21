@@ -6,6 +6,7 @@ import {
   ChevronLeft, ChevronRight, X, ArrowUpRight, ArrowDownRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { CashFlowData, DailyEntry, formatCompactCurrency, formatFullCurrency } from "@/lib/cashflow";
 
 interface CalendarViewProps {
@@ -77,7 +78,9 @@ export function CalendarView({ cashFlowData }: CalendarViewProps) {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border bg-card/60">
+      {/* Desktop / tablet grid — a 7-column calendar at 375px gives you ~53px cells
+          which can't fit the financial numbers. Mobile gets a list view below. */}
+      <div className="hidden overflow-hidden rounded-xl border border-border bg-card/60 sm:block">
         <div className="grid grid-cols-7 border-b border-border">
           {DAYS_OF_WEEK.map((day) => (
             <div key={day} className="px-2 py-3 text-center text-[length:var(--cal-header-size)] font-medium text-muted-foreground">
@@ -149,7 +152,88 @@ export function CalendarView({ cashFlowData }: CalendarViewProps) {
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-end gap-4 text-[length:var(--font-size-caption)] text-muted-foreground">
+      {/* Mobile list — one row per day that has entries this month.
+          Tap a row to open the same bottom-sheet detail used by the desktop grid. */}
+      <div className="space-y-2 sm:hidden">
+        {(() => {
+          const monthEntries = calendarDays.filter(
+            ({ date, isCurrentMonth }) =>
+              isCurrentMonth && !!entryMap[formatDateKey(date)]
+          );
+          if (monthEntries.length === 0) {
+            return (
+              <div className="rounded-xl border border-border bg-card/60 px-4 py-8 text-center">
+                <p className="text-sm text-muted-foreground">
+                  No entries for {MONTH_NAMES[currentDate.getMonth()]}
+                </p>
+              </div>
+            );
+          }
+          return monthEntries.map(({ date }) => {
+            const dateKey = formatDateKey(date);
+            const entry = entryMap[dateKey]!;
+            const billCount = entry.transactions.filter((t) => t.type === "out").length;
+            const today = isToday(date);
+            const isSelected = selectedDate === dateKey;
+            return (
+              <button
+                key={dateKey}
+                onClick={() => setSelectedDate(dateKey)}
+                className={cn(
+                  "flex w-full items-center gap-3 rounded-xl border border-border bg-card/60 px-3 py-3 text-left transition-colors hover:bg-muted/30",
+                  isSelected && "ring-2 ring-primary"
+                )}
+              >
+                <div className="flex w-10 shrink-0 flex-col items-center">
+                  <span className="text-[10px] font-medium uppercase text-muted-foreground">
+                    {DAYS_OF_WEEK[date.getDay()]}
+                  </span>
+                  <span
+                    className={cn(
+                      "text-lg font-semibold",
+                      today ? "text-primary" : "text-foreground"
+                    )}
+                  >
+                    {date.getDate()}
+                  </span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div
+                    className={cn(
+                      "data-value text-sm font-bold",
+                      entry.endBalance >= 0
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-red-600 dark:text-red-400"
+                    )}
+                  >
+                    {formatCompactCurrency(entry.endBalance)}
+                  </div>
+                  <div className="flex flex-wrap gap-x-3 text-[11px]">
+                    {entry.cashIn > 0 && (
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        +{formatCompactCurrency(entry.cashIn)}
+                      </span>
+                    )}
+                    {entry.cashOut > 0 && (
+                      <span className="text-red-600 dark:text-red-400">
+                        -{formatCompactCurrency(entry.cashOut)}
+                      </span>
+                    )}
+                    {billCount > 0 && (
+                      <span className="text-muted-foreground">
+                        {billCount} {billCount === 1 ? "bill" : "bills"}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+              </button>
+            );
+          });
+        })()}
+      </div>
+
+      <div className="mt-4 hidden items-center justify-end gap-4 text-[length:var(--font-size-caption)] text-muted-foreground sm:flex">
         <div className="flex items-center gap-1.5">
           <span className="text-[length:var(--cal-detail-size)] font-bold text-emerald-500">$</span> Cash Remaining
         </div>

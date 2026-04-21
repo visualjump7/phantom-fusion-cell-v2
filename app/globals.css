@@ -385,6 +385,14 @@ html[data-density="comfort"] .density-table tbody tr:nth-child(even) {
   flex: 1 1 180px;
 }
 
+/* Stack decision buttons full-width on narrow viewports — 180px basis × 3
+   buttons shrinks to unreadable widths below ~560px. */
+@media (max-width: 640px) {
+  .decision-actions > * {
+    flex: 1 1 100%;
+  }
+}
+
 .comfort-grid {
   display: grid;
   grid-template-columns: repeat(var(--grid-cols-mobile), minmax(0, 1fr));

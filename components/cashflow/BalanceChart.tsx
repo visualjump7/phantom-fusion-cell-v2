@@ -115,8 +115,8 @@ export function BalanceChart({ entries, defaultRange = "90D" }: BalanceChartProp
         ))}
       </div>
 
-      <div className="rounded-xl border border-border bg-card/60 p-4">
-        <ResponsiveContainer width="100%" height={320}>
+      <div className="h-[240px] rounded-xl border border-border bg-card/60 p-4 sm:h-[320px]">
+        <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" opacity={0.3} />
             <XAxis

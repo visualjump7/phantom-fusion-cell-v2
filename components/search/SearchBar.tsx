@@ -154,7 +154,7 @@ export function SearchBar({ organizationId, isOpen, onClose }: SearchBarProps) {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: -10 }}
           transition={{ type: "spring", duration: 0.3, bounce: 0.1 }}
-          className="relative z-10 w-full max-w-2xl rounded-xl border border-border bg-card shadow-2xl"
+          className="relative z-10 w-full max-w-[calc(100vw-1.5rem)] rounded-xl border border-border bg-card shadow-2xl sm:max-w-2xl"
         >
           {/* Search input */}
           <form onSubmit={handleSubmit} className="flex items-center border-b border-border px-4">

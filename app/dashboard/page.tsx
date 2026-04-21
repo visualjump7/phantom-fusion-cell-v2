@@ -246,7 +246,7 @@ export default function DashboardPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8"
+          className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8"
         >
           <h1 className="page-title font-bold text-foreground">
             {greeting}, {displayName}
@@ -362,41 +362,41 @@ export default function DashboardPage() {
                 </Card>
               </motion.div>
 
-              {/* Quick Stats */}
+              {/* Quick Stats — horizontal snap-scroll on mobile (tight 2x2 cramped
+                  long currency values), 4-col grid on sm+ */}
               <motion.div variants={itemVariants} data-section="stats">
                 <div
                   className={
                     density === "comfort"
                       ? "grid grid-cols-1 gap-[var(--gap)] md:grid-cols-2"
-                      : "grid grid-cols-2 gap-4 sm:grid-cols-4"
+                      : "-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-4 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0"
                   }
                 >
-                  <Card className="border-border bg-card/60 backdrop-blur-sm">
-                    <CardContent>
-                      <p className="text-[length:var(--font-size-caption)] text-muted-foreground">Total Projects</p>
-                      <p className="data-value text-[length:var(--font-size-section-header)] font-bold text-foreground">{assets.length}</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="border-border bg-card/60 backdrop-blur-sm">
-                    <CardContent>
-                      <p className="text-[length:var(--font-size-caption)] text-muted-foreground">Due This Month</p>
-                      <p className="data-value text-[length:var(--font-size-section-header)] font-bold text-foreground">
-                        {billSummary ? `$${Math.round(billSummary.totalDueThisMonth / 100).toLocaleString()}` : "\u2014"}
-                      </p>
-                    </CardContent>
-                  </Card>
-                  <Card className="border-border bg-card/60 backdrop-blur-sm">
-                    <CardContent>
-                      <p className="text-[length:var(--font-size-caption)] text-muted-foreground">Pending Bills</p>
-                      <p className="data-value text-[length:var(--font-size-section-header)] font-bold text-foreground">{billSummary?.upcomingCount || 0}</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="border-border bg-card/60 backdrop-blur-sm">
-                    <CardContent>
-                      <p className="text-[length:var(--font-size-caption)] text-muted-foreground">Alerts</p>
-                      <p className="data-value text-[length:var(--font-size-section-header)] font-bold text-foreground">{messages.length}</p>
-                    </CardContent>
-                  </Card>
+                  {[
+                    { label: "Total Projects", value: String(assets.length) },
+                    {
+                      label: "Due This Month",
+                      value: billSummary
+                        ? `$${Math.round(billSummary.totalDueThisMonth / 100).toLocaleString()}`
+                        : "\u2014",
+                    },
+                    { label: "Pending Bills", value: String(billSummary?.upcomingCount || 0) },
+                    { label: "Alerts", value: String(messages.length) },
+                  ].map((stat) => (
+                    <Card
+                      key={stat.label}
+                      className="w-[68%] shrink-0 snap-start border-border bg-card/60 backdrop-blur-sm sm:w-auto sm:shrink"
+                    >
+                      <CardContent>
+                        <p className="text-[length:var(--font-size-caption)] text-muted-foreground">
+                          {stat.label}
+                        </p>
+                        <p className="data-value text-[length:var(--font-size-section-header)] font-bold text-foreground">
+                          {stat.value}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
               </motion.div>
 

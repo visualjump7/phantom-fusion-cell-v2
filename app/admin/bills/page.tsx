@@ -285,7 +285,7 @@ function AdminBillsContent() {
               <p className="text-sm text-muted-foreground">Track and manage bills across all assets</p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={() => setShowUpload(!showUpload)}>
               <Upload className="mr-2 h-4 w-4" />{showUpload ? "Hide Upload" : "Excel Import"}
             </Button>
@@ -536,7 +536,7 @@ function AdminBillsContent() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={() => setShowModal(false)}>
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-card p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+              className="w-full max-w-lg max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-border bg-card p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-lg font-bold text-foreground">{editingBill ? "Edit Bill" : "Add Bill"}</h2>
                 <button onClick={() => setShowModal(false)} className="rounded-lg p-1 text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
@@ -544,7 +544,7 @@ function AdminBillsContent() {
               <div className="space-y-4">
                 <div><label className="mb-1 block text-sm font-medium text-foreground">Title *</label>
                   <Input value={formTitle} onChange={(e) => setFormTitle(e.target.value)} placeholder="e.g., HVAC Quarterly Service" /></div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div><label className="mb-1 block text-sm font-medium text-foreground">Amount *</label>
                     <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
                       <Input type="number" step="0.01" value={formAmount} onChange={(e) => setFormAmount(e.target.value)} placeholder="8500.00" className="pl-7" /></div></div>
@@ -561,7 +561,7 @@ function AdminBillsContent() {
                       </optgroup>
                     ))}
                   </select></div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div><label className="mb-1 block text-sm font-medium text-foreground">Category</label>
                     <Input list="cat-list" value={formCategory} onChange={(e) => setFormCategory(e.target.value)} placeholder="e.g., Maintenance" />
                     <datalist id="cat-list">{categories.map((c) => <option key={c} value={c} />)}</datalist></div>

@@ -73,11 +73,11 @@ export function MonthlyTable({ entries }: MonthlyTableProps) {
       <table className="w-full text-sm">
         <thead className="sticky top-0 bg-card border-b border-border">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Month</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Cash In</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Cash Out</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Net Change</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">End Balance</th>
+            <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground sm:px-4">Month</th>
+            <th className="hidden px-4 py-3 text-right text-xs font-medium text-muted-foreground sm:table-cell">Cash In</th>
+            <th className="hidden px-4 py-3 text-right text-xs font-medium text-muted-foreground sm:table-cell">Cash Out</th>
+            <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground sm:px-4">Net Change</th>
+            <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground sm:px-4">End Balance</th>
           </tr>
         </thead>
         <tbody>
@@ -93,22 +93,22 @@ export function MonthlyTable({ entries }: MonthlyTableProps) {
                     isCurrent ? "border-l-2 border-l-primary" : ""
                   } ${idx % 2 === 0 ? "" : "bg-muted/10"}`}
                 >
-                  <td className="px-4 py-3 font-medium text-foreground">
+                  <td className="px-3 py-3 font-medium text-foreground sm:px-4">
                     <div className="flex items-center gap-2">
                       {isExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
                       {month.label}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-right font-medium text-emerald-500">
+                  <td className="hidden px-4 py-3 text-right font-medium text-emerald-500 sm:table-cell">
                     {month.totalCashIn > 0 ? formatFullCurrency(month.totalCashIn) : "—"}
                   </td>
-                  <td className="px-4 py-3 text-right font-medium text-red-500">
+                  <td className="hidden px-4 py-3 text-right font-medium text-red-500 sm:table-cell">
                     {month.totalCashOut > 0 ? formatFullCurrency(month.totalCashOut) : "—"}
                   </td>
-                  <td className={`px-4 py-3 text-right font-bold ${month.netChange >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                  <td className={`px-3 py-3 text-right font-bold sm:px-4 ${month.netChange >= 0 ? "text-emerald-500" : "text-red-500"}`}>
                     {formatFullCurrency(month.netChange)}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-3 py-3 text-right sm:px-4">
                     <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-bold ${
                       month.endBalance >= 0
                         ? "bg-emerald-500/10 text-emerald-500"

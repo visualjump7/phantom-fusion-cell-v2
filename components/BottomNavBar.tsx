@@ -10,33 +10,52 @@ import {
   MessageSquare,
   type LucideIcon,
 } from "lucide-react";
+import { useRole } from "@/lib/use-role";
 
 interface BottomNavItem {
   name: string;
   href: string;
   icon: LucideIcon;
+  /** Delegates only see items flagged visible for them. */
+  delegateVisible?: boolean;
+  /** Label override when rendered for a delegate. */
+  delegateName?: string;
 }
 
-// Reuses the same routes/icons as the main Navbar
+// Mirrors the admin/executive-facing nav in lib/nav-items.ts (trimmed to 5 for
+// the tab bar). Kept inline because the bottom bar uses smaller icon sizes and
+// a different label convention.
 const bottomNavItems: BottomNavItem[] = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Map", href: "/globe", icon: Globe },
-  { name: "Directory", href: "/assets", icon: Building2 },
+  {
+    name: "Directory",
+    href: "/assets",
+    icon: Building2,
+    delegateVisible: true,
+    delegateName: "Projects",
+  },
   { name: "Cash Flow", href: "/cash-flow", icon: DollarSign },
-  { name: "Alerts", href: "/messages", icon: MessageSquare },
+  { name: "Alerts", href: "/messages", icon: MessageSquare, delegateVisible: true },
 ];
 
 // Routes that manage their own bottom UI (fullscreen immersive views).
 // The bottom nav is suppressed on these paths to avoid overlap.
-// "/" is the orbital landing — its design is meant to stand alone.
-const SUPPRESS_ON: string[] = ["/globe", "/"];
+// "/" is the orbital landing, "/command" is the command panel — both meant
+// to stand alone.
+const SUPPRESS_ON: string[] = ["/globe", "/", "/command"];
 
 export function BottomNavBar() {
   const pathname = usePathname();
+  const { isDelegate } = useRole();
 
   if (SUPPRESS_ON.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
     return null;
   }
+
+  const visibleItems = isDelegate
+    ? bottomNavItems.filter((i) => i.delegateVisible)
+    : bottomNavItems;
 
   return (
     <nav
@@ -51,13 +70,14 @@ export function BottomNavBar() {
       }}
     >
       <ul className="flex w-full items-stretch justify-around">
-        {bottomNavItems.map((item) => {
+        {visibleItems.map((item) => {
           const isActive =
             item.href === "/"
               ? pathname === "/"
               : pathname.startsWith(item.href);
           const Icon = item.icon;
           const color = isActive ? "#4ade80" : "#71717a";
+          const label = isDelegate && item.delegateName ? item.delegateName : item.name;
           return (
             <li key={item.href} className="flex-1">
               <Link
@@ -71,7 +91,7 @@ export function BottomNavBar() {
                   className="leading-none"
                   style={{ fontSize: "10px", fontWeight: 500 }}
                 >
-                  {item.name}
+                  {label}
                 </span>
               </Link>
             </li>

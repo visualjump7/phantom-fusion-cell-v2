@@ -1,32 +1,30 @@
 "use client";
 
 /**
- * AdminSettingsMenu — dropdown items + controllers for the three admin
- * affordances that used to live inline on the navbar:
+ * AdminSettingsMenu — admin-only controls rendered inside <MobileNavDrawer />.
  *
- *   - Open Nucleus            (mounts NucleusOverlayHost)
  *   - View as Principal       (list of active principals, or immediate
  *                              activation if only one exists)
+ *   - Open Command Panel      (mounts <AdminOverlayHost /> at Navbar level)
  *   - Land on Nucleus / Dashboard (toggle profiles.default_landing)
  *
- * To survive the settings dropdown closing on click, the actual nucleus
- * overlay is rendered by <AdminOverlayHost /> mounted at Navbar level.
- * The menu items just call openNucleus() / activatePrincipal() via
- * callbacks passed in by the Navbar.
+ * Plain nav links (Admin, Budget Editor) live in lib/nav-items.ts and are
+ * rendered by the drawer itself; this component is strictly the admin
+ * controls. No section header — the drawer provides it.
+ *
+ * The command panel overlay is rendered by <AdminOverlayHost /> mounted at
+ * Navbar level, so it survives the drawer closing on click. This component
+ * just calls openNucleus() / activatePrincipal() via the callbacks passed in.
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   CircleDot,
   Eye,
   ChevronRight,
   LayoutDashboard,
   Loader2,
-  ShieldCheck,
-  FileSpreadsheet,
-  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRole } from "@/lib/use-role";
@@ -57,21 +55,8 @@ interface PrincipalOption {
   accent: string;
 }
 
-type AdminNavItem = { name: string; href: string; icon: LucideIcon };
-
-const ADMIN_TOP_NAV: AdminNavItem = {
-  name: "Admin",
-  href: "/admin",
-  icon: ShieldCheck,
-};
-const ADMIN_BOTTOM_NAV: AdminNavItem = {
-  name: "Budget Editor",
-  href: "/budget-editor",
-  icon: FileSpreadsheet,
-};
-
 // ============================================
-// <AdminSettingsMenu /> — items rendered inside the Navbar settings panel
+// <AdminSettingsMenu /> — admin controls rendered inside <MobileNavDrawer />
 // ============================================
 
 export function AdminSettingsMenu({
@@ -82,7 +67,6 @@ export function AdminSettingsMenu({
   onRequestClose: () => void;
 }) {
   const router = useRouter();
-  const pathname = usePathname();
   const { isStaff, userId } = useRole();
   const { enterPreview, active: previewActive } = usePreview();
 
@@ -180,33 +164,8 @@ export function AdminSettingsMenu({
 
   if (!isStaff) return null;
 
-  const renderAdminNavLink = (nav: AdminNavItem) => {
-    const isActive = pathname ? pathname.startsWith(nav.href) : false;
-    return (
-      <Link
-        href={nav.href}
-        onClick={onRequestClose}
-        className={cn(
-          "flex min-h-[var(--tap-target-min)] items-center gap-2 px-3 py-2 text-[length:var(--font-size-body)] font-medium transition-colors",
-          isActive
-            ? "bg-primary/10 text-primary"
-            : "text-foreground hover:bg-muted"
-        )}
-      >
-        <nav.icon className="h-4 w-4" />
-        {nav.name}
-      </Link>
-    );
-  };
-
   return (
     <>
-      <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-        Admin
-      </div>
-
-      {renderAdminNavLink(ADMIN_TOP_NAV)}
-
       {!previewActive && (
         <button
           type="button"
@@ -288,10 +247,6 @@ export function AdminSettingsMenu({
           </span>
         )}
       </button>
-
-      {renderAdminNavLink(ADMIN_BOTTOM_NAV)}
-
-      <div className="my-1 border-t border-border" />
     </>
   );
 }
