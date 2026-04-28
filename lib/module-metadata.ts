@@ -1,7 +1,7 @@
 import {
   LayoutDashboard,
   Newspaper,
-  Bell,
+  MessageSquare,
   Plane,
   PieChart,
   Wallet,
@@ -54,10 +54,10 @@ export const MODULE_METADATA: Record<ModuleKey, ModuleMeta> = {
   },
   [MODULE_KEYS.COMMS]: {
     key: MODULE_KEYS.COMMS,
-    label: "Alerts",
-    description: "Alerts, decisions, action items.",
-    icon: Bell,
-    routePath: "/messages",
+    label: "Comms",
+    description: "Secure chat with your team + alerts, decisions, action items.",
+    icon: MessageSquare,
+    routePath: "/comms",
     opensInOverlay: true,
     accent: "#ef4444",
     glow: "rgba(239, 68, 68, 0.18)",

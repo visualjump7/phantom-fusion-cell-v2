@@ -229,7 +229,7 @@ export function AlertsCard({
               </motion.div>
               {totalFiltered > 5 && (
                 <Link
-                  href="/messages"
+                  href="/comms/alerts"
                   className="block text-[10px] text-white/40 hover:text-white/70 text-center pt-1 transition-colors"
                 >
                   View all {totalFiltered} &rarr;

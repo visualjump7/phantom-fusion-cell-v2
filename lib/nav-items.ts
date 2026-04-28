@@ -37,7 +37,9 @@ export const mainNavItems: NavItem[] = [
     delegateName: "My Projects",
   },
   { name: "Cash Flow", href: "/cash-flow", icon: DollarSign },
-  { name: "Alerts", href: "/messages", icon: MessageSquare, delegateVisible: true },
+  // Comms unifies structured alerts (decisions/approvals) + real-time chat
+  // into a single top-level destination with two tabs. Lands on Chat by default.
+  { name: "Comms", href: "/comms", icon: MessageSquare, delegateVisible: true },
 ];
 
 export const adminNavItems: NavItem[] = [

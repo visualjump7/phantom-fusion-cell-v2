@@ -1,19 +1,23 @@
 "use client";
 
+/**
+ * Comms → Alerts tab. Structured decisions / approvals / updates.
+ * Unchanged from the previous /messages page apart from stripping the
+ * outer chrome (Navbar + page header) which the /comms layout now owns.
+ */
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  MessageSquare, Loader2, Building2, X, Send, ThumbsUp,
+  Loader2, Building2, X, Send, ThumbsUp,
   ThumbsDown, Eye, Archive, ShieldCheck, Clock,
 } from "lucide-react";
-import { Navbar } from "@/components/Navbar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRole } from "@/lib/use-role";
-import { useInsideCommand } from "@/components/command/CommandContext";
 import { useThemePreferences } from "@/components/ThemeProvider";
 import { useEffectiveOrgId, useScopedOrgId } from "@/lib/use-active-principal";
 import {
@@ -29,12 +33,11 @@ import {
 import { formatTimeAgo } from "@/lib/utils";
 import { useDelegateAccess } from "@/lib/use-delegate-access";
 
-export default function MessagesPage() {
+export default function CommsAlertsPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
   const { isAdmin, isExecutive, isDelegate } = useRole();
-  const embedded = useInsideCommand();
   const { assetIds: delegateAssetIds, isLoading: delegateLoading } = useDelegateAccess();
   const { density } = useThemePreferences();
   const { scopedOrgId } = useScopedOrgId();
@@ -207,18 +210,11 @@ export default function MessagesPage() {
               </span>
               <span className="text-[10px] text-muted-foreground">
                 {msg.response?.confirmed_by_email && `by ${msg.response.confirmed_by_email} · `}
-                {msg.response?.confirmed_at && formatTimeAgo(msg.response.confirmed_at)}
+                {formatTimeAgo(msg.response!.confirmed_at!)}
               </span>
             </div>
             {msg.response?.comment && (
-              <p className="mt-1.5 text-xs text-muted-foreground">
-                Your note: <span className="italic">&ldquo;{msg.response.comment}&rdquo;</span>
-              </p>
-            )}
-            {msg.response?.confirmation_note && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                Team note: <span className="italic">&ldquo;{msg.response.confirmation_note}&rdquo;</span>
-              </p>
+              <p className="mt-1.5 text-xs text-muted-foreground italic">&ldquo;{msg.response.comment}&rdquo;</p>
             )}
           </div>
         );
@@ -324,54 +320,42 @@ export default function MessagesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
+    <>
+      {/* Send-message row */}
+      <div className="mb-4 flex justify-end">
+        <Button size="sm" variant={density === "comfort" ? "default" : "outline"} onClick={() => setShowReply(!showReply)}>
+          <Send className="mr-2 h-4 w-4" />Send Message
+        </Button>
       </div>
-      {!embedded && <Navbar />}
-      <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-8 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-              <MessageSquare className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h1 className="page-title font-bold text-foreground">Alerts</h1>
-              <p className="text-[length:var(--font-size-body)] text-muted-foreground">Review and respond</p>
-            </div>
-          </div>
-          <Button size="sm" variant={density === "comfort" ? "default" : "outline"} onClick={() => setShowReply(!showReply)}>
-            <Send className="mr-2 h-4 w-4" />Send Message
-          </Button>
-        </div>
 
-        {/* Reply composer */}
-        <AnimatePresence>
-          {showReply && (
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="mb-6">
-              <Card className="border-primary/30 bg-card/80">
-                <CardContent className="p-4">
-                  <p className="mb-3 text-[length:var(--font-size-body)] font-medium text-foreground">
-                    {isExecutive ? "Send a message to your Fusion Cell team" : "Send a message"}
-                  </p>
-                  <div className="flex gap-2">
-                    <Input value={replyText} onChange={(e) => setReplyText(e.target.value)}
-                      placeholder="Type your message..." onKeyDown={(e) => e.key === "Enter" && handleSendReply()} className="flex-1" />
-                    <Button onClick={handleSendReply} disabled={!replyText.trim() || isSendingReply} size="sm">
-                      {isSendingReply ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
-        </AnimatePresence>
+      {/* Reply composer */}
+      <AnimatePresence>
+        {showReply && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="mb-6">
+            <Card className="border-primary/30 bg-card/80">
+              <CardContent className="p-4">
+                <p className="mb-3 text-[length:var(--font-size-body)] font-medium text-foreground">
+                  {isExecutive ? "Send a message to your Fusion Cell team" : "Send a message"}
+                </p>
+                <div className="flex gap-2">
+                  <Input value={replyText} onChange={(e) => setReplyText(e.target.value)}
+                    placeholder="Type your message..." onKeyDown={(e) => e.key === "Enter" && handleSendReply()} className="flex-1" />
+                  <Button onClick={handleSendReply} disabled={!replyText.trim() || isSendingReply} size="sm">
+                    {isSendingReply ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-        {/* Filters */}
-        <div className="mb-6 flex flex-wrap gap-[calc(var(--gap)/2)]">
+      {/* Filters */}
+      <div className="-mx-4 mb-6 overflow-x-auto px-4 sm:mx-0 sm:overflow-visible sm:px-0">
+        <div className="flex gap-[calc(var(--gap)/2)]">
           {["all", "decision", "action_required", "alert", "update", "comment"].map((t) => (
             <button key={t} onClick={() => setFilter(t)}
-              className={`rounded-lg px-3 py-1.5 text-[length:var(--font-size-body)] font-medium capitalize transition-colors ${
+              className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 text-[length:var(--font-size-body)] font-medium capitalize transition-colors ${
                 filter === t ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
               }`}>
               {t === "all" ? "All" : t === "comment" ? "Replies" : t.replace("_", " ")}
@@ -381,53 +365,53 @@ export default function MessagesPage() {
             </button>
           ))}
         </div>
+      </div>
 
-        {/* Content */}
-        {isLoading ? (
-          <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-        ) : messages.length === 0 ? (
-          <p className="text-center text-[length:var(--font-size-body)] text-muted-foreground py-20">No alerts</p>
-        ) : (
-          <div className="space-y-6">
-            {pendingDecisions.length > 0 && (
-              <div>
-                <h2 className="mb-3 flex items-center gap-2 text-[length:var(--font-size-body)] font-semibold text-foreground">
-                  <div className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
-                  Needs Your Response ({pendingDecisions.length})
-                </h2>
-                <div className="space-y-3">{pendingDecisions.map(renderMessage)}</div>
-              </div>
-            )}
+      {/* Content */}
+      {isLoading ? (
+        <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+      ) : messages.length === 0 ? (
+        <p className="text-center text-[length:var(--font-size-body)] text-muted-foreground py-20">No alerts</p>
+      ) : (
+        <div className="space-y-6">
+          {pendingDecisions.length > 0 && (
+            <div>
+              <h2 className="mb-3 flex items-center gap-2 text-[length:var(--font-size-body)] font-semibold text-foreground">
+                <div className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+                Needs Your Response ({pendingDecisions.length})
+              </h2>
+              <div className="space-y-3">{pendingDecisions.map(renderMessage)}</div>
+            </div>
+          )}
 
-            {awaitingConfirmation.length > 0 && (
-              <div>
-                <h2 className="mb-3 flex items-center gap-2 text-[length:var(--font-size-body)] font-semibold text-foreground">
-                  <Clock className="h-4 w-4 text-amber-400" />
-                  Awaiting Team Confirmation ({awaitingConfirmation.length})
-                </h2>
-                <div className="space-y-3">{awaitingConfirmation.map(renderMessage)}</div>
-              </div>
-            )}
+          {awaitingConfirmation.length > 0 && (
+            <div>
+              <h2 className="mb-3 flex items-center gap-2 text-[length:var(--font-size-body)] font-semibold text-foreground">
+                <Clock className="h-4 w-4 text-amber-400" />
+                Awaiting Team Confirmation ({awaitingConfirmation.length})
+              </h2>
+              <div className="space-y-3">{awaitingConfirmation.map(renderMessage)}</div>
+            </div>
+          )}
 
-            {otherMessages.length > 0 && (
-              <div>
-                <h2 className="mb-3 text-[length:var(--font-size-body)] font-semibold text-muted-foreground">Other Alerts</h2>
-                <div className="space-y-3">{otherMessages.map(renderMessage)}</div>
-              </div>
-            )}
+          {otherMessages.length > 0 && (
+            <div>
+              <h2 className="mb-3 text-[length:var(--font-size-body)] font-semibold text-muted-foreground">Other Alerts</h2>
+              <div className="space-y-3">{otherMessages.map(renderMessage)}</div>
+            </div>
+          )}
 
-            {confirmed.length > 0 && (
-              <div>
-                <h2 className="mb-3 flex items-center gap-2 text-[length:var(--font-size-body)] font-semibold text-muted-foreground">
-                  <ShieldCheck className="h-4 w-4 text-primary" />
-                  Completed ({confirmed.length})
-                </h2>
-                <div className="space-y-3">{confirmed.map(renderMessage)}</div>
-              </div>
-            )}
-          </div>
-        )}
-      </motion.main>
+          {confirmed.length > 0 && (
+            <div>
+              <h2 className="mb-3 flex items-center gap-2 text-[length:var(--font-size-body)] font-semibold text-muted-foreground">
+                <ShieldCheck className="h-4 w-4 text-primary" />
+                Completed ({confirmed.length})
+              </h2>
+              <div className="space-y-3">{confirmed.map(renderMessage)}</div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Approve/Reject Modal */}
       <AnimatePresence>
@@ -493,6 +477,6 @@ export default function MessagesPage() {
           </>
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
 }

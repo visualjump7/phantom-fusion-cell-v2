@@ -447,7 +447,7 @@ export function MobileStatsContent({
                   </motion.div>
                   {totalFiltered > 5 && (
                     <Link
-                      href="/messages"
+                      href="/comms/alerts"
                       className="block text-[10px] text-white/40 text-center pt-1"
                     >
                       View all {totalFiltered} &rarr;

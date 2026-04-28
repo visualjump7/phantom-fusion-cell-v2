@@ -445,7 +445,7 @@ export default function DashboardPage() {
                         <MessageSquare className="h-4 w-4 text-primary" />
                         Recent Alerts
                       </CardTitle>
-                      <Link href="/messages" className="text-[length:var(--font-size-caption)] text-primary hover:underline">
+                      <Link href="/comms/alerts" className="text-[length:var(--font-size-caption)] text-primary hover:underline">
                         View all {"\u2192"}
                       </Link>
                     </div>
@@ -458,7 +458,7 @@ export default function DashboardPage() {
                         {messages.map((msg) => (
                           <Link
                             key={msg.id}
-                            href="/messages"
+                            href="/comms/alerts"
                             className="flex min-h-[var(--table-row-height)] items-stretch gap-3 rounded-lg px-[var(--table-cell-padding-x)] py-[var(--table-cell-padding-y)] transition-colors hover:bg-muted/30"
                           >
                             <div className={`w-0.5 shrink-0 rounded-full ${priorityBarColors[msg.priority] || "bg-border"}`} />
