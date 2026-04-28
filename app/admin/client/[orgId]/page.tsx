@@ -119,7 +119,7 @@ export default function WorkspaceDashboard() {
   const quickLinks = [
     { name: "Projects", href: `/admin/client/${orgId}/projects`, icon: Building2, stat: `${projectsCount} projects` },
     { name: "Bills", href: `/admin/client/${orgId}/bills`, icon: Receipt, stat: `${billSummary?.upcomingCount || 0} pending` },
-    { name: "Alerts", href: `/admin/client/${orgId}/messages`, icon: MessageSquare, stat: `${alertsCount} active` },
+    { name: "Comms", href: `/admin/client/${orgId}/comms`, icon: MessageSquare, stat: `${alertsCount} alerts · chat` },
     { name: "Daily Briefs", href: `/admin/client/${orgId}/briefs`, icon: FileText, stat: "Compose briefs" },
     { name: "Principal Experience", href: `/admin/client/${orgId}/principal-experience`, icon: Sparkles, stat: "Module visibility" },
     ...(isAdmin ? [{ name: "Delegates", href: `/admin/client/${orgId}/delegates`, icon: Users, stat: "Manage access" }] : []),

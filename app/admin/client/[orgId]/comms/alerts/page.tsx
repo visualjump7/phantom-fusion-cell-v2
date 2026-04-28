@@ -191,14 +191,14 @@ export default function WorkspaceMessagesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-foreground">Alerts & Messages</h1>
-          <p className="text-sm text-muted-foreground">Manage communications for {clientName}</p>
+      {/* Page title is owned by the Comms layout; keep only the primary action. */}
+      {canCompose && (
+        <div className="flex justify-end">
+          <Button onClick={() => openCompose()}>
+            <Plus className="mr-2 h-4 w-4" />New Message
+          </Button>
         </div>
-        {canCompose && <Button onClick={() => openCompose()}><Plus className="mr-2 h-4 w-4" />New Message</Button>}
-      </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">

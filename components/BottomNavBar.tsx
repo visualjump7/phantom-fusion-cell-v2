@@ -10,6 +10,7 @@ import {
   MessageSquare,
   type LucideIcon,
 } from "lucide-react";
+// MessageSquare is reused for the Comms tab (structured alerts + chat hub).
 import { useRole } from "@/lib/use-role";
 
 interface BottomNavItem {
@@ -36,7 +37,10 @@ const bottomNavItems: BottomNavItem[] = [
     delegateName: "Projects",
   },
   { name: "Cash Flow", href: "/cash-flow", icon: DollarSign },
-  { name: "Alerts", href: "/messages", icon: MessageSquare, delegateVisible: true },
+  // Comms = alerts + chat unified. href points at /comms (which redirects to
+  // /comms/chat) so the startsWith active-state check lights up on both
+  // /comms/chat and /comms/alerts.
+  { name: "Comms", href: "/comms", icon: MessageSquare, delegateVisible: true },
 ];
 
 // Routes that manage their own bottom UI (fullscreen immersive views).

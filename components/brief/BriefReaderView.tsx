@@ -305,7 +305,7 @@ function ReaderBlock({
                     {d.priority}
                   </Badge>
                   <Link
-                    href="/messages"
+                    href="/comms/alerts"
                     className="text-xs text-primary hover:underline"
                   >
                     View
