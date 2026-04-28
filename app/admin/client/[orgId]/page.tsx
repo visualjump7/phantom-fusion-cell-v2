@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Building2, Receipt, MessageSquare, Upload, ChevronRight, Loader2, Trash2, FileText, Users, Tag, Globe, Sparkles,
-  Pencil, Check, X as XIcon,
+  Pencil, Check, X as XIcon, Compass, UserCog,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -121,7 +121,9 @@ export default function WorkspaceDashboard() {
     { name: "Bills", href: `/admin/client/${orgId}/bills`, icon: Receipt, stat: `${billSummary?.upcomingCount || 0} pending` },
     { name: "Comms", href: `/admin/client/${orgId}/comms`, icon: MessageSquare, stat: `${alertsCount} alerts · chat` },
     { name: "Daily Briefs", href: `/admin/client/${orgId}/briefs`, icon: FileText, stat: "Compose briefs" },
-    { name: "Principal Experience", href: `/admin/client/${orgId}/principal-experience`, icon: Sparkles, stat: "Module visibility" },
+    { name: "Executives", href: `/admin/client/${orgId}/executives`, icon: UserCog, stat: "Add or remove people" },
+    { name: "Executive Views", href: `/admin/client/${orgId}/principal-experience`, icon: Sparkles, stat: "Per-person modules" },
+    { name: "Principles", href: `/admin/client/${orgId}/principles`, icon: Compass, stat: "Standing rules" },
     ...(isAdmin ? [{ name: "Delegates", href: `/admin/client/${orgId}/delegates`, icon: Users, stat: "Manage access" }] : []),
     ...(canUpload ? [{ name: "Budget Upload", href: `/admin/client/${orgId}/upload`, icon: Upload, stat: "Import budgets" }] : []),
   ];

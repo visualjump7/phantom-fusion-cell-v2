@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, Users, ChevronRight } from "lucide-react";
+import { Loader2, Users, UserCog, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { OverviewStats } from "@/components/admin/overview/OverviewStats";
 import { ClientCard } from "@/components/admin/overview/ClientCard";
@@ -94,7 +94,7 @@ export default function CommandCenterPage() {
         </div>
       </div>
 
-      {/* Admin-only: Team Management card */}
+      {/* Admin-only: Administration cards */}
       {isAdmin && (
         <div>
           <h2 className="mb-4 text-lg font-semibold text-foreground">Administration</h2>
@@ -108,7 +108,7 @@ export default function CommandCenterPage() {
                     </div>
                     <div>
                       <p className="font-medium text-foreground">Onboard Principal</p>
-                      <p className="text-xs text-muted-foreground">Guided wizard: org, principal, modules, holdings</p>
+                      <p className="text-xs text-muted-foreground">Guided wizard: account, first executive, modules</p>
                     </div>
                   </div>
                   <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
@@ -123,8 +123,24 @@ export default function CommandCenterPage() {
                       <Users className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-medium text-foreground">Team Management</p>
-                      <p className="text-xs text-muted-foreground">Invite users, manage roles and permissions</p>
+                      <p className="font-medium text-foreground">Fusion Cell Team</p>
+                      <p className="text-xs text-muted-foreground">Invite team members, manage roles and assignments</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                </CardContent>
+              </Card>
+            </Link>
+            <Link href="/admin/executive-team">
+              <Card className="group cursor-pointer border-border transition-colors hover:bg-muted/30">
+                <CardContent className="flex items-center justify-between p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-amber-500/15 p-2">
+                      <UserCog className="h-5 w-5 text-amber-400" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">Executive Team</p>
+                      <p className="text-xs text-muted-foreground">Add executives, set account access, update contact info, set passwords</p>
                     </div>
                   </div>
                   <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />

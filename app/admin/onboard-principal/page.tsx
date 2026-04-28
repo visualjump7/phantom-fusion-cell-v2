@@ -1,10 +1,11 @@
 "use client";
 
 /**
- * Onboard-principal wizard — 5 steps to stand up a new principal.
+ * Onboard-principal wizard — 5 steps to stand up a new principal account.
  *
- *   1. Organization       — name, accent, primary contact
- *   2. Principal profile  — name, email, phone
+ *   1. Account            — org name, accent, primary contact
+ *   2. First executive    — name, email, phone (more can be added later via
+ *                           /admin/executive-team or per-account Executives)
  *   3. Module visibility  — checkboxes (Dashboard + Comms always on)
  *   4. Initial holdings   — "skip for now" placeholder (CSV import deferred)
  *   5. Confirm            — summary + Create button
@@ -36,8 +37,10 @@ import { MODULE_METADATA } from "@/lib/module-metadata";
 import { ALL_MODULE_KEYS, isRequiredModule, isDefaultModule } from "@/lib/modules";
 
 const STEPS = [
-  { id: "org", label: "Organization" },
-  { id: "principal", label: "Principal" },
+  { id: "org", label: "Account" },
+  // The id stays "principal" to keep the existing state machine + wizard
+  // routing intact; only the label changed.
+  { id: "principal", label: "First Executive" },
   { id: "modules", label: "Modules" },
   { id: "holdings", label: "Holdings" },
   { id: "confirm", label: "Confirm" },
@@ -147,9 +150,10 @@ export default function OnboardPrincipalPage() {
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
             <CheckCircle className="h-7 w-7" />
           </div>
-          <h1 className="text-2xl font-bold">Principal onboarded</h1>
+          <h1 className="text-2xl font-bold">Principal account ready</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            A confirmation email has been sent to <strong>{principalEmail}</strong> with a link to sign in.
+            A sign-in email has been sent to <strong>{principalEmail}</strong> — they&apos;ll click the
+            link to set their password and access the account.
           </p>
           <div className="mt-6 flex items-center justify-center gap-3">
             <Button variant="outline" onClick={() => router.push("/admin")}>Back to Admin</Button>
@@ -193,8 +197,8 @@ export default function OnboardPrincipalPage() {
         </ol>
 
         {step === "org" && (
-          <StepCard icon={Building2} title="Organization" subtitle="Name the org that will own this principal's holdings.">
-            <Input placeholder="Organization name" value={orgName} onChange={(e) => setOrgName(e.target.value)} />
+          <StepCard icon={Building2} title="Principal Account" subtitle="Name the account that will own this principal's projects and team.">
+            <Input placeholder="Account name (e.g. Smith Family Office)" value={orgName} onChange={(e) => setOrgName(e.target.value)} />
             <div className="mt-3">
               <p className="mb-2 text-xs font-medium text-muted-foreground">Accent</p>
               <div className="flex gap-2">
@@ -221,18 +225,22 @@ export default function OnboardPrincipalPage() {
         )}
 
         {step === "principal" && (
-          <StepCard icon={Users} title="Principal profile" subtitle="The person who will log in to the nucleus.">
+          <StepCard
+            icon={Users}
+            title="First executive"
+            subtitle="The first person who will sign in to this account. You can add more executives anytime from Executive Team."
+          >
             <Input placeholder="Full name *" value={principalName} onChange={(e) => setPrincipalName(e.target.value)} />
             <Input placeholder="Email *" value={principalEmail} onChange={(e) => setPrincipalEmail(e.target.value)} className="mt-3" />
             <Input placeholder="Phone (optional)" value={principalPhone} onChange={(e) => setPrincipalPhone(e.target.value)} className="mt-3" />
             <p className="mt-3 text-xs text-muted-foreground">
-              A confirmation email will be sent on create — they click the link to set their own password.
+              A sign-in email will be sent on create — they click the link to set their own password.
             </p>
           </StepCard>
         )}
 
         {step === "modules" && (
-          <StepCard icon={Sparkles} title="Module visibility" subtitle="Which modules appear on their nucleus. You can change this later.">
+          <StepCard icon={Sparkles} title="Module visibility" subtitle="Which modules this executive sees when they sign in. You can change this later — and configure each executive separately.">
             <p className="mb-3 text-xs text-muted-foreground">
               Defaults: Dashboard, Daily Brief, and Comms are enabled. Dashboard and Comms cannot be turned off.
             </p>
@@ -280,11 +288,11 @@ export default function OnboardPrincipalPage() {
         )}
 
         {step === "confirm" && (
-          <StepCard icon={CheckCircle} title="Confirm" subtitle="Review everything and create the principal.">
+          <StepCard icon={CheckCircle} title="Confirm" subtitle="Review everything and create the principal account.">
             <dl className="space-y-2 text-sm">
-              <Row label="Organization" value={orgName} />
+              <Row label="Account" value={orgName} />
               <Row label="Accent" value={accent} />
-              <Row label="Principal" value={`${principalName} <${principalEmail}>`} />
+              <Row label="First executive" value={`${principalName} <${principalEmail}>`} />
               {principalPhone && <Row label="Phone" value={principalPhone} />}
               <Row
                 label="Modules enabled"
@@ -309,7 +317,7 @@ export default function OnboardPrincipalPage() {
               {submitting ? (
                 <><Loader2 className="mr-1 h-4 w-4 animate-spin" />Creating…</>
               ) : (
-                <>Create principal <ArrowRight className="ml-1 h-4 w-4" /></>
+                <>Create principal account <ArrowRight className="ml-1 h-4 w-4" /></>
               )}
             </Button>
           ) : (

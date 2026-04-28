@@ -12,7 +12,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Eye, RotateCcw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,11 @@ interface PrincipalRow {
 
 export default function PrincipalExperiencePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Deep-link target: /admin/client/[orgId]/principal-experience?principalId=X
+  // selects that executive on first render so the executives roster page can
+  // jump straight to their view config.
+  const requestedPrincipalId = searchParams.get("principalId");
   const { orgId, clientName } = useClientContext();
   const { enterPreview } = usePreview();
   const { blocked, guardClick } = useActionGuard();
@@ -91,14 +96,30 @@ export default function PrincipalExperiencePage() {
       );
       if (!cancelled) {
         setPrincipals(rows);
-        setSelectedPrincipalId(rows[0]?.userId ?? null);
+        // Honor ?principalId= when present and valid, else fall back to the
+        // first executive in the list.
+        const wantedId = requestedPrincipalId &&
+          rows.some((r) => r.userId === requestedPrincipalId)
+            ? requestedPrincipalId
+            : rows[0]?.userId ?? null;
+        setSelectedPrincipalId(wantedId);
         setLoadingPrincipals(false);
       }
     })();
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orgId]);
+
+  // Honor ?principalId= when navigating between executives without a full
+  // remount (e.g. router.push from the executives roster page after adding).
+  useEffect(() => {
+    if (!requestedPrincipalId || principals.length === 0) return;
+    if (principals.some((p) => p.userId === requestedPrincipalId)) {
+      setSelectedPrincipalId(requestedPrincipalId);
+    }
+  }, [requestedPrincipalId, principals]);
 
   // Load config for selected principal
   useEffect(() => {
@@ -232,7 +253,8 @@ export default function PrincipalExperiencePage() {
   if (principals.length === 0) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-12 text-center text-muted-foreground">
-        No principals found for <strong>{clientName}</strong>. Onboard a principal to configure their experience.
+        No executives on <strong>{clientName}</strong> yet. Add one from the
+        Executives section to configure their view.
       </div>
     );
   }
@@ -241,19 +263,21 @@ export default function PrincipalExperiencePage() {
     <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Principal Experience</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Executive View</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Choose which modules appear on each principal&apos;s nucleus. Dashboard and Comms are always enabled —
-            Dashboard is the principal&apos;s full view and Comms powers decision approvals.
+            Choose what each executive on <strong>{clientName}</strong> sees when they sign in.
+            Dashboard and Comms are always enabled — Dashboard is their full view and Comms
+            powers decision approvals.
           </p>
         </div>
       </div>
 
-      {/* Principal selector */}
-      {principals.length > 1 && (
+      {/* Executive selector — always visible, even with one person, so the admin
+          knows whose view they're configuring. */}
+      {principals.length >= 1 && (
         <div className="mb-6">
           <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Principal
+            Executive
           </label>
           <select
             value={selectedPrincipalId ?? ""}
@@ -293,7 +317,7 @@ export default function PrincipalExperiencePage() {
               className="gap-1.5"
             >
               <Eye className="h-3.5 w-3.5" />
-              Preview as principal
+              Preview as executive
             </Button>
           </div>
         </CardContent>
@@ -383,7 +407,7 @@ export default function PrincipalExperiencePage() {
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Quick-glance cards that appear <strong>below</strong> the
-            orbital ring on this principal&apos;s command page. Redundant
+            orbital ring on this executive&apos;s command page. Redundant
             with the ring on purpose — lets them scroll to check status
             without opening an overlay. All off by default.
           </p>
