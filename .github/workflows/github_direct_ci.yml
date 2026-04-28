@@ -33,3 +33,6 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Check SQL migrations
+        run: npm run check:migrations

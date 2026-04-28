@@ -1,0 +1,34 @@
+{
+  "$comment": "Capacitor config for the iOS native shell. See ios/README.md and docs/release/ios-architecture.md for the full rationale. Strategy: remote-URL wrapper that loads the production web app inside a native WebView so the existing Next.js / Supabase / middleware stack is untouched. The web build is the source of truth.",
+
+  "appId": "com.phantomservices.fusioncell",
+  "appName": "Fusion Cell",
+  "webDir": "ios/offline-shell",
+
+  "server": {
+    "url": "https://fusioncell.phantomservices.com",
+    "cleartext": false,
+    "allowNavigation": [
+      "fusioncell.phantomservices.com",
+      "*.supabase.co",
+      "*.supabase.in",
+      "*.mapbox.com"
+    ]
+  },
+
+  "ios": {
+    "backgroundColor": "#0b0b0f",
+    "allowsLinkPreview": false,
+    "contentInset": "always",
+    "preferredContentMode": "mobile",
+    "scheme": "Fusion Cell"
+  },
+
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": false,
+      "backgroundColor": "#0b0b0f",
+      "iosSpinnerStyle": "small"
+    }
+  }
+}

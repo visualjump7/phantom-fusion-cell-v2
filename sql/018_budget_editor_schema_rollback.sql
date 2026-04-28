@@ -1,3 +1,4 @@
+-- compat:approved Rollback migration — destructive by design. Run only when reverting 018.
 -- ============================================================================
 -- 018 ROLLBACK: Budget Editor — schema additions
 -- ============================================================================

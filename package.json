@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "check:migrations": "node scripts/check-migrations.mjs",
     "seed:demo": "tsx scripts/seed-demo-principal.ts",
     "reset:demo": "tsx scripts/reset-demo-principal.ts"
   },

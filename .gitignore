@@ -33,5 +33,19 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .cursor/
-backups/
+
 # local DB dumps
+backups/
+
+# iOS / Capacitor build artifacts (the ios/ source tree IS committed; only
+# generated/intermediate output is ignored)
+ios/App/build/
+ios/App/Pods/
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/App.xcodeproj/xcuserdata/
+ios/App/App.xcodeproj/project.xcworkspace/xcuserdata/
+ios/.derived-data/
+*.xcuserstate
+
+# Capacitor copy-output (regenerated on each `npx cap sync`)
+ios/App/App/public/
