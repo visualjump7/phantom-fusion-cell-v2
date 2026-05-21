@@ -15,6 +15,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { createCalendarSync } from "@/lib/calendar-sync-service";
+import { requireOrgManager, requireUser } from "@/lib/server-auth";
 
 export async function POST(request: Request) {
   const cookieStore = cookies();
@@ -31,18 +32,30 @@ export async function POST(request: Request) {
     }
   );
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-  if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireUser(supabase);
+  if ("response" in auth) return auth.response;
 
   const body = (await request.json().catch(() => ({}))) as { sourceId?: string };
   if (!body.sourceId) {
     return NextResponse.json({ error: "sourceId is required" }, { status: 400 });
   }
+
+  // Look up the source's org so we can verify the caller is a manager of it.
+  // Without this gate any authenticated user could trigger a sync of any
+  // source they happen to know the id of, burning server CPU and hammering
+  // the upstream ICS URL.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sourceLookup = await (supabase as any)
+    .from("calendar_sources")
+    .select("organization_id")
+    .eq("id", body.sourceId)
+    .maybeSingle();
+  const sourceOrgId = (sourceLookup.data as { organization_id?: string } | null)?.organization_id;
+  if (!sourceOrgId) {
+    return NextResponse.json({ error: "Source not found" }, { status: 404 });
+  }
+  const gate = await requireOrgManager(supabase, sourceOrgId);
+  if ("response" in gate) return gate.response;
 
   const { syncSource } = createCalendarSync(supabase);
   const result = await syncSource(body.sourceId);

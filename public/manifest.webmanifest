@@ -1,0 +1,18 @@
+{
+  "name": "Fusion Cell",
+  "short_name": "Fusion Cell",
+  "description": "Your world simplified.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0b0f",
+  "theme_color": "#0b0b0f",
+  "icons": [
+    {
+      "src": "/phantom-wings.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

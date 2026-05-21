@@ -1,19 +1,38 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
-export default function LoginPage() {
+function LoginInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Preserve the deep-link target middleware bounced us off of so we can
+  // route the user back there after sign-in. Validated as a same-origin
+  // path before we use it.
+  const redirectParam = searchParams.get("redirect_to");
+  const safeRedirect =
+    redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")
+      ? redirectParam
+      : "/";
+  // Error messages bubbled here from /auth/callback when a magic-link
+  // exchange fails — surfaces them inline so the user knows what happened
+  // instead of just seeing a blank login form.
+  const errorParam = searchParams.get("error");
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(errorParam);
+
+  useEffect(() => {
+    if (errorParam) setError(errorParam);
+  }, [errorParam]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,10 +45,21 @@ export default function LoginPage() {
     });
 
     if (error) {
-      setError(error.message);
+      // Normalize a couple of common Supabase errors so we don't surface
+      // raw backend strings.
+      const friendly =
+        /invalid login credentials/i.test(error.message)
+          ? "Email or password is incorrect."
+          : /email not confirmed/i.test(error.message)
+            ? "Check your inbox to confirm your account first."
+            : error.message;
+      setError(friendly);
       setIsLoading(false);
     } else {
-      router.push("/");
+      // replace() so /login doesn't sit in the back-history. Otherwise the
+      // user hits Back from inside the app and gets bounced through the
+      // middleware login redirect again.
+      router.replace(safeRedirect);
       router.refresh();
     }
   };
@@ -87,9 +117,17 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-foreground">
-                Password
-              </label>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label className="block text-sm font-medium text-foreground">
+                  Password
+                </label>
+                <Link
+                  href="/forgot-password"
+                  className="text-xs text-muted-foreground hover:text-primary"
+                >
+                  Forgot your password?
+                </Link>
+              </div>
               <Input
                 type="password"
                 value={password}
@@ -114,8 +152,28 @@ export default function LoginPage() {
               )}
             </Button>
           </form>
+
+          <p className="mt-6 text-center text-xs text-muted-foreground">
+            Invited to Fusion Cell? Check your email for the sign-in link.
+          </p>
         </motion.div>
       </motion.div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  // useSearchParams must be inside a Suspense boundary in Next.js 14
+  // when using client components — wrap to satisfy the build.
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-background">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        </div>
+      }
+    >
+      <LoginInner />
+    </Suspense>
   );
 }

@@ -47,6 +47,8 @@ export default function ExecutivesPage() {
   const [confirmRemove, setConfirmRemove] = useState<Executive | null>(null);
   const [removing, setRemoving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const [justAddedId, setJustAddedId] = useState<string | null>(null);
 
   async function loadExecutives() {
     setLoading(true);
@@ -60,15 +62,19 @@ export default function ExecutivesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orgId]);
 
-  function handleAdded(userId: string) {
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 4000);
+  }
+
+  async function handleAdded(userId: string) {
     setShowAdd(false);
-    loadExecutives();
-    // Drop straight into their view-config page so the admin can immediately
-    // pick the modules they should see. The principal-experience page reads
-    // ?principalId= to preselect.
-    router.push(
-      `/admin/client/${orgId}/principal-experience?principalId=${userId}`
-    );
+    setJustAddedId(userId);
+    // Refresh in place so the user sees the new executive land in the list
+    // immediately. They can click "Configure view" if they want to set what
+    // the new executive sees.
+    await loadExecutives();
+    showToast("Executive added");
   }
 
   async function handleRemove(exec: Executive) {
@@ -142,7 +148,15 @@ export default function ExecutivesPage() {
       ) : (
         <div className="space-y-3">
           {executives.map((exec) => (
-            <Card key={exec.userId} className="border-border bg-card/60">
+            <Card
+              key={exec.userId}
+              className={
+                "border-border bg-card/60 transition " +
+                (justAddedId === exec.userId
+                  ? "ring-2 ring-emerald-400/60"
+                  : "")
+              }
+            >
               <CardContent className="flex flex-wrap items-center justify-between gap-4 p-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
@@ -247,6 +261,12 @@ export default function ExecutivesPage() {
               </Button>
             </div>
           </div>
+        </div>
+      )}
+
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg border border-border bg-card px-5 py-3 shadow-xl">
+          <p className="text-sm font-medium text-foreground">{toast}</p>
         </div>
       )}
     </div>

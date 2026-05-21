@@ -49,28 +49,47 @@ export async function middleware(request: NextRequest) {
   const isPublicRoute =
     pathname === "/login" ||
     pathname === "/signup" ||
+    pathname === "/forgot-password" ||
     pathname.startsWith("/auth");
 
-  // Redirect unauthenticated users to login
+  // Redirect unauthenticated users to login, preserving the original
+  // destination so we can route them back there after sign-in. Skip the
+  // root path — that's the landing redirect, not a meaningful deep link.
   if (!user && !isPublicRoute) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    const loginUrl = new URL("/login", request.url);
+    if (pathname !== "/" && pathname !== "/login") {
+      loginUrl.searchParams.set(
+        "redirect_to",
+        pathname + (request.nextUrl.search || "")
+      );
+    }
+    return NextResponse.redirect(loginUrl);
   }
 
-  // Redirect authenticated users away from login
+  // Redirect authenticated users away from login. Honor a redirect_to param
+  // if it points at our own app (no off-site redirects).
   if (user && pathname === "/login") {
-    return NextResponse.redirect(new URL("/", request.url));
+    const redirectTo = request.nextUrl.searchParams.get("redirect_to");
+    const safe =
+      redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//");
+    return NextResponse.redirect(new URL(safe ? redirectTo : "/", request.url));
   }
 
   // ========================================
   // ROLE-BASED ROUTE PROTECTION
   // ========================================
   if (user) {
-    // Query all the user's memberships
+    // Query all the user's memberships. We previously filtered to
+    // status='active' which locked out freshly-invited users (status =
+    // 'invited' until their first sign-in is finalized). Include both so
+    // delegates and executives can reach the app on first visit; the
+    // service layer handles the "is this person fully onboarded" case
+    // separately.
     const { data: memberships } = await supabase
       .from("organization_members")
       .select("role, organization_id")
       .eq("user_id", user.id)
-      .eq("status", "active");
+      .in("status", ["active", "invited"]);
 
     // Normalize legacy roles
     const roles = (memberships || []).map((m: { role: string; organization_id: string }) => ({

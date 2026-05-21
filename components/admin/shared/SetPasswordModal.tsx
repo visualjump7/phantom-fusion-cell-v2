@@ -22,8 +22,8 @@ export function SetPasswordModal({ open, userId, userName, onClose, onSuccess }:
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
-    if (!password || password.length < 6) {
-      setError("Password must be at least 6 characters.");
+    if (!password || password.length < 8) {
+      setError("Password must be at least 8 characters.");
       return;
     }
     if (password !== confirmPassword) {
@@ -86,7 +86,7 @@ export function SetPasswordModal({ open, userId, userName, onClose, onSuccess }:
                 type="text"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Min. 6 characters"
+                placeholder="Min. 8 characters"
                 className="mt-1"
               />
             </div>

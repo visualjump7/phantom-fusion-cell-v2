@@ -69,14 +69,21 @@ export async function POST(request: Request) {
   if (authError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const { data: membership } = await anon
+  // Look across every membership the caller has — not just the first one we
+  // happen to read. With multiple memberships, .limit(1).single() returns an
+  // arbitrary row and may pick a non-admin role even when the caller is admin
+  // somewhere else.
+  const { data: memberships } = await anon
     .from("organization_members")
     .select("role")
-    .eq("user_id", user.id)
-    .limit(1)
-    .single();
-  const callerRole = (membership as { role: string } | null)?.role;
-  if (callerRole !== "admin" && callerRole !== "owner") {
+    .eq("user_id", user.id);
+  const roles = ((memberships ?? []) as { role: string }[]).map((m) => m.role);
+  const isAdmin = roles.some((r) => r === "admin" || r === "owner");
+  if (!isAdmin) {
+    console.warn("[add-executive] non-admin caller", {
+      userId: user.id,
+      roles,
+    });
     return NextResponse.json({ error: "Admin access required" }, { status: 403 });
   }
 
@@ -104,19 +111,39 @@ export async function POST(request: Request) {
   if (!email || !/@/.test(email)) {
     return NextResponse.json({ error: "A valid email is required" }, { status: 400 });
   }
-  if (password !== undefined && password.length < 6) {
+  if (password !== undefined && password.length < 8) {
     return NextResponse.json(
-      { error: "Password must be at least 6 characters" },
+      { error: "Password must be at least 8 characters" },
       { status: 400 }
     );
   }
 
-  // Service-role client
+  // Service-role client. The key is required — without it, auth.admin.* calls
+  // and RLS-bypassing inserts fail. Surface a clear message instead of going
+  // ahead with a broken client and reporting cryptic downstream errors.
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceRoleKey) {
+    console.error("[add-executive] SUPABASE_SERVICE_ROLE_KEY missing");
+    return NextResponse.json(
+      {
+        error:
+          "SUPABASE_SERVICE_ROLE_KEY is not configured. Add it to .env.local and restart the dev server.",
+      },
+      { status: 501 }
+    );
+  }
   const service = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    serviceRoleKey,
     { auth: { persistSession: false } }
   );
+
+  console.log("[add-executive] start", {
+    callerId: user.id,
+    email,
+    orgIds,
+    hasPassword: !!password,
+  });
 
   // Confirm every requested org exists. Catches typos / stale URLs before we
   // touch the auth table.
@@ -169,25 +196,44 @@ export async function POST(request: Request) {
       }
     }
   } else {
-    // Create auth user. If a password is provided, the executive can sign in
-    // immediately with email + password. If not, they'll receive a magic-link
-    // confirmation email and set their own.
-    const createPayload: Parameters<typeof service.auth.admin.createUser>[0] = {
-      email,
-      email_confirm: !!password,
-      user_metadata: { full_name: fullName },
-    };
-    if (password) createPayload.password = password;
-    const { data: created, error: createErr } = await service.auth.admin.createUser(
-      createPayload
-    );
-    if (createErr || !created?.user) {
-      return NextResponse.json(
-        { error: `Failed to create executive: ${createErr?.message}` },
-        { status: 500 }
-      );
+    // Create auth user. Two paths:
+    //   - With password: admin.createUser({email_confirm:true, password})
+    //     so the executive can sign in immediately with email + password.
+    //   - Without password: admin.inviteUserByEmail — Supabase deterministically
+    //     sends an invite email, the user clicks the link, lands in
+    //     /auth/reset, sets their own password. This is the right API for
+    //     "invite" flows — createUser({email_confirm:false}) only sometimes
+    //     sent the email depending on project signup settings.
+    let createdUserId: string | undefined;
+    if (password) {
+      const { data: created, error: createErr } =
+        await service.auth.admin.createUser({
+          email,
+          email_confirm: true,
+          password,
+          user_metadata: { full_name: fullName },
+        });
+      if (createErr || !created?.user) {
+        return NextResponse.json(
+          { error: `Failed to create executive: ${createErr?.message}` },
+          { status: 500 }
+        );
+      }
+      createdUserId = created.user.id;
+    } else {
+      const { data: invited, error: inviteErr } =
+        await service.auth.admin.inviteUserByEmail(email, {
+          data: { full_name: fullName },
+        });
+      if (inviteErr || !invited?.user) {
+        return NextResponse.json(
+          { error: `Failed to invite executive: ${inviteErr?.message}` },
+          { status: 500 }
+        );
+      }
+      createdUserId = invited.user.id;
     }
-    executiveId = created.user.id;
+    executiveId = createdUserId;
 
     // Profile row
     await svc.from("profiles").upsert({
@@ -213,10 +259,20 @@ export async function POST(request: Request) {
 
     if (existingMember) {
       if (existingMember.role !== "executive") {
-        await svc
+        const { error: updErr } = await svc
           .from("organization_members")
           .update({ role: "executive", status: "active" })
           .eq("id", existingMember.id);
+        if (updErr) {
+          console.error(
+            "[add-executive] promote failed",
+            { targetOrgId, executiveId, err: updErr.message }
+          );
+          return NextResponse.json(
+            { error: `Failed to promote member: ${updErr.message}` },
+            { status: 500 }
+          );
+        }
       }
     } else {
       const { error: memberErr } = await svc.from("organization_members").insert({
@@ -226,6 +282,10 @@ export async function POST(request: Request) {
         status: "active",
       });
       if (memberErr) {
+        console.error(
+          "[add-executive] membership insert failed",
+          { targetOrgId, executiveId, err: memberErr.message }
+        );
         return NextResponse.json(
           { error: `Failed to attach executive to ${targetOrgId}: ${memberErr.message}` },
           { status: 500 }
@@ -254,17 +314,81 @@ export async function POST(request: Request) {
       })
     );
     if (missingRows.length > 0) {
-      await svc.from("principal_module_config").insert(missingRows);
+      const { error: cfgErr } = await svc
+        .from("principal_module_config")
+        .insert(missingRows);
+      if (cfgErr) {
+        // Don't block — view config can be fixed from the Executive View page.
+        // But log so we can spot it.
+        console.warn(
+          "[add-executive] module_config seed failed (continuing)",
+          { targetOrgId, executiveId, err: cfgErr.message }
+        );
+      }
     }
 
-    // Audit per attachment
-    await svc.from("audit_log").insert({
-      organization_id: targetOrgId,
-      user_id: user.id,
-      action: "executive.added",
-      metadata: { executive_id: executiveId, executive_email: email },
-    });
+    // Audit per attachment. Tolerated failure — the table may not exist in
+    // this environment, and we don't want to block the membership writes.
+    try {
+      const { error: auditErr } = await svc.from("audit_log").insert({
+        organization_id: targetOrgId,
+        user_id: user.id,
+        action: "executive.added",
+        metadata: { executive_id: executiveId, executive_email: email },
+      });
+      if (auditErr) {
+        console.warn("[add-executive] audit_log skipped", auditErr.message);
+      }
+    } catch (e) {
+      console.warn("[add-executive] audit_log threw", e);
+    }
   }
 
-  return NextResponse.json({ success: true, userId: executiveId });
+  // Verification re-read — confirm the membership rows we expected actually
+  // landed before reporting success. Catches silent RLS / trigger weirdness.
+  const { data: verifyRows, error: verifyErr } = await svc
+    .from("organization_members")
+    .select("organization_id, role, status")
+    .eq("user_id", executiveId)
+    .eq("role", "executive")
+    .in("organization_id", orgIds);
+  if (verifyErr) {
+    console.error("[add-executive] verify failed", verifyErr.message);
+    return NextResponse.json(
+      { error: `Couldn't verify the new attachment: ${verifyErr.message}` },
+      { status: 500 }
+    );
+  }
+  const attachedOrgIds = (verifyRows ?? []).map(
+    (r: { organization_id: string }) => r.organization_id
+  );
+  const notAttached = orgIds.filter((id) => !attachedOrgIds.includes(id));
+  if (notAttached.length > 0) {
+    console.error("[add-executive] verify mismatch", {
+      executiveId,
+      requested: orgIds,
+      actual: attachedOrgIds,
+      notAttached,
+    });
+    return NextResponse.json(
+      {
+        error:
+          "Executive was created but didn't attach to: " +
+          notAttached.join(", ") +
+          ". Check organization_members RLS / triggers.",
+      },
+      { status: 500 }
+    );
+  }
+
+  console.log("[add-executive] success", {
+    executiveId,
+    email,
+    attachedOrgIds,
+  });
+  return NextResponse.json({
+    success: true,
+    userId: executiveId,
+    attachedOrgIds,
+  });
 }

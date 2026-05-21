@@ -17,6 +17,7 @@ import { getVisibleModulesForUser } from "@/lib/module-visibility-service";
 import { MODULE_METADATA } from "@/lib/module-metadata";
 import { ALL_MODULE_KEYS, MODULE_KEYS, type ModuleKey } from "@/lib/modules";
 import { OrbitalCommand } from "@/components/command/OrbitalCommand";
+import { BriefingCommand } from "@/components/command/BriefingCommand";
 import { FocusedOverlay } from "@/components/command/FocusedOverlay";
 import { CommandProvider, useCommand } from "@/components/command/CommandContext";
 import { getModuleContent } from "@/components/command/module-content";
@@ -31,6 +32,20 @@ import {
   getVisibleSummaryCardsForPrincipal,
   type SummaryCardKey,
 } from "@/lib/principal-summary-service";
+import {
+  getCommandLayout,
+  getUserCommandLayout,
+  DEFAULT_COMMAND_LAYOUT,
+  type CommandLayout,
+} from "@/lib/command-layout-service";
+import {
+  loadBriefingSnapshot,
+  type BriefingSnapshot,
+} from "@/lib/briefing-status-service";
+import { supabase } from "@/lib/supabase";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const db = supabase as any;
 
 export default function CommandPage() {
   return (
@@ -54,6 +69,13 @@ function CommandPageInner() {
   // Summary cards to render below the orbital ring (principals only).
   // Empty array = nothing renders. Staff users never fetch this.
   const [summaryCards, setSummaryCards] = useState<SummaryCardKey[]>([]);
+  // Layout chosen for this executive by the team. Defaults to 'orbital'.
+  const [layout, setLayout] = useState<CommandLayout>(DEFAULT_COMMAND_LAYOUT);
+  // First name for the briefing greeting. Pulled from profiles.full_name.
+  const [firstName, setFirstName] = useState<string | null>(null);
+  // Briefing-only data: chips, dynamic subhead, per-section meta. Only
+  // loaded when layout === 'briefing' so the orbital path stays cheap.
+  const [briefing, setBriefing] = useState<BriefingSnapshot | null>(null);
 
   const isAdminSide = useMemo(
     () => ["admin", "owner", "manager"].includes((role ?? "").toLowerCase()),
@@ -129,6 +151,113 @@ function CommandPageInner() {
     };
   }, [effectiveOrgForQuery]);
 
+  // Load layout pref. Three cases:
+  //   - Preview mode: take the previewed principal's principal_layout_config
+  //     row (admin chose it for them — preview should mirror real exp).
+  //   - Staff (admin / manager): take their OWN profiles.command_layout
+  //     pref set in /settings → Appearance.
+  //   - Executive: take their principal_layout_config row (team controls it).
+  // All paths default to 'orbital' if nothing is set.
+  useEffect(() => {
+    if (preview.active) {
+      if (!effectiveOrgForQuery || !effectiveUserId) {
+        setLayout(DEFAULT_COMMAND_LAYOUT);
+        return;
+      }
+      let cancelled = false;
+      getCommandLayout(effectiveOrgForQuery, effectiveUserId).then((next) => {
+        if (!cancelled) setLayout(next);
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
+    if (effectiveIsAdminSide) {
+      if (!userId) {
+        setLayout(DEFAULT_COMMAND_LAYOUT);
+        return;
+      }
+      let cancelled = false;
+      getUserCommandLayout(userId).then((next) => {
+        if (!cancelled) setLayout(next);
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
+    if (!effectiveOrgForQuery || !effectiveUserId) {
+      setLayout(DEFAULT_COMMAND_LAYOUT);
+      return;
+    }
+    let cancelled = false;
+    getCommandLayout(effectiveOrgForQuery, effectiveUserId).then((next) => {
+      if (!cancelled) setLayout(next);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    preview.active,
+    effectiveOrgForQuery,
+    effectiveUserId,
+    effectiveIsAdminSide,
+    userId,
+  ]);
+
+  // First name for the briefing greeting. Only fetched when we're rendering
+  // the briefing layout — saves a query on the orbital path. Falls back to
+  // the email's local-part if full_name isn't set.
+  useEffect(() => {
+    if (layout !== "briefing" || !effectiveUserId) {
+      setFirstName(null);
+      return;
+    }
+    let cancelled = false;
+    db
+      .from("profiles")
+      .select("full_name, email")
+      .eq("id", effectiveUserId)
+      .maybeSingle()
+      .then(
+        ({ data }: { data: { full_name: string | null; email: string | null } | null }) => {
+          if (cancelled) return;
+          const full = (data?.full_name || "").trim();
+          if (full) {
+            setFirstName(full.split(" ")[0]);
+            return;
+          }
+          const email = data?.email || "";
+          setFirstName(email ? email.split("@")[0] : null);
+        }
+      );
+    return () => {
+      cancelled = true;
+    };
+  }, [layout, effectiveUserId]);
+
+  // Briefing snapshot — chips, subhead, per-section meta. Skipped on the
+  // orbital path so we don't run extra queries the layout doesn't use.
+  useEffect(() => {
+    if (layout !== "briefing" || !effectiveOrgForQuery) {
+      setBriefing(null);
+      return;
+    }
+    let cancelled = false;
+    loadBriefingSnapshot(effectiveOrgForQuery, effectiveUserId ?? null)
+      .then((snap) => {
+        if (!cancelled) setBriefing(snap);
+      })
+      .catch((err) => {
+        // Snapshot failure is non-fatal — the layout still renders with
+        // defaults (greeting + module list, no chips / status meta).
+        console.error("[command] loadBriefingSnapshot failed", err);
+        if (!cancelled) setBriefing(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [layout, effectiveOrgForQuery, effectiveUserId]);
+
   // Load principal-facing summary cards. Only fetch for principals (and
   // preview mode where we're acting as one) — staff never see these, so
   // don't hit the DB for them.
@@ -190,14 +319,28 @@ function CommandPageInner() {
           Fusion <span className="text-primary">Cell</span>
         </span>
       </div>
-      <OrbitalCommand
-        visibleModules={visibleModules}
-        onModuleClick={handleModuleClick}
-        onOrbClick={() => setSearchOpen(true)}
-        badges={badges}
-        centerLogoSrc="/phantom-wings.svg"
-        mode={preview.active ? "preview" : effectiveIsAdminSide ? "admin" : "principal"}
-      />
+      {layout === "briefing" ? (
+        <BriefingCommand
+          visibleModules={visibleModules}
+          onModuleClick={handleModuleClick}
+          onOrbClick={() => setSearchOpen(true)}
+          badges={badges}
+          centerLogoSrc="/phantom-wings.svg"
+          firstName={firstName}
+          chips={briefing?.chips}
+          subhead={briefing?.subhead}
+          sections={briefing?.sections}
+        />
+      ) : (
+        <OrbitalCommand
+          visibleModules={visibleModules}
+          onModuleClick={handleModuleClick}
+          onOrbClick={() => setSearchOpen(true)}
+          badges={badges}
+          centerLogoSrc="/phantom-wings.svg"
+          mode={preview.active ? "preview" : effectiveIsAdminSide ? "admin" : "principal"}
+        />
+      )}
 
       {/* Principal-only summary section — renders below the orbital ring
           when the admin has turned on any summary cards for this principal.

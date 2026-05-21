@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { requireOrgMember } from "@/lib/server-auth";
 import {
   generateDemoCashFlowData,
   getCashFlowForRange,
@@ -33,6 +34,11 @@ export async function GET(request: Request) {
           },
         }
       );
+
+      // Tenant gate — caller must be a member of this org. Without this,
+      // any authenticated user could request another tenant's cash flow.
+      const gate = await requireOrgMember(supabase, orgId);
+      if ("response" in gate) return gate.response;
 
       const { data: bills, error } = await supabase
         .from("bills")

@@ -37,42 +37,31 @@ export interface Executive {
 // Read
 // ============================================
 
+/**
+ * Fetch all executives on a single principal account.
+ *
+ * Goes through /api/admin/list-executives so the read happens with the
+ * service role and isn't subject to RLS quirks. Some Supabase projects have
+ * stricter org-scoped RLS than the migrations in this repo show, so doing
+ * this client-side directly was returning empty lists even when the rows
+ * existed in the DB.
+ */
 export async function fetchExecutives(orgId: string): Promise<Executive[]> {
-  const { data: members, error } = await db
-    .from("organization_members")
-    .select("user_id, status, created_at")
-    .eq("organization_id", orgId)
-    .eq("role", "executive");
-
-  if (error || !members || members.length === 0) {
-    if (error) console.error("[fetchExecutives]", error);
+  try {
+    const res = await fetch(
+      `/api/admin/list-executives?orgId=${encodeURIComponent(orgId)}`,
+      { cache: "no-store" }
+    );
+    const json = await res.json();
+    if (!res.ok) {
+      console.error("[fetchExecutives]", json.error);
+      return [];
+    }
+    return (json.executives ?? []) as Executive[];
+  } catch (err) {
+    console.error("[fetchExecutives]", err);
     return [];
   }
-
-  const userIds = members.map((m: { user_id: string }) => m.user_id);
-  const { data: profiles } = await db
-    .from("profiles")
-    .select("id, full_name, email, phone")
-    .in("id", userIds);
-
-  const profileById = new Map<string, { full_name: string | null; email: string | null; phone: string | null }>();
-  (profiles ?? []).forEach((p: { id: string; full_name: string | null; email: string | null; phone: string | null }) =>
-    profileById.set(p.id, p)
-  );
-
-  return members
-    .map((m: { user_id: string; status: string; created_at: string }) => {
-      const p = profileById.get(m.user_id);
-      return {
-        userId: m.user_id,
-        fullName: p?.full_name || p?.email || "Unnamed executive",
-        email: p?.email || "",
-        phone: p?.phone || null,
-        status: m.status || "active",
-        createdAt: m.created_at,
-      };
-    })
-    .sort((a: Executive, b: Executive) => a.fullName.localeCompare(b.fullName));
 }
 
 // ============================================
@@ -136,8 +125,8 @@ async function addExecutiveCore(input: {
   if (!email || !/@/.test(email)) {
     return { success: false, error: "A valid email is required." };
   }
-  if (input.password !== undefined && input.password.length < 6) {
-    return { success: false, error: "Password must be at least 6 characters." };
+  if (input.password !== undefined && input.password.length < 8) {
+    return { success: false, error: "Password must be at least 8 characters." };
   }
   try {
     const res = await fetch("/api/admin/add-executive", {
@@ -205,96 +194,25 @@ export interface ExecutiveRoster extends Executive {
 /**
  * Returns every executive across every principal account, with the list of
  * accounts they belong to. Used by the /admin/executive-team page.
+ *
+ * Goes through /api/admin/list-executives so it uses the service role —
+ * same reasoning as fetchExecutives.
  */
 export async function fetchAllExecutives(): Promise<ExecutiveRoster[]> {
-  const { data: members, error } = await db
-    .from("organization_members")
-    .select("user_id, organization_id, status, created_at")
-    .eq("role", "executive");
-  if (error || !members) {
-    if (error) console.error("[fetchAllExecutives] members", error);
+  try {
+    const res = await fetch("/api/admin/list-executives", {
+      cache: "no-store",
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      console.error("[fetchAllExecutives]", json.error);
+      return [];
+    }
+    return (json.executives ?? []) as ExecutiveRoster[];
+  } catch (err) {
+    console.error("[fetchAllExecutives]", err);
     return [];
   }
-
-  const userIds = [
-    ...new Set(members.map((m: { user_id: string }) => m.user_id)),
-  ] as string[];
-  const orgIds = [
-    ...new Set(members.map((m: { organization_id: string }) => m.organization_id)),
-  ] as string[];
-  if (userIds.length === 0) return [];
-
-  const [profilesRes, clientProfilesRes] = await Promise.all([
-    db
-      .from("profiles")
-      .select("id, full_name, email, phone")
-      .in("id", userIds),
-    orgIds.length > 0
-      ? db
-          .from("client_profiles")
-          .select("organization_id, display_name")
-          .in("organization_id", orgIds)
-      : Promise.resolve({ data: [] as { organization_id: string; display_name: string }[] }),
-  ]);
-
-  const profileById = new Map<
-    string,
-    { full_name: string | null; email: string | null; phone: string | null }
-  >();
-  (profilesRes.data ?? []).forEach((p: { id: string; full_name: string | null; email: string | null; phone: string | null }) =>
-    profileById.set(p.id, p)
-  );
-  const orgNameById = new Map<string, string>();
-  (clientProfilesRes.data ?? []).forEach(
-    (c: { organization_id: string; display_name: string }) =>
-      orgNameById.set(c.organization_id, c.display_name)
-  );
-
-  // Group memberships by user
-  const accountsByUser = new Map<string, { orgId: string; displayName: string }[]>();
-  for (const m of members as {
-    user_id: string;
-    organization_id: string;
-  }[]) {
-    const list = accountsByUser.get(m.user_id) ?? [];
-    list.push({
-      orgId: m.organization_id,
-      displayName: orgNameById.get(m.organization_id) || "Unnamed account",
-    });
-    accountsByUser.set(m.user_id, list);
-  }
-
-  // Pick the earliest membership row per user for status / createdAt — tweaks
-  // are minor; we just need a stable representative row.
-  const firstByUser = new Map<string, { status: string; created_at: string }>();
-  for (const m of members as {
-    user_id: string;
-    status: string;
-    created_at: string;
-  }[]) {
-    const existing = firstByUser.get(m.user_id);
-    if (!existing || (m.created_at && m.created_at < existing.created_at)) {
-      firstByUser.set(m.user_id, { status: m.status, created_at: m.created_at });
-    }
-  }
-
-  const roster: ExecutiveRoster[] = userIds.map((id) => {
-    const profile = profileById.get(id);
-    const first = firstByUser.get(id);
-    return {
-      userId: id,
-      fullName: profile?.full_name || profile?.email || "Unnamed executive",
-      email: profile?.email || "",
-      phone: profile?.phone || null,
-      status: first?.status || "active",
-      createdAt: first?.created_at || new Date().toISOString(),
-      accounts: (accountsByUser.get(id) ?? []).sort((a, b) =>
-        a.displayName.localeCompare(b.displayName)
-      ),
-    };
-  });
-
-  return roster.sort((a, b) => a.fullName.localeCompare(b.fullName));
 }
 
 /**

@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import { requireOrgMember } from "@/lib/server-auth";
 import {
   fetchDocumentIndex,
   formatDocumentContext,
@@ -344,6 +347,25 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Auth + tenant gate — caller must be a member of the org they're
+    // asking about. Without this, anyone with a valid session could pull
+    // another tenant's data simply by passing a different orgId.
+    const cookieStore = cookies();
+    const supabaseAuth = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll() {},
+        },
+      }
+    );
+    const gate = await requireOrgMember(supabaseAuth, organizationId);
+    if ("response" in gate) return gate.response;
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;

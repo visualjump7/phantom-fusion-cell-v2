@@ -498,7 +498,7 @@ export default function AdminMessagesPage() {
                           : composeType === "alert"
                           ? "e.g., Property tax assessment increased 18% for Park Ave residence"
                           : composeType === "update"
-                          ? "e.g., Q1 portfolio rebalancing complete"
+                          ? "e.g., Q1 review across projects complete"
                           : "e.g., Following up on the wine collection appraisal"
                       }
                       className="text-sm"

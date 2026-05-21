@@ -20,10 +20,20 @@ import {
   setDefaultLanding,
   type DefaultLanding,
 } from "@/lib/profile-service";
+import {
+  getUserCommandLayout,
+  setUserCommandLayout,
+  DEFAULT_COMMAND_LAYOUT,
+  type CommandLayout,
+} from "@/lib/command-layout-service";
+import { LayoutPickerCard } from "@/components/command/LayoutPickerCard";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any;
 
+// Tab id stays "theme" so existing state machinery keeps working; the
+// user-facing label is "Appearance" since this tab now also covers the
+// command-page layout picker.
 type SettingsTab = "profile" | "theme";
 
 export default function SettingsPage() {
@@ -39,6 +49,11 @@ export default function SettingsPage() {
   // Default landing (team members only)
   const [defaultLanding, setDefaultLandingState] = useState<DefaultLanding>("dashboard");
   const [savingLanding, setSavingLanding] = useState(false);
+
+  // Command-page layout pref. profiles.command_layout, set per-user.
+  const [commandLayout, setCommandLayoutState] =
+    useState<CommandLayout>(DEFAULT_COMMAND_LAYOUT);
+  const [savingLayout, setSavingLayout] = useState(false);
 
   // Password
   const [newPassword, setNewPassword] = useState("");
@@ -61,9 +76,21 @@ export default function SettingsPage() {
         const landing = await getDefaultLanding(userId);
         setDefaultLandingState(landing);
       }
+      const layout = await getUserCommandLayout(userId);
+      setCommandLayoutState(layout);
     }
     loadProfile();
   }, [userId, isStaff]);
+
+  async function handleCommandLayoutChange(next: CommandLayout) {
+    if (!userId || next === commandLayout) return;
+    const previous = commandLayout;
+    setCommandLayoutState(next); // optimistic
+    setSavingLayout(true);
+    const res = await setUserCommandLayout(userId, next);
+    setSavingLayout(false);
+    if (!res.success) setCommandLayoutState(previous);
+  }
 
   async function handleDefaultLandingChange(next: DefaultLanding) {
     if (!userId || next === defaultLanding) return;
@@ -102,7 +129,7 @@ export default function SettingsPage() {
   };
 
   const handleChangePassword = async () => {
-    if (newPassword.length < 6) { setPasswordMsg({ type: "error", text: "Password must be at least 6 characters" }); return; }
+    if (newPassword.length < 8) { setPasswordMsg({ type: "error", text: "Password must be at least 8 characters" }); return; }
     if (newPassword !== confirmPassword) { setPasswordMsg({ type: "error", text: "Passwords do not match" }); return; }
     setIsSavingPassword(true);
     setPasswordMsg(null);
@@ -164,7 +191,7 @@ export default function SettingsPage() {
             )}
           >
             <Palette className="h-4 w-4" />
-            Theme
+            Appearance
           </button>
         </div>
 
@@ -311,6 +338,24 @@ export default function SettingsPage() {
 
           {activeTab === "theme" && (
             <>
+          {/* ═══ COMMAND PAGE LAYOUT ═══ — sits above the existing color/density
+               panel so the layout choice gets the visual emphasis it needs. */}
+          {!isDelegate && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <LayoutPickerCard
+              value={commandLayout}
+              onChange={handleCommandLayoutChange}
+              description="Pick how your /command page is arranged. Categories don't change — only the layout."
+              disabled={savingLayout}
+              saving={savingLayout}
+            />
+          </motion.div>
+          )}
+
           {/* ═══ APPEARANCE ═══ */}
           {!isDelegate && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>

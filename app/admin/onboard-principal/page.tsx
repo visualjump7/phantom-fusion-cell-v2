@@ -42,7 +42,7 @@ const STEPS = [
   // routing intact; only the label changed.
   { id: "principal", label: "First Executive" },
   { id: "modules", label: "Modules" },
-  { id: "holdings", label: "Holdings" },
+  { id: "holdings", label: "Projects" },
   { id: "confirm", label: "Confirm" },
 ] as const;
 
@@ -280,9 +280,9 @@ export default function OnboardPrincipalPage() {
         )}
 
         {step === "holdings" && (
-          <StepCard icon={UploadCloud} title="Initial holdings" subtitle="Optional. You can skip and add holdings later from Projects.">
+          <StepCard icon={UploadCloud} title="Initial projects" subtitle="Optional. You can skip and add projects later from the workspace.">
             <p className="rounded-lg border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
-              CSV import will be available in a post-launch update. For now, skip this step — you can add holdings manually or via bulk upload from the principal&apos;s workspace.
+              CSV import will be available in a post-launch update. For now, skip this step — you can add projects manually or via bulk upload from the principal&apos;s workspace.
             </p>
           </StepCard>
         )}

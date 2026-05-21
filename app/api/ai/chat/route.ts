@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import { requireUser } from "@/lib/server-auth";
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
@@ -206,19 +209,19 @@ async function fetchComprehensiveSnapshot(supabaseUrl: string, supabaseKey: stri
 }
 
 function buildSystemPrompt(data: any): string {
-  return `You are the Fusion Cell AI assistant — a concierge intelligence system for a high-net-worth individual. You have complete visibility into their financial operations.
+  return `You are Fusion Cell Advanced Search — a concierge intelligence system for a high-net-worth individual. You have complete visibility into their operations.
 
-═══ PORTFOLIO OVERVIEW ═══
-Total Value: ${data.portfolio.totalValue} across ${data.portfolio.assetCount} assets
+═══ PROJECTS OVERVIEW ═══
+Total Value: ${data.portfolio.totalValue} across ${data.portfolio.assetCount} projects
 By Category: ${data.portfolio.byCategory.join(" | ")}
 
-Assets:
+Projects:
 ${data.portfolio.assets.map((a: any) => `• ${a.name} (${a.category}) — ${a.value}${a.description ? ` — ${a.description}` : ""}`).join("\n")}
 
-═══ BILLING & CASH FLOW ═══
-Due This Month: ${data.billing.dueThisMonth} (${data.billing.dueCount} bills)
+═══ CASH FLOW ═══
+Due This Month: ${data.billing.dueThisMonth} (${data.billing.dueCount} items)
 Already Paid: ${data.billing.paidThisMonth}
-${data.billing.overdueCount > 0 ? `⚠️ OVERDUE: ${data.billing.overdueCount} bills totaling ${data.billing.overdueTotal}\n${data.billing.overdueBills.map((b: any) => `  • ${b.title} — ${b.amount} (due ${b.dueDate}${b.asset ? `, ${b.asset}` : ""})`).join("\n")}` : "No overdue bills."}
+${data.billing.overdueCount > 0 ? `⚠️ OVERDUE: ${data.billing.overdueCount} items totaling ${data.billing.overdueTotal}\n${data.billing.overdueBills.map((b: any) => `  • ${b.title} — ${b.amount} (due ${b.dueDate}${b.asset ? `, ${b.asset}` : ""})`).join("\n")}` : "Nothing overdue."}
 
 By Category: ${data.billing.byCategory.map((c: any) => `${c.category}: ${c.total} (${c.count})`).join(" | ")}
 ${data.billing.byAsset.length > 0 ? `By Asset: ${data.billing.byAsset.map((a: any) => `${a.asset}: ${a.total} (${a.count})`).join(" | ")}` : ""}
@@ -244,16 +247,16 @@ ${data.budgets ? `═══ BUDGETS ═══\n${data.budgets.map((b: any) => `�
 ═══ NAVIGATION DEEP LINKS ═══
 Include these as markdown links when relevant:
 - Dashboard: [Dashboard](/)
-- All Assets: [Assets](/assets)
+- All Projects: [Projects](/assets)
 ${data.portfolio.assets.map((a: any) => `- ${a.name}: [View ${a.name}](/assets/${a.id})`).join("\n")}
 - Cash Flow: [Cash Flow](/cash-flow)
-- Messages: [Messages](/messages)
+- Comms: [Comms](/comms)
 - Settings: [Settings](/settings)
 
 ═══ YOUR ROLE ═══
 1. Be concise and direct. This person is busy.
 2. Prioritize: overdue items → pending decisions → upcoming large payments → general overview.
-3. When mentioning assets, bills, or messages, always include a navigation link.
+3. When mentioning projects, cash flow, or messages, always include a navigation link.
 4. Use specific dollar amounts, dates, and names — never vague.
 5. If asked "what needs my attention" or similar, lead with actionable items.
 6. If asked about something not in the data, say so clearly.
@@ -265,10 +268,28 @@ ${data.portfolio.assets.map((a: any) => `- ${a.name}: [View ${a.name}](/assets/$
 export async function POST(request: NextRequest) {
   if (!ANTHROPIC_API_KEY) {
     return NextResponse.json(
-      { error: "AI assistant not configured. Add ANTHROPIC_API_KEY to environment." },
+      { error: "Advanced Search not configured. Add ANTHROPIC_API_KEY to environment." },
       { status: 500 }
     );
   }
+
+  // Verify the caller is signed in — without this, anyone on the public
+  // internet can POST and drain our Anthropic key.
+  const cookieStore = cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll() {},
+      },
+    }
+  );
+  const gate = await requireUser(supabase);
+  if ("response" in gate) return gate.response;
 
   try {
     const { messages, conversationHistory } = await request.json();

@@ -74,8 +74,8 @@ export function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalPro
       setError("Name and email are required.");
       return;
     }
-    if (!password || password.length < 6) {
-      setError("Password must be at least 6 characters.");
+    if (!password || password.length < 8) {
+      setError("Password must be at least 8 characters.");
       return;
     }
     if (needsAssignment && selectedPrincipals.length === 0) {
@@ -155,7 +155,7 @@ export function InviteUserModal({ open, onClose, onSuccess }: InviteUserModalPro
               <label className="text-sm font-medium text-foreground">Temporary Password *</label>
               <div className="relative mt-1">
                 <KeyRound className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input type="text" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min. 6 characters" className="pl-10" />
+                <Input type="text" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min. 8 characters" className="pl-10" />
               </div>
               <p className="mt-1 text-xs text-muted-foreground">Share this with the team member. They can change it in Settings.</p>
             </div>

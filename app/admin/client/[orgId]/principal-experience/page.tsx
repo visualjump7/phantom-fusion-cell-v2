@@ -15,6 +15,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Eye, RotateCcw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { LayoutPickerCard } from "@/components/command/LayoutPickerCard";
 import { Button } from "@/components/ui/button";
 import { useClientContext } from "@/lib/use-client-context";
 import { supabase } from "@/lib/supabase";
@@ -31,6 +32,12 @@ import {
   type SummaryCardKey,
   type SummaryConfigRow,
 } from "@/lib/principal-summary-service";
+import {
+  getCommandLayout,
+  setCommandLayout,
+  DEFAULT_COMMAND_LAYOUT,
+  type CommandLayout,
+} from "@/lib/command-layout-service";
 import { MODULE_METADATA } from "@/lib/module-metadata";
 import { ALL_MODULE_KEYS, isRequiredModule, type ModuleKey } from "@/lib/modules";
 import { usePreview } from "@/lib/preview-context";
@@ -64,6 +71,10 @@ export default function PrincipalExperiencePage() {
   const [loadingConfig, setLoadingConfig] = useState(false);
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [savingSummary, setSavingSummary] = useState<Record<string, boolean>>({});
+  // Per-executive command-page layout (orbital | briefing). Defaults to
+  // 'orbital' until a row exists in principal_layout_config.
+  const [layout, setLayout] = useState<CommandLayout>(DEFAULT_COMMAND_LAYOUT);
+  const [savingLayout, setSavingLayout] = useState(false);
 
   // Load principals for this org
   useEffect(() => {
@@ -173,6 +184,34 @@ export default function PrincipalExperiencePage() {
     summaryConfig.forEach((r) => map.set(r.card_key, r));
     return map;
   }, [summaryConfig]);
+
+  // Load layout pref for the selected executive. Resets to default while
+  // switching principals so the radio doesn't briefly show stale state.
+  useEffect(() => {
+    if (!orgId || !selectedPrincipalId) {
+      setLayout(DEFAULT_COMMAND_LAYOUT);
+      return;
+    }
+    let cancelled = false;
+    getCommandLayout(orgId, selectedPrincipalId).then((next) => {
+      if (!cancelled) setLayout(next);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [orgId, selectedPrincipalId]);
+
+  async function handleLayoutChange(next: CommandLayout) {
+    if (!selectedPrincipalId || next === layout) return;
+    const previous = layout;
+    setLayout(next); // optimistic
+    setSavingLayout(true);
+    const res = await setCommandLayout(orgId, selectedPrincipalId, next);
+    setSavingLayout(false);
+    if (!res.success) {
+      setLayout(previous); // rollback on failure
+    }
+  }
 
   async function handleSummaryToggle(cardKey: SummaryCardKey, next: boolean) {
     if (!selectedPrincipalId) return;
@@ -322,6 +361,20 @@ export default function PrincipalExperiencePage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* ─── Command-page layout ─────────────────────────────────────────
+          Two layouts share the same module set; this picks how the page is
+          shaped. Picker is its own emphasized section, distinct from the
+          module-toggle grid below. */}
+      <div className="mb-6">
+        <LayoutPickerCard
+          value={layout}
+          onChange={(next) => guardClick(() => handleLayoutChange(next))()}
+          description={`How ${clientName}'s command page is arranged when this executive signs in. Categories don't change — only the layout.`}
+          disabled={blocked}
+          saving={savingLayout}
+        />
+      </div>
 
       {loadingConfig ? (
         <div className="flex min-h-[30vh] items-center justify-center">

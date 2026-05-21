@@ -123,22 +123,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `Failed to create client profile: ${profileErr.message}` }, { status: 500 });
   }
 
-  // 3) Auth user — magic-link email on first login.
-  // Use admin.createUser with email_confirm=false so Supabase sends a
-  // confirmation email. Fallback to admin.inviteUserByEmail if createUser
-  // isn't allowed.
-  const { data: created, error: createErr } = await service.auth.admin.createUser({
-    email: body.principal.email.trim(),
-    email_confirm: false,
-    user_metadata: { full_name: body.principal.fullName.trim() },
-  });
-  if (createErr || !created?.user) {
+  // 3) Auth user — guaranteed invite email via inviteUserByEmail. This
+  // creates the user AND sends them a confirm-and-set-password email in one
+  // call, regardless of whether the Supabase project has signup confirmation
+  // emails enabled. createUser({email_confirm:false}) only sometimes sent
+  // the email depending on project settings — this is the deterministic API.
+  //
+  // The invited user clicks the link in the email → bounces through
+  // /auth/callback → lands signed-in with a recovery session → sets their
+  // password. (The recovery flow lives at /auth/reset.)
+  const { data: invited, error: createErr } =
+    await service.auth.admin.inviteUserByEmail(body.principal.email.trim(), {
+      data: { full_name: body.principal.fullName.trim() },
+    });
+  if (createErr || !invited?.user) {
     return NextResponse.json(
-      { error: `Failed to create principal user: ${createErr?.message}` },
+      { error: `Failed to invite principal user: ${createErr?.message}` },
       { status: 500 }
     );
   }
-  const principalId = created.user.id;
+  const principalId = invited.user.id;
 
   // 4) Profile row
   await service.from("profiles").upsert({
